@@ -1,0 +1,49 @@
+Table recipes {
+  id int [pk, increment]
+  name varchar(255) [not null, unique]
+  description text
+  prep_time_minutes int
+  cook_time_minutes int
+  servings int
+  season_id int [not null]
+  carb_type_id int [not null]
+}
+
+Table ingredients {
+  id int [pk, increment]
+  name varchar(255) [not null, unique]
+}
+
+Table recipe_ingredients {
+  recipe_id int [not null]
+  ingredient_id int [not null]
+  quantity decimal [not null]
+  unit_id int [not null]
+
+  indexes {
+    (recipe_id, ingredient_id) [pk]
+  }
+}
+
+Table units {
+  unit_id int [not null]
+  name varchar(50) [not null]
+}
+
+Table seasons {
+  id int [pk, increment]
+  name varchar(100) [not null, unique]
+}
+
+Table carb_types {
+  id int [pk, increment]
+  name varchar(100) [not null, unique]
+}
+
+Ref: recipes.season_id > seasons.id
+Ref: recipes.carb_type_id > carb_types.id
+Ref: recipe_ingredients.recipe_id > recipes.id
+Ref: recipe_ingredients.ingredient_id > ingredients.id
+
+
+Ref: "recipe_ingredients"."unit_id" > "units"."unit_id"
