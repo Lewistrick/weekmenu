@@ -27,6 +27,6 @@
 - Each recipe_ingredient points to a food in `ingredients` and a unit in `units`
     - foreign key `ingredients.id` = `recipe_ingredients.ingredient_id`
     - foreign key `units.unit_id` = `recipe_ingredients.unit_id`
-- Each recipe has a season and a carb type attached
-    - foreign key `seasons.id` = `recipes.season_id`
-    - foreign key `carb_types.id` = `recipes.carb_type_id`
+- Recipes can have `tags`, in `tag_categories`
+    - foreign key `recipe_tags.id` = `tag.id`
+    - foreign key `tag_category.id`= `tag.category_id`
