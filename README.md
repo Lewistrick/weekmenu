@@ -30,3 +30,9 @@
 - Recipes can have `tags`, in `tag_categories`
     - foreign key `recipe_tags.id` = `tag.id`
     - foreign key `tag_category.id`= `tag.category_id`
+
+### How to
+- To initialize: `uv run aerich db-init`
+- To migrate to new version:
+    - `uv run aerich migrate --name [type_reason_here]`
+    - `uv run aerich upgrade`

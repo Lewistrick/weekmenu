@@ -178,6 +178,7 @@ pyrightconfig.json
 # Data
 *.sqlite3*
 
-# Own (temp?)
+# Own (temp)
 "Weekmenu extravaganza v2.xslm"
 import_extravaganza.py
+src/migrate_backup.py

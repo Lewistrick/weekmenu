@@ -40,16 +40,16 @@ class Tag(Model):
     """
 
     id = IntField(primary_key=True)
-    category = ForeignKeyField("models.Category", "")
+    category = ForeignKeyField("models.TagCategory", "category")
     name = TextField(required=True)
 
 
-class RecipeTag:
+class RecipeTag(Model):
     """A tag linked to a category."""
 
     id = IntField(primary_key=True)
-    recipe = ForeignKeyField("models.Recipe", "recipe")
-    tag = ForeignKeyField("models.Tag", name="tag")
+    recipe = ForeignKeyField("models.Recipe", "tagged_recipe")
+    tag = ForeignKeyField("models.Tag", name="recipe_tag")
 
 
 class RecipeIngredient(Model):
