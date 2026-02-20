@@ -1,0 +1,9 @@
+<ul>
+    {% for recipe in recipes %}
+    <li>
+        <button hx-get="/recipes/{{ recipe.id }}/detail" hx-target="#recipe-detail" hx-swap="innerHTML">
+            {{ recipe.name }}
+        </button>
+    </li>
+    {% endfor %}
+</ul>

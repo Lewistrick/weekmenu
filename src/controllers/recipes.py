@@ -1,7 +1,8 @@
 import random
 
-from litestar import Controller, delete, get, post
+from litestar import Controller, Request, delete, get, post
 from litestar.exceptions import NotFoundException
+from litestar.response import Template
 from loguru import logger
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
@@ -22,6 +23,17 @@ class RecipeController(Controller):
     path = "/recipes"
     tags = ["recipes"]
 
+    @get(path="/search", summary="Search for recipes by name")
+    async def search(self, request: Request, search: str | None = None) -> Template:
+        if not search:
+            recipes = []
+        else:
+            recipes = await Recipe.filter(name__icontains=search)
+        return Template(
+            template_name="search-results.html",
+            context={"request": request, "recipes": recipes},
+        )
+
     @get(summary="Show all recipes")
     async def showall(self) -> list[RecipeSchema]:  # type: ignore
         """Show all recipes."""
@@ -32,6 +44,19 @@ class RecipeController(Controller):
         """Count recipes."""
         q = await Recipe.all().count()
         return q
+
+    @get(path="/{recipe_id:int}/detail", summary="Get recipe details as HTML")
+    async def get_recipe_detail(self, request: Request, recipe_id: int) -> Template:
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
+
+        return Template(
+            template_name="recipe-detail.html",
+            context={"request": request, "recipe": recipe, "ingredients": ingredients},
+        )
 
     @get(path="/{recipe_id:int}", summary="Get one recipe by id")
     async def from_id(self, recipe_id: int) -> RecipeSchema | None:  # type: ignore
@@ -48,7 +73,7 @@ class RecipeController(Controller):
         return await RecipeSchema.from_tortoise_orm(random_recipe)
 
     @get(path="/{recipe_id:int}/ingredients", summary="Get detailed ingredient list.")
-    async def ingredient_list(self, recipe_id: int) -> list[RecipeIngredientDetail]:
+    async def ingredient_list(self, request: Request, recipe_id: int) -> Template:
         """Get the ingredient list for one recipe."""
         if not await Recipe.exists(id=recipe_id):
             raise NotFoundException()
@@ -56,14 +81,10 @@ class RecipeController(Controller):
         logger.debug(f"Getting ingredients for {recipe_id=}")
         ingredient_listing = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
 
-        return [
-            RecipeIngredientDetail(
-                name=row.ingredient.name,
-                quantity=row.quantity,
-                unit=row.unit.abbrev,
-            )
-            for row in ingredient_listing
-        ]
+        return Template(
+            template_name="ingredient-list.html",
+            context={"request": request, "ingredients": ingredient_listing},
+        )
 
     @delete(path="/{recipe_id:int}", summary="Remove one recipe by id")
     async def delete(self, recipe_id: int) -> None:
