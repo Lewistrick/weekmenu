@@ -5,6 +5,9 @@ Table recipes {
   prep_time_minutes int
   cook_time_minutes int
   servings int
+  owner_id int
+  private boolean [not null, default: true]
+  enabled boolean [not null, default: true]
 }
 
 Table ingredients {
@@ -30,13 +33,13 @@ Table units {
 
 Table tag_categories {
     id int [pk, increment]
-    name str [not null]
+    name varchar(255) [not null]
 }
 
 Table tags {
     id int [pk, increment]
     category_id int
-    name str
+    name varchar(255)
 }
 
 Table recipe_tags {
@@ -48,10 +51,34 @@ Table recipe_tags {
     }
 }
 
+Table users {
+  id int [pk, increment]
+  username varchar(255) [not null, unique]
+  email varchar(255) [not null, unique]
+}
 
+Table shops {
+  id int [pk, increment]
+  name varchar(255) [not null, unique]
+}
+
+Table user_ingredient_shops {
+  user_id int [not null]
+  ingredient_id int [not null]
+  shop_id int
+
+  indexes {
+    (user_id, ingredient_id) [pk]
+  }
+}
+
+Ref: recipes.owner_id > users.id
 Ref: recipe_ingredients.recipe_id > recipes.id
 Ref: recipe_ingredients.ingredient_id > ingredients.id
-Ref: "recipe_ingredients"."unit_id" > "units"."unit_id"
-Ref: "recipe_tags"."recipe_id" < "recipes"."id"
-Ref: "recipe_tags"."tag_id" < "tags"."id"
-Ref: "tags"."category_id" < "tag_categories"."id"
+Ref: recipe_ingredients.unit_id > units.unit_id
+Ref: recipe_tags.recipe_id < recipes.id
+Ref: recipe_tags.tag_id < tags.id
+Ref: tags.category_id < tag_categories.id
+Ref: user_ingredient_shops.user_id > users.id
+Ref: user_ingredient_shops.ingredient_id > ingredients.id
+Ref: user_ingredient_shops.shop_id > shops.id

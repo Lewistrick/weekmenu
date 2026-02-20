@@ -181,4 +181,4 @@ pyrightconfig.json
 # Own (temp)
 "Weekmenu extravaganza v2.xslm"
 import_extravaganza.py
-src/migrate_backup.py
+src/user_scripts/

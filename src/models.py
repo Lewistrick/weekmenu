@@ -1,4 +1,10 @@
-from tortoise.fields import FloatField, ForeignKeyField, IntField, TextField
+from tortoise.fields import (
+    BooleanField,
+    FloatField,
+    ForeignKeyField,
+    IntField,
+    TextField,
+)
 from tortoise.models import Model
 
 
@@ -11,6 +17,9 @@ class Recipe(Model):
     prep_time_minutes = IntField()
     cook_time_minutes = IntField()
     servings = IntField()
+    owner = ForeignKeyField("models.User", related_name="recipes", null=True)
+    private = BooleanField(default=True)
+    enabled = BooleanField(default=True)
 
 
 class Ingredient(Model):
@@ -65,6 +74,24 @@ class RecipeIngredient(Model):
         unit_name = Unit.get(id=self.unit).values("abbrev")
         ingredient_name = Ingredient.get(id=self.ingredient).values("name")
         return f"{self.quantity} {unit_name} {ingredient_name}"
+
+
+class User(Model):
+    id = IntField(primary_key=True)
+    username = TextField(required=True)
+    email = TextField(required=True)
+
+
+class Shop(Model):
+    id = IntField(primary_key=True)
+    name = TextField(required=True)
+
+
+class UserIngredientShop(Model):
+    id = IntField(primary_key=True)
+    user = ForeignKeyField("models.User", related_name="ingredient_shops")
+    ingredient = ForeignKeyField("models.Ingredient", related_name="user_shops")
+    shop = ForeignKeyField("models.Shop", related_name="user_ingredients", null=True)
 
 
 class Unit(Model):
