@@ -1,11 +1,21 @@
+import random
+
 from litestar import Controller, delete, get, post
 from litestar.exceptions import NotFoundException
 from loguru import logger
+from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-from src.models import CarbType, Ingredient, Recipe, RecipeIngredient, Season, Unit
+from src.models import Ingredient, Recipe, RecipeIngredient, Unit
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
+IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
+
+
+class RecipeIngredientDetail(BaseModel):
+    name: str
+    quantity: float
+    unit: str
 
 
 class RecipeController(Controller):
@@ -30,6 +40,31 @@ class RecipeController(Controller):
             raise NotFoundException()
         return await RecipeSchema.from_tortoise_orm(recipe)
 
+    @get(path="/random", summary="Get a random recipe")
+    async def random(self) -> RecipeSchema:  # type: ignore
+        """Select one random recipe."""
+        recipes = await Recipe.all()
+        random_recipe = random.choice(recipes)
+        return await RecipeSchema.from_tortoise_orm(random_recipe)
+
+    @get(path="/{recipe_id:int}/ingredients", summary="Get detailed ingredient list.")
+    async def ingredient_list(self, recipe_id: int) -> list[RecipeIngredientDetail]:
+        """Get the ingredient list for one recipe."""
+        if not await Recipe.exists(id=recipe_id):
+            raise NotFoundException()
+
+        logger.debug(f"Getting ingredients for {recipe_id=}")
+        ingredient_listing = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
+
+        return [
+            RecipeIngredientDetail(
+                name=row.ingredient.name,
+                quantity=row.quantity,
+                unit=row.unit.abbrev,
+            )
+            for row in ingredient_listing
+        ]
+
     @delete(path="/{recipe_id:int}", summary="Remove one recipe by id")
     async def delete(self, recipe_id: int) -> None:
         recipe = await Recipe.get_or_none(id=recipe_id)
@@ -46,27 +81,23 @@ class RecipeController(Controller):
         prep_time_minutes: int | None = None,
         cook_time_minutes: int | None = None,
         ingredient_strings: list[str] | None = None,
-        season_name: str = "",
-        carb_type_name: str = "",
     ) -> RecipeSchema:  # type: ignore
         """Create a new recipe, user-style.
 
         Accepts
+        - a name of the recipe
+        - the number of servings
+        - a description (preparation steps)
+        - the number of minutes it takes to prep the food
+        - the number of minutes it takes to cook the food
         - a list of ingredients like this: quantity|unit|ingredient, e.g. 200|g|potatoes
-        - season (e.g. summer, winter)
-        - carb type (e.g. potato, pasta, rice)
 
-        For any ingredient, unit, season or carbtype:
+        For any ingredient or unit:
         - will check if it exists (note the web UI should do fuzzy matching to not get similar records)
         - add if it doesn't exist or select if it does
         - select the corresponding ID
         - link it to the new recipe
         """
-
-        logger.debug(f"Adding season: {season_name}")
-        season, season_created = await Season.get_or_create(name=season_name)
-        logger.debug(f"Adding carbtype: {carb_type_name}")
-        carbtype, carbtype_created = await CarbType.get_or_create(name=carb_type_name)
 
         logger.debug(f"Adding recipe: {name}")
         recipe = await Recipe.create(
@@ -75,8 +106,6 @@ class RecipeController(Controller):
             prep_time_minutes=prep_time_minutes,
             cook_time_minutes=cook_time_minutes,
             servings=servings,
-            season_id=season,
-            carbtype_id=carbtype,
         )
         logger.debug(f"Added - {recipe.id=}")
 

@@ -36,3 +36,4 @@
 - To migrate to new version:
     - `uv run aerich migrate --name [type_reason_here]`
     - `uv run aerich upgrade`
+    
