@@ -28,7 +28,7 @@ class RecipeController(Controller):
         if not search:
             recipes = []
         else:
-            recipes = await Recipe.filter(name__icontains=search)
+            recipes = await Recipe.filter(name__icontains=search).limit(5)
         return Template(
             template_name="search-results.html",
             context={"request": request, "recipes": recipes},
@@ -65,12 +65,22 @@ class RecipeController(Controller):
             raise NotFoundException()
         return await RecipeSchema.from_tortoise_orm(recipe)
 
-    @get(path="/random", summary="Get a random recipe")
-    async def random(self) -> RecipeSchema:  # type: ignore
-        """Select one random recipe."""
+    @get(path="/random-recipe", summary="Get a random recipe page")
+    async def random_recipe_page(self, request: Request) -> Template:
+        """Select one random recipe and show it."""
         recipes = await Recipe.all()
         random_recipe = random.choice(recipes)
-        return await RecipeSchema.from_tortoise_orm(random_recipe)
+        ingredients = await RecipeIngredient.filter(recipe=random_recipe.id).select_related("ingredient", "unit")
+
+        return Template(
+            template_name="recipe-detail.html",
+            context={"request": request, "recipe": random_recipe, "ingredients": ingredients},
+        )
+
+    @get(path="/user-profile", summary="Get the user profile page")
+    async def user_profile_page(self, request: Request) -> Template:
+        """Show the user profile page."""
+        return Template(template_name="user-profile.html", context={"request": request})
 
     @get(path="/{recipe_id:int}/ingredients", summary="Get detailed ingredient list.")
     async def ingredient_list(self, request: Request, recipe_id: int) -> Template:
