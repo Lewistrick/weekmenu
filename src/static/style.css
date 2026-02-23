@@ -15,7 +15,6 @@ body {
     border-bottom: 1px solid #dee2e6;
 }
 
-
 .navbar-title {
     font-size: 1.5rem;
     font-weight: bold;
@@ -35,7 +34,6 @@ body {
     background-color: transparent;
     color: #007bff;
     cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
 }
 
 .nav-button:hover {
@@ -43,6 +41,49 @@ body {
     color: #fff;
 }
 
+.recipe-button {
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    background-color: transparent;
+    color: #007bff;
+    cursor: pointer;
+    margin: 0.1rem;
+    padding: 5px;
+    width: 100%;
+}
+
+.selected-recipe-button {
+    background-color: #007bff;
+    color: black;
+}
+
+.recipe-search {
+    width: 100%;
+    margin: 8px 0;
+    padding: 8px;
+}
+
+div.search-results {
+    border-radius: 5px;
+    display: inline-block;
+    margin-right: 10px;
+    padding: 5px;
+    vertical-align: text-top;
+    width: 360px;
+}
+
+div.recipe-detail {
+    display: inline-block;
+    padding: 5px;
+    vertical-align: text-top;
+}
+
 .container {
+    margin: 0 15%;
     padding: 1rem;
+}
+
+.recipe-search-wrapper {
+    display: flex;
+    width: 100%;
 }

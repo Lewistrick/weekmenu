@@ -1,7 +1,10 @@
+<h2>Search results</h2>
 {% for recipe in recipes %}
-<p>
-    <button hx-get="/recipes/{{ recipe.id }}/detail" hx-target="#recipe-detail" hx-swap="innerHTML">
+<div>
+    <button class="recipe-button{% if recipe.id == selected_id %} selected-recipe-button{% endif %}"
+        hx-get="/recipes/{{ recipe.id }}/detail" hx-target="#recipe-detail" hx-swap="innerHTML"
+        hx-include="[name='search']">
         {{ recipe.name }}
     </button>
-</p>
+</div>
 {% endfor %}

@@ -24,14 +24,17 @@ class RecipeController(Controller):
     tags = ["recipes"]
 
     @get(path="/search", summary="Search for recipes by name")
-    async def search(self, request: Request, search: str | None = None) -> Template:
+    async def search(self, request: Request, search: str | None = None, selected_id: int | None = None) -> Template:
+        recipes: list[Recipe] = []
         if not search:
-            recipes = []
+            # At some point this could show recent/popular recipes
+            pass
         else:
-            recipes = await Recipe.filter(name__icontains=search).limit(5)
+            recipes = await Recipe.filter(name__icontains=search).limit(10)
+
         return Template(
             template_name="search-results.html",
-            context={"request": request, "recipes": recipes},
+            context={"request": request, "recipes": recipes, "selected_id": selected_id},
         )
 
     @get(summary="Show all recipes")
@@ -46,16 +49,27 @@ class RecipeController(Controller):
         return q
 
     @get(path="/{recipe_id:int}/detail", summary="Get recipe details as HTML")
-    async def get_recipe_detail(self, request: Request, recipe_id: int) -> Template:
+    async def get_recipe_detail(self, request: Request, recipe_id: int, search: str | None = None) -> Template:
+        """Get recipe details and re-render the search results with the selection."""
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
             raise NotFoundException()
 
         ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
 
+        search_results: list[Recipe] = []
+        if search:
+            search_results = await Recipe.filter(name__icontains=search).limit(10)
+
         return Template(
-            template_name="recipe-detail.html",
-            context={"request": request, "recipe": recipe, "ingredients": ingredients},
+            template_name="partials/recipe-detail-and-search-results.html",
+            context={
+                "request": request,
+                "recipe": recipe,
+                "ingredients": ingredients,
+                "recipes": search_results,
+                "selected_id": recipe_id,
+            },
         )
 
     @get(path="/{recipe_id:int}", summary="Get one recipe by id")
