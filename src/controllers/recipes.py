@@ -185,7 +185,7 @@ class RecipeController(Controller):
 
         def get_as_list(key: str) -> list[str]:
             """Helper function to guarantee we always get a list, even for a single ingredient."""
-            val = form_data.get(key)
+            val = form_data.getall(key)
             if val is None:
                 return []
             return val if isinstance(val, list) else [val]
