@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2 class="recipe-title">#{{ recipe.id }} {{ recipe.name }}</h2>
-<a href="/recipes/edit/{{recipe.id}}" class="emoji-button"><span class="emoji-on-button">✏️</span></a>
+<a href="/recipes/delete/{{recipe.id}}" class="emoji-button"><span class="emoji-on-button">🗑️</span></a>
 <h4>Ingredients</h4>
 <ul>
     {% for ingredient in ingredients %}

@@ -159,3 +159,20 @@ div.recipe-detail {
     margin-top: 1rem;
     font-weight: bold;
 }
+.recipe-title {
+    display: inline-block;
+}
+
+.emoji-button {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    display: inline-block;
+    font-size: 1.5em;
+    margin: 5px;
+    /* padding: 5px 10px; */
+    text-decoration: none;
+}
+
+.emoji-on-button {
+    vertical-align: middle;
+}
