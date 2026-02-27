@@ -60,6 +60,22 @@ class RecipeController(Controller):
             },
         )
 
+    @get(path="/edit/{recipe_id:int}", summary="Get the page to edit a recipe")
+    async def edit_recipe_page(self, recipe_id: int) -> Template:
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            breakpoint()
+            raise NotFoundException()
+
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        return Template(
+            template_name="edit-recipe.html",
+            context={
+                "recipe": recipe,
+                "ingredients": ingredients,
+            },
+        )
+
     @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
     async def new_ingredient_input(self, request: Request) -> Template:
         """Return an HTML snippet for a new ingredient input field."""
@@ -183,16 +199,9 @@ class RecipeController(Controller):
         cook_time_minutes_str = form_data.get("cook_time_minutes")
         cook_time_minutes = int(cook_time_minutes_str) if cook_time_minutes_str else None
 
-        def get_as_list(key: str) -> list[str]:
-            """Helper function to guarantee we always get a list, even for a single ingredient."""
-            val = form_data.getall(key)
-            if val is None:
-                return []
-            return val if isinstance(val, list) else [val]
-
-        quantities = get_as_list("quantity[]")
-        units = get_as_list("unit[]")
-        ingredient_names = get_as_list("ingredient_name[]")
+        quantities = form_data.getall("quantity[]")
+        units = form_data.getall("unit[]")
+        ingredient_names = form_data.getall("ingredient_name[]")
 
         ingredients = [{"quantity": q, "unit": u, "name": n} for q, u, n in zip(quantities, units, ingredient_names)]
 
