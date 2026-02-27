@@ -1,3 +1,4 @@
+from tortoise.expressions import Q
 from tortoise.fields import (
     BooleanField,
     FloatField,
@@ -101,3 +102,10 @@ class Unit(Model):
     abbrev = TextField(required=True)
     single = TextField(null=True)
     plural = TextField(null=True)
+
+    async def find(query) -> "Unit | None":
+        unit = await Unit.filter(
+            Q(abbrev=query) | Q(single=query) | Q(plural=query),
+        ).first()
+
+        return unit

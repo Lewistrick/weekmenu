@@ -182,7 +182,19 @@ class RecipeController(Controller):
         prep_time_minutes = int(prep_time_minutes_str) if prep_time_minutes_str else None
         cook_time_minutes_str = form_data.get("cook_time_minutes")
         cook_time_minutes = int(cook_time_minutes_str) if cook_time_minutes_str else None
-        ingredient_strings = form_data.getall("ingredient_strings")
+
+        def get_as_list(key: str) -> list[str]:
+            """Helper function to guarantee we always get a list, even for a single ingredient."""
+            val = form_data.get(key)
+            if val is None:
+                return []
+            return val if isinstance(val, list) else [val]
+
+        quantities = get_as_list("quantity[]")
+        units = get_as_list("unit[]")
+        ingredient_names = get_as_list("ingredient_name[]")
+
+        ingredients = [{"quantity": q, "unit": u, "name": n} for q, u, n in zip(quantities, units, ingredient_names)]
 
         logger.debug(f"Adding recipe: {name}")
         recipe = await Recipe.create(
@@ -194,28 +206,31 @@ class RecipeController(Controller):
         )
         logger.debug(f"Added - {recipe.id=}")
 
-        if ingredient_strings:
-            for ingredient_str in ingredient_strings:
-                if not ingredient_str:
-                    continue
-                quantity, unit_abbrev, ing_name = ingredient_str.split("|", 2)
+        messages = []
+        for ing_dict in ingredients:
+            logger.debug(f"Adding ingredient: {ing_dict['name']}")
+            ingredient, ing_created = await Ingredient.get_or_create(name=ing_dict["name"])
+            if ing_created:
+                messages.append(f"Hey, I didn't know {ingredient.name} yet!")
 
-                logger.debug(f"Adding ingredient: {ing_name}")
-                ingredient, ing_created = await Ingredient.get_or_create(name=ing_name)
+            logger.debug(f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}")
+            unit = await Unit.find(ing_dict["unit"])
+            if unit is None:
+                messages.append(f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})")
+                continue
 
-                logger.debug(f"Adding unit by abbreviation: {unit_abbrev}")
-                unit, unit_created = await Unit.get_or_create(abbrev=unit_abbrev)
+            quantity = ing_dict["quantity"]
 
-                logger.debug("Listing ingredient in recipe")
-                recipe_ing = await RecipeIngredient.create(
-                    recipe=recipe,
-                    ingredient=ingredient,
-                    quantity=quantity,
-                    unit=unit,
-                )
-                logger.info(f"Added ingredient to recipe: {recipe_ing}")
+            logger.debug("Listing ingredient in recipe")
+            recipe_ing = await RecipeIngredient.create(
+                recipe=recipe,
+                ingredient=ingredient,
+                quantity=quantity,
+                unit=unit,
+            )
+            logger.info(f"Added ingredient to recipe: {recipe_ing}")
 
-        logger.success("Created recipe")
         return Template(
-            template_name="partials/add-recipe-response.html", context={"request": request, "recipe": recipe}
+            template_name="partials/add-recipe-response.html",
+            context={"request": request, "recipe": recipe, "messages": messages},
         )
