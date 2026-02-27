@@ -23,6 +23,16 @@ class RecipeController(Controller):
     path = "/recipes"
     tags = ["recipes"]
 
+    @get(path="/add", summary="Get the page to add a new recipe")
+    async def add_recipe_page(self, request: Request) -> Template:
+        """Show the page for adding a new recipe."""
+        return Template(template_name="add-recipe.html", context={"request": request})
+
+    @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
+    async def new_ingredient_input(self, request: Request) -> Template:
+        """Return an HTML snippet for a new ingredient input field."""
+        return Template(template_name="partials/new-ingredient-input.html", context={"request": request})
+
     @get(path="/search", summary="Search for recipes by name")
     async def search(self, request: Request, search: str | None = None, selected_id: int | None = None) -> Template:
         recipes: list[Recipe] = []
@@ -118,15 +128,7 @@ class RecipeController(Controller):
         await recipe.delete()
 
     @post(name="Add a recipe")
-    async def add(
-        self,
-        name: str,
-        servings: int,
-        description: str | None = None,
-        prep_time_minutes: int | None = None,
-        cook_time_minutes: int | None = None,
-        ingredient_strings: list[str] | None = None,
-    ) -> RecipeSchema:  # type: ignore
+    async def add(self, request: Request) -> Template:
         """Create a new recipe, user-style.
 
         Accepts
@@ -143,6 +145,15 @@ class RecipeController(Controller):
         - select the corresponding ID
         - link it to the new recipe
         """
+        form_data = await request.form()
+        name = form_data.get("name")
+        servings = form_data.get("servings")
+        description = form_data.get("description")
+        prep_time_minutes_str = form_data.get("prep_time_minutes")
+        prep_time_minutes = int(prep_time_minutes_str) if prep_time_minutes_str else None
+        cook_time_minutes_str = form_data.get("cook_time_minutes")
+        cook_time_minutes = int(cook_time_minutes_str) if cook_time_minutes_str else None
+        ingredient_strings = form_data.getall("ingredient_strings")
 
         logger.debug(f"Adding recipe: {name}")
         recipe = await Recipe.create(
@@ -156,6 +167,8 @@ class RecipeController(Controller):
 
         if ingredient_strings:
             for ingredient_str in ingredient_strings:
+                if not ingredient_str:
+                    continue
                 quantity, unit_abbrev, ing_name = ingredient_str.split("|", 2)
 
                 logger.debug(f"Adding ingredient: {ing_name}")
@@ -166,12 +179,14 @@ class RecipeController(Controller):
 
                 logger.debug("Listing ingredient in recipe")
                 recipe_ing = await RecipeIngredient.create(
-                    recipe_id=recipe,
-                    ingredient_id=ingredient,
+                    recipe=recipe,
+                    ingredient=ingredient,
                     quantity=quantity,
-                    unit_id=unit,
+                    unit=unit,
                 )
                 logger.info(f"Added ingredient to recipe: {recipe_ing}")
 
         logger.success("Created recipe")
-        return await RecipeSchema.from_tortoise_orm(recipe)
+        return Template(
+            template_name="partials/add-recipe-response.html", context={"request": request, "recipe": recipe}
+        )

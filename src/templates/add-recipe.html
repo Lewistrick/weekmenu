@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Add a new recipe{% endblock %}
+
+{% block content %}
+<div class="add-recipe-container">
+    <h1 class="page-title">Add a New Recipe</h1>
+
+    <form hx-post="/recipes" hx-target="#response-message" hx-swap="innerHTML" class="recipe-form">
+        <div class="form-group">
+            <label for="name">Recipe Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="servings">Servings</label>
+            <input type="number" id="servings" name="servings" required>
+        </div>
+
+        <div class="form-group">
+            <label for="prep_time_minutes">Prep Time (minutes)</label>
+            <input type="number" id="prep_time_minutes" name="prep_time_minutes">
+        </div>
+
+        <div class="form-group">
+            <label for="cook_time_minutes">Cook Time (minutes)</label>
+            <input type="number" id="cook_time_minutes" name="cook_time_minutes">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="5"></textarea>
+        </div>
+
+        <div class="form-group">
+            <h2>Ingredients</h2>
+            <div id="ingredients-container">
+                <!-- Ingredient inputs will be added here -->
+            </div>
+            <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container" hx-swap="beforeend" class="btn-add-ingredient">Add Ingredient</button>
+        </div>
+
+        <button type="submit" class="btn-submit">Add Recipe</button>
+    </form>
+
+    <div id="response-message" class="response-message"></div>
+</div>
+{% endblock %}
