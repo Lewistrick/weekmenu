@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Weekmenu{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-title">
+            <a href="/">Weekmenu</a>
+        </div>
+        <div class="navbar-links">
+            <a href="/recipes/search" class="nav-button">Find recipe</a>
+            <a href="/recipes/add" class="nav-button">Add recipe</a>
+            <a href="/recipes/random" class="nav-button">Random recipe</a>
+        </div>
+        <div class="navbar-right">
+            <a href="/recipes/user-profile" class="nav-button">User profile</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+
+</html>

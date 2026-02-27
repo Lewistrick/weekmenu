@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Search recipes{% endblock %}
+
+{% block content %}
+
+<h1>Recipe Search</h1>
+<input class="recipe-search" type="search" name="search" placeholder="Search for recipes" hx-get="/recipes/search-recipe"
+    hx-trigger="keyup changed delay:200ms" hx-target="#search-results" hx-swap="innerHTML">
+
+<div id="search-results" class="search-results">
+    <!-- This will show search results -->
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+<h2>Search results:</h2>
+{% for recipe in recipes %}
+    <a href="/recipes/view/{{ recipe.id }}">
+        <p>#{{ recipe.id }} {{ recipe.name }}</p>
+    </a>
+{% endfor %}
