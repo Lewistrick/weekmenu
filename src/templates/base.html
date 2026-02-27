@@ -7,16 +7,17 @@
     <title>{% block title %}Weekmenu{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
 </head>
 
 <body>
     <nav class="navbar">
-        <div class="navbar-title">Weekmenu</div>
+        <div class="navbar-title">
+            <a href="/">Weekmenu</a>
+        </div>
         <div class="navbar-links">
-            <a href="/" class="nav-button">Search recipe</a>
+            <a href="/recipes/search" class="nav-button">Find recipe</a>
             <a href="/recipes/add" class="nav-button">Add recipe</a>
-            <button hx-get="/recipes/random-recipe" hx-target=".container" hx-swap="innerHTML" class="nav-button">Random recipe</button>
+            <a href="/recipes/random" class="nav-button">Random recipe</a>
         </div>
         <div class="navbar-right">
             <a href="/recipes/user-profile" class="nav-button">User profile</a>

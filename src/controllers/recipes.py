@@ -28,13 +28,54 @@ class RecipeController(Controller):
         """Show the page for adding a new recipe."""
         return Template(template_name="add-recipe.html", context={"request": request})
 
+    @get(path="/random", summary="View a random recipe")
+    async def random_recipe_page(self) -> Template:
+        """Show the page for viewing/editing a recipe."""
+        recipes = await Recipe.all()
+        random_recipe = random.choice(recipes)
+        logger.debug(f"Random recipe: {random_recipe.name}")
+        ingredients = await RecipeIngredient.filter(recipe=random_recipe.id).select_related("ingredient", "unit")
+
+        return Template(
+            template_name="view-recipe.html",
+            context={
+                "recipe": random_recipe,
+                "ingredients": ingredients,
+            },
+        )
+
+    @get(path="/view/{recipe_id:int}", summary="Get the page to view a recipe")
+    async def view_recipe_page(self, recipe_id: int) -> Template:
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            breakpoint()
+            raise NotFoundException()
+
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        return Template(
+            template_name="view-recipe.html",
+            context={
+                "recipe": recipe,
+                "ingredients": ingredients,
+            },
+        )
+
     @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
     async def new_ingredient_input(self, request: Request) -> Template:
         """Return an HTML snippet for a new ingredient input field."""
         return Template(template_name="partials/new-ingredient-input.html", context={"request": request})
 
-    @get(path="/search", summary="Search for recipes by name")
-    async def search(self, request: Request, search: str | None = None, selected_id: int | None = None) -> Template:
+    @get(path="/search", summary="Search recipe page")
+    async def search_page(self, request: Request) -> Template:
+        """Show the page for searching a recipe."""
+
+        return Template(
+            template_name="search-recipes.html",
+            context={"request": request},
+        )
+
+    @get(path="/search-recipe", summary="Search for recipes")
+    async def search_by_query(self, request: Request, search: str | None = None) -> Template:
         recipes: list[Recipe] = []
         if not search:
             # At some point this could show recent/popular recipes
@@ -44,7 +85,7 @@ class RecipeController(Controller):
 
         return Template(
             template_name="search-results.html",
-            context={"request": request, "recipes": recipes, "selected_id": selected_id},
+            context={"request": request, "recipes": recipes},
         )
 
     @get(summary="Show all recipes")
@@ -88,18 +129,6 @@ class RecipeController(Controller):
         if not recipe:
             raise NotFoundException()
         return await RecipeSchema.from_tortoise_orm(recipe)
-
-    @get(path="/random-recipe", summary="Get a random recipe page")
-    async def random_recipe_page(self, request: Request) -> Template:
-        """Select one random recipe and show it."""
-        recipes = await Recipe.all()
-        random_recipe = random.choice(recipes)
-        ingredients = await RecipeIngredient.filter(recipe=random_recipe.id).select_related("ingredient", "unit")
-
-        return Template(
-            template_name="recipe-detail.html",
-            context={"request": request, "recipe": random_recipe, "ingredients": ingredients},
-        )
 
     @get(path="/user-profile", summary="Get the user profile page")
     async def user_profile_page(self, request: Request) -> Template:
