@@ -16,14 +16,23 @@
     </button>
 </div>
 
-<h4>Ingredients</h4>
-<ul>
-    {% for ingredient in ingredients %}
-    <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
-    {% endfor %}
-</ul>
-<h4>Description</h4>
-<p>{{ recipe.description }}</p>
+<div id="recipe-ingredients">
+    <h4>Ingredients</h4>
+    <ul>
+        {% for ingredient in ingredients %}
+        <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div id="recipe-desc">
+    <h4>Description</h4>
+    <p>{{ recipe.description }}</p>
+</div>
+
+<!-- To do: add switches to set private/public and enabled/disabled -->
+
+<hr />
 <a hx-get="/recipes/delete/{{recipe.id}}" hx-target="#delete-confirmation" hx-swap="innerHTML" class="emoji-button">
     <span class="emoji-on-button">🗑️</span>
 </a>
