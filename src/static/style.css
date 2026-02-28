@@ -41,20 +41,22 @@ body {
     color: #fff;
 }
 
+.single-message {
+    background-color: #61d4445e;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin: 5px;
+    padding: 5px;
+}
 .recipe-button {
+    background-color: transparent;
     border: 1px solid #007bff;
     border-radius: 5px;
-    background-color: transparent;
     color: #007bff;
     cursor: pointer;
     margin: 0.1rem;
     padding: 5px;
     width: 100%;
-}
-
-.selected-recipe-button {
-    background-color: #007bff;
-    color: black;
 }
 
 .recipe-search {
@@ -69,7 +71,6 @@ div.search-results {
     margin-right: 10px;
     padding: 5px;
     vertical-align: text-top;
-    width: 360px;
 }
 
 div.recipe-detail {
@@ -159,20 +160,26 @@ div.recipe-detail {
     margin-top: 1rem;
     font-weight: bold;
 }
+
 .recipe-title {
     display: inline-block;
 }
 
 .emoji-button {
+    background-color: transparent;
     border-radius: 5px;
     border: 1px solid #ccc;
     display: inline-block;
     font-size: 1.5em;
-    margin: 5px;
+    /* margin: 5px; */
     /* padding: 5px 10px; */
-    text-decoration: none;
 }
 
 .emoji-on-button {
+    text-decoration: none;
     vertical-align: middle;
+}
+.small {
+    font-size: 0.8em;
+    margin: 0.5em;
 }

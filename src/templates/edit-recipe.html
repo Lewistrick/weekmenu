@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}View recipe{% endblock %}
+{% block title %}Edit recipe{% endblock %}
 
 {% block content %}
-<h2 class="recipe-title">#{{ recipe.id }} {{ recipe.name }}</h2>
-<a href="/recipes/delete/{{recipe.id}}" class="emoji-button"><span class="emoji-on-button">🗑️</span></a>
+<p class="small">You are now in edit mode. Click the eye to go back to view mode.</p>
+<button hx-get="/recipes/view/{{recipe.id}}" hx-target="body" class="emoji-button">
+    <span class="emoji-on-button">👁️</span>
+</button>
+
+<div id="recipe-title">
+    <h2 class="recipe-title">{{ recipe.name }}</h2>
+    <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
+        class="emoji-button">
+        <span class="emoji-on-button">✏️</span>
+    </button>
+</div>
+
 <h4>Ingredients</h4>
 <ul>
     {% for ingredient in ingredients %}
@@ -13,4 +24,9 @@
 </ul>
 <h4>Description</h4>
 <p>{{ recipe.description }}</p>
+<a hx-get="/recipes/delete/{{recipe.id}}" hx-target="#delete-confirmation" hx-swap="innerHTML" class="emoji-button">
+    <span class="emoji-on-button">🗑️</span>
+</a>
+<div id="delete-confirmation"></div>
+
 {% endblock %}

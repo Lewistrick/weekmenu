@@ -1,7 +1,10 @@
 import random
+from typing import Annotated, Any
 
 from litestar import Controller, Request, delete, get, post
+from litestar.enums import RequestEncodingType
 from litestar.exceptions import NotFoundException
+from litestar.params import Body
 from litestar.response import Template
 from loguru import logger
 from pydantic import BaseModel
@@ -64,7 +67,6 @@ class RecipeController(Controller):
     async def edit_recipe_page(self, recipe_id: int) -> Template:
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
-            breakpoint()
             raise NotFoundException()
 
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
@@ -74,6 +76,57 @@ class RecipeController(Controller):
                 "recipe": recipe,
                 "ingredients": ingredients,
             },
+        )
+
+    @get(path="/delete/{recipe_id:int}", summary="Show the delete confirmation")
+    async def delete_recipe_partial(self, recipe_id: int) -> Template:
+        return Template(template_name="partials/delete-confirmation.html", context={"recipe_id": recipe_id})
+
+    @get(path="/title-editor/{recipe_id:int}", summary="Create title editor")
+    async def title_editor(self, recipe_id: int) -> Template:
+        """Just load the element to edit the title."""
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        return Template(template_name="partials/edit-recipe-title.html", context={"recipe": recipe})
+
+    class EditTitleData(BaseModel):
+        new_title: str
+
+    @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")
+    async def edit_title(
+        self,
+        recipe_id: int,
+        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+    ) -> Template:
+        """Edit the title, and return the updated title element."""
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        messages = []
+        if new_title := data.get("new_title"):
+            recipe.name = new_title
+            await recipe.save()
+            messages.append("Recipe name updated")
+        else:
+            messages.append("No recipe name found, not saved.")
+
+        return Template(
+            template_name="partials/edited-recipe-title.html",
+            context={"recipe": recipe, "messages": messages},
+        )
+
+    @get(path="/delete-confirmation/{recipe_id:int}", summary="Delete the recipe by ID.")
+    async def delete_recipe_page(self, recipe_id: int) -> Template:
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+        await recipe.delete()
+        return Template(
+            "index.html",
+            context={"messages": [f"Recipe deleted: {recipe.name}"]},
         )
 
     @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
@@ -97,7 +150,7 @@ class RecipeController(Controller):
             # At some point this could show recent/popular recipes
             pass
         else:
-            recipes = await Recipe.filter(name__icontains=search).limit(10)
+            recipes = await Recipe.filter(name__icontains=search)
 
         return Template(
             template_name="search-results.html",
