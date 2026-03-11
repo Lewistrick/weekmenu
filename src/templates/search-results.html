@@ -1,6 +1,8 @@
-<h2>Search results:</h2>
+<h2>Search results</h2>
 {% for recipe in recipes %}
-    <a href="/recipes/view/{{ recipe.id }}">
-        <p>#{{ recipe.id }} {{ recipe.name }}</p>
-    </a>
+<div>
+    <button hx-get="/recipes/view/{{ recipe.id }}" hx-target="body" class="recipe-button">
+        #{{ recipe.id }} {{ recipe.name }}
+    </button>
+</div>
 {% endfor %}
