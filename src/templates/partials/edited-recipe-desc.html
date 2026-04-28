@@ -1,0 +1,11 @@
+<button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="emoji-button">
+    <span class="emoji-on-button">✏️</span>
+</button>
+<p>{{ recipe.description }}</p>
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <p class="single-message">{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}

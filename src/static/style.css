@@ -48,6 +48,7 @@ body {
     margin: 5px;
     padding: 5px;
 }
+
 .recipe-button {
     background-color: transparent;
     border: 1px solid #007bff;
@@ -126,6 +127,7 @@ div.recipe-detail {
     background-color: #555;
     color: #ddd;
     width: 100%;
+    height: 15rem;
     box-sizing: border-box;
 }
 
@@ -179,7 +181,15 @@ div.recipe-detail {
     text-decoration: none;
     vertical-align: middle;
 }
+
 .small {
     font-size: 0.8em;
     margin: 0.5em;
+}
+.edit-ingredient-row {
+    margin: 0.5em 0px;
+}
+
+.ingredient-span {
+    margin-left: 1rem;
 }

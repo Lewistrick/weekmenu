@@ -16,17 +16,33 @@
     </button>
 </div>
 
+<h4>Ingredients</h4>
 <div id="recipe-ingredients">
-    <h4>Ingredients</h4>
-    <ul>
-        {% for ingredient in ingredients %}
-        <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
-        {% endfor %}
-    </ul>
+    {% for ingredient in ingredients %}
+    <div id="edit-ingredient-{{ingredient.id}}" class="edit-ingredient-row">
+        <button class="emoji-button edit-ingredient-button"
+            hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit" hx-target=".edit-ingredient-row"
+            hx-swap="outerHTML">
+            <span class="emoji-on-button">✏️</span>
+        </button>
+        <button class="emoji-button delete-ingredient-button"
+            hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}" hx-target=".recipe-ingredients"
+            hx-swap="innerHTML">
+            <span class="emoji-on-button">🗑️</span>
+        </button>
+        <span class="ingredient-span">
+            {{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}
+        </span>
+    </div>
+    {% endfor %}
+    <!-- To do: add form to add a new ingredient to a recipe -->
 </div>
 
+<h4>Description</h4>
 <div id="recipe-desc">
-    <h4>Description</h4>
+    <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="emoji-button">
+        <span class="emoji-on-button">✏️</span>
+    </button>
     <p>{{ recipe.description }}</p>
 </div>
 

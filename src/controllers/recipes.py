@@ -82,7 +82,7 @@ class RecipeController(Controller):
     async def delete_recipe_partial(self, recipe_id: int) -> Template:
         return Template(template_name="partials/delete-confirmation.html", context={"recipe_id": recipe_id})
 
-    @get(path="/title-editor/{recipe_id:int}", summary="Create title editor")
+    @get(path="/title-editor/{recipe_id:int}", summary="Title editor")
     async def title_editor(self, recipe_id: int) -> Template:
         """Just load the element to edit the title."""
         recipe = await Recipe.get_or_none(id=recipe_id)
@@ -91,8 +91,14 @@ class RecipeController(Controller):
 
         return Template(template_name="partials/edit-recipe-title.html", context={"recipe": recipe})
 
-    class EditTitleData(BaseModel):
-        new_title: str
+    @get(path="/desc-editor/{recipe_id:int}", summary="Description editor")
+    async def desc_editor(self, recipe_id: int) -> Template:
+        """Just load the element to edit the description."""
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        return Template(template_name="partials/edit-recipe-desc.html", context={"recipe": recipe})
 
     @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")
     async def edit_title(
@@ -115,6 +121,30 @@ class RecipeController(Controller):
 
         return Template(
             template_name="partials/edited-recipe-title.html",
+            context={"recipe": recipe, "messages": messages},
+        )
+
+    @post(path="/edit-desc/{recipe_id:int}", summary="Edit the description")
+    async def edit_description(
+        self,
+        recipe_id: int,
+        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+    ) -> Template:
+        """Edit the description, and return the updated title element."""
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        messages = []
+        if new_value := data.get("new_desc"):
+            recipe.description = new_value
+            await recipe.save()
+            messages.append("Recipe description updated")
+        else:
+            messages.append("No recipe description found, not saved.")
+
+        return Template(
+            template_name="partials/edited-recipe-desc.html",
             context={"recipe": recipe, "messages": messages},
         )
 
