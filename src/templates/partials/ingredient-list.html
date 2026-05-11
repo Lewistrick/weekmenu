@@ -1,0 +1,32 @@
+<!-- filepath: src/templates/partials/ingredient-list.html -->
+<div id="recipe-ingredients" class="recipe-ingredients">
+    {% for ingredient in ingredients %}
+    <div id="edit-ingredient-{{ingredient.id}}" class="edit-ingredient-row">
+        <button class="emoji-button edit-ingredient-button"
+            hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit" hx-target=".edit-ingredient-row"
+            hx-swap="outerHTML">
+            <span class="emoji-on-button">✏️</span>
+        </button>
+        <button class="emoji-button delete-ingredient-button"
+            hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}" hx-target=".recipe-ingredients"
+            hx-swap="innerHTML">
+            <span class="emoji-on-button">🗑️</span>
+        </button>
+        <span class="ingredient-span">
+            {{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}
+        </span>
+    </div>
+    {% endfor %}
+    <button hx-get="/recipes/{{ recipe.id }}/ingredients/add" hx-target="#add-ingredient-form" hx-swap="innerHTML"
+        class="emoji-button">
+        <span class="emoji-on-button">➕</span>
+    </button>
+    <div id="add-ingredient-form"></div>
+</div>
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <p class="single-message">{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}

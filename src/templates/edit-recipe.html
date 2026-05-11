@@ -35,7 +35,11 @@
         </span>
     </div>
     {% endfor %}
-    <!-- To do: add form to add a new ingredient to a recipe -->
+    <button hx-get="/recipes/{{ recipe.id }}/ingredients/add" hx-target="#add-ingredient-form" hx-swap="innerHTML"
+        class="emoji-button">
+        <span class="emoji-on-button">➕</span>
+    </button>
+    <div id="add-ingredient-form"></div>
 </div>
 
 <h4>Description</h4>

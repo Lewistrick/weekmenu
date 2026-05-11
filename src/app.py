@@ -9,6 +9,7 @@ from litestar.static_files import StaticFilesConfig
 from litestar.template import TemplateConfig
 from tortoise import Tortoise
 
+from src.controllers.elements import ElementController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
@@ -37,6 +38,7 @@ app = Litestar(
         RecipeController,
         IngredientController,
         TagController,
+        ElementController,
     ],
     on_startup=[init_db],
     on_shutdown=[close_db],

@@ -1,0 +1,19 @@
+<!-- filepath: src/templates/partials/edit-ingredient-form.html -->
+<div id="edit-ingredient-{{ recipe.id }}" class="edit-ingredient-row">
+    <form hx-post="/recipes/{{ recipe_id }}/ingredients/{{ recipe.id }}/edit" hx-target="#edit-ingredient-{{ recipe.id }}" hx-swap="outerHTML" class="inline-form">
+        <div class="form-group">
+            <input type="number" name="quantity" value="{{ recipe.quantity }}" step="0.1" class="form-control" style="width: 80px;" required />
+            <select name="unit" class="form-control" style="width: 100px;" required>
+                {% for unit in units %}
+                <option value="{{ unit.id }}" {% if unit.id == recipe.unit.id %}selected{% endif %}>
+                    {{ unit.abbrev }}
+                </option>
+                {% endfor %}
+            </select>
+            <span class="ingredient-span">{{ recipe.ingredient.name }}</span>
+            <button type="submit" class="emoji-button">
+                <span class="emoji-on-button">✔️</span>
+            </button>
+        </div>
+    </form>
+</div>
