@@ -196,3 +196,95 @@ div.recipe-detail {
 .ingredient-span {
     margin-left: 1rem;
 }
+.recipe-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0 1rem;
+    font-size: 0.9rem;
+    color: #cfcfcf;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid #666;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.status-icon {
+    font-size: 0.95rem;
+}
+
+.recipe-status-heading {
+    margin-bottom: 0.35rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #d0d0d0;
+}
+
+.recipe-status-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 20rem;
+}
+
+.recipe-status-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.switch-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    font-weight: normal;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 2.6rem;
+    height: 1.5rem;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #666;
+    border-radius: 999px;
+    transition: background-color 0.2s ease;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    width: 1.1rem;
+    height: 1.1rem;
+    left: 0.2rem;
+    top: 0.2rem;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.switch input:checked+.slider {
+    background-color: #28a745;
+}
+
+.switch input:checked+.slider::before {
+    transform: translateX(1.1rem);
+}

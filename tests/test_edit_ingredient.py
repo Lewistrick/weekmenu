@@ -181,3 +181,82 @@ async def test_add_ingredient_form_targets_recipe_ingredient_list(
     assert f"/recipes/{recipe.id}/ingredients/add" in response.text
     assert 'hx-target="#recipe-ingredients"' in response.text
     assert 'id="add-ingredient-form"' not in response.text
+
+
+@pytest.mark.asyncio
+async def test_add_recipe_defaults_to_enabled_and_private(
+    test_client: AsyncTestClient,
+) -> None:
+    """New recipes should start out enabled but private."""
+    response = await test_client.post(
+        "/recipes",
+        data={
+            "name": "Default Flags",
+            "servings": "2",
+            "description": "A recipe with defaults",
+            "prep_time_minutes": "10",
+            "cook_time_minutes": "20",
+        },
+    )
+
+    assert response.status_code == 200
+
+    recipe = await Recipe.filter(name="Default Flags").order_by("-id").first()
+    assert recipe is not None
+    assert recipe.enabled is True
+    assert recipe.private is True
+
+
+@pytest.mark.asyncio
+async def test_toggle_recipe_status_updates_flags(
+    test_client: AsyncTestClient,
+) -> None:
+    """The status toggle endpoints should persist the selected state."""
+    recipe = await Recipe.create(
+        name="Status Test",
+        description="Toggle me",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        private=True,
+        enabled=True,
+    )
+
+    response = await test_client.post(
+        f"/recipes/{recipe.id}/toggle-private",
+        data={"private": "true"},
+    )
+
+    assert response.status_code == 200
+    await recipe.refresh_from_db()
+    assert recipe.private is False
+
+    response = await test_client.post(
+        f"/recipes/{recipe.id}/toggle-enabled",
+        data={"enabled": "false"},
+    )
+
+    assert response.status_code == 200
+    await recipe.refresh_from_db()
+    assert recipe.enabled is False
+
+
+@pytest.mark.asyncio
+async def test_edit_recipe_page_uses_change_trigger_for_status_toggles(
+    test_client: AsyncTestClient,
+) -> None:
+    """The edit page should submit status changes immediately when the switch changes."""
+    recipe = await Recipe.create(
+        name="Toggle Trigger",
+        description="Test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        private=True,
+        enabled=True,
+    )
+
+    response = await test_client.get(f"/recipes/edit/{recipe.id}")
+
+    assert response.status_code == 200
+    assert 'hx-trigger="change"' in response.text

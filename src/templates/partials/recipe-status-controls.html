@@ -1,0 +1,25 @@
+<div class="form-group" id="recipe-status-controls">
+    <label class="recipe-status-heading">Recipe status</label>
+    <div class="recipe-status-editor">
+        <form hx-post="/recipes/{{ recipe.id }}/toggle-private" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
+            class="recipe-status-toggle">
+            <label class="switch-row">
+                <span>Public recipe</span>
+                <label class="switch">
+                    <input type="checkbox" name="private" value="true" {% if not recipe.private %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </label>
+        </form>
+        <form hx-post="/recipes/{{ recipe.id }}/toggle-enabled" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
+            class="recipe-status-toggle">
+            <label class="switch-row">
+                <span>Enabled recipe</span>
+                <label class="switch">
+                    <input type="checkbox" name="enabled" value="true" {% if recipe.enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </label>
+        </form>
+    </div>
+</div>

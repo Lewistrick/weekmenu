@@ -27,6 +27,17 @@ async def init_db() -> None:
     await Tortoise.init(config=TORTOISE_CONFIG)
     await Tortoise.generate_schemas(safe=True)
 
+    conn = Tortoise.get_connection("default")
+    try:
+        table_info = await conn.execute_query("PRAGMA table_info(recipe)")
+        columns = {row[1] for row in table_info[1]}
+        if "private" not in columns:
+            await conn.execute_query("ALTER TABLE recipe ADD COLUMN private BOOLEAN NOT NULL DEFAULT 1")
+        if "enabled" not in columns:
+            await conn.execute_query("ALTER TABLE recipe ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT 1")
+    except Exception:
+        pass
+
 
 async def close_db() -> None:
     await Tortoise.close_connections()

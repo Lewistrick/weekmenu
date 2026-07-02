@@ -26,6 +26,21 @@ class RecipeController(Controller):
     path = "/recipes"
     tags = ["recipes"]
 
+    @staticmethod
+    def _toggle_recipe_flag(value: Any | None, current_value: bool) -> bool:
+        """Translate form input for checkbox-backed boolean flags."""
+        if value is None:
+            return False
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"false", "0", "off", "no", "none"}:
+                return False
+            if normalized in {"true", "1", "on", "yes"}:
+                return True
+        return bool(value)
+
     @get(path="/add", summary="Get the page to add a new recipe")
     async def add_recipe_page(self, request: Request) -> Template:
         """Show the page for adding a new recipe."""
@@ -163,6 +178,40 @@ class RecipeController(Controller):
         return Template(
             template_name="partials/edited-recipe-desc.html",
             context={"recipe": recipe, "messages": messages},
+        )
+
+    @post(path="/{recipe_id:int}/toggle-private", summary="Toggle recipe privacy")
+    async def toggle_private(
+        self,
+        recipe_id: int,
+        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+    ) -> Template:
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        recipe.private = not self._toggle_recipe_flag(data.get("private"), recipe.private)
+        await recipe.save()
+        return Template(
+            template_name="partials/recipe-status-controls.html",
+            context={"recipe": recipe},
+        )
+
+    @post(path="/{recipe_id:int}/toggle-enabled", summary="Toggle recipe enabled state")
+    async def toggle_enabled(
+        self,
+        recipe_id: int,
+        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+    ) -> Template:
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        recipe.enabled = self._toggle_recipe_flag(data.get("enabled"), recipe.enabled)
+        await recipe.save()
+        return Template(
+            template_name="partials/recipe-status-controls.html",
+            context={"recipe": recipe},
         )
 
     @get(
@@ -487,9 +536,9 @@ class RecipeController(Controller):
             int(cook_time_minutes_str) if cook_time_minutes_str else None
         )
 
-        quantities = form_data.getall("quantity[]")
-        units = form_data.getall("unit[]")
-        ingredient_names = form_data.getall("ingredient_name[]")
+        quantities = form_data.getall("quantity[]") if "quantity[]" in form_data else []
+        units = form_data.getall("unit[]") if "unit[]" in form_data else []
+        ingredient_names = form_data.getall("ingredient_name[]") if "ingredient_name[]" in form_data else []
 
         ingredients = [
             {"quantity": q, "unit": u, "name": n}
@@ -503,6 +552,8 @@ class RecipeController(Controller):
             prep_time_minutes=prep_time_minutes,
             cook_time_minutes=cook_time_minutes,
             servings=servings,
+            private=True,
+            enabled=True,
         )
         logger.debug(f"Added - {recipe.id=}")
 

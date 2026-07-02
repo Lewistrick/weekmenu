@@ -27,7 +27,7 @@
     <p>{{ recipe.description }}</p>
 </div>
 
-<!-- To do: add switches to set private/public and enabled/disabled -->
+{% include "partials/recipe-status-controls.html" %}
 
 <hr />
 <a hx-get="/recipes/delete/{{recipe.id}}" hx-target="#delete-confirmation" hx-swap="innerHTML" class="emoji-button">
