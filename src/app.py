@@ -5,7 +5,7 @@ from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.logging import LoggingConfig
 from litestar.openapi import OpenAPIConfig
 from litestar.response import Template
-from litestar.static_files import StaticFilesConfig
+from litestar.static_files import create_static_files_router
 from litestar.template import TemplateConfig
 from tortoise import Tortoise
 
@@ -47,7 +47,7 @@ logging_config = LoggingConfig(
     handlers={"default": {"class": "src.log_utils.InterceptHandler"}},
     formatters={"standard": {"format": "%(message)s"}},
 )
-static_config = StaticFilesConfig(path="/static", directories=["src/static"])
+static_files_router = create_static_files_router(path="/static", directories=["src/static"])
 template_config: TemplateConfig = TemplateConfig(engine=JinjaTemplateEngine, directory=Path("src/templates"))
 
 app = Litestar(
@@ -57,12 +57,12 @@ app = Litestar(
         IngredientController,
         TagController,
         ElementController,
+        static_files_router,
     ],
     on_startup=[init_db],
     on_shutdown=[close_db],
     openapi_config=openapi_config,
     logging_config=logging_config,
-    static_files_config=[static_config],
     template_config=template_config,
     debug=DEBUG,
 )

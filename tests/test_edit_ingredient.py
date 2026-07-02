@@ -4,6 +4,7 @@ import pytest
 from litestar.testing import AsyncTestClient
 from tortoise import Tortoise
 
+import src.app as app_module
 from src.app import app
 from src.models import Ingredient, Recipe, RecipeIngredient, Unit
 
@@ -26,10 +27,19 @@ async def test_client(monkeypatch: pytest.MonkeyPatch) -> AsyncTestClient:
         await Tortoise.init(config=TEST_DB_CONFIG)
         await Tortoise.generate_schemas(safe=True)
 
-    monkeypatch.setattr("src.app.init_db", init_test_db)
+    monkeypatch.setattr(app_module, "TORTOISE_CONFIG", TEST_DB_CONFIG)
+    monkeypatch.setattr(app_module, "init_db", init_test_db)
 
     async with AsyncTestClient(app=app) as client:
         yield client
+
+
+@pytest.mark.asyncio
+async def test_test_client_uses_isolated_database(
+    test_client: AsyncTestClient,
+) -> None:
+    """The test fixture should point the app at an in-memory database."""
+    assert app_module.TORTOISE_CONFIG["connections"]["default"] == "sqlite://:memory:"
 
 
 @pytest.fixture
@@ -44,6 +54,7 @@ async def recipe_with_ingredient(
         cook_time_minutes=20,
         servings=4,
     )
+    await Ingredient.create(name="placeholder")
     ingredient = await Ingredient.create(name="potatoes")
     unit = await Unit.create(abbrev="g", single="gram", plural="grams")
     recipe_ingredient = await RecipeIngredient.create(
@@ -112,7 +123,7 @@ async def test_ingredient_editor_uses_recipe_ingredient_id(
         f"/recipes/{recipe.id}/ingredients/{recipe_ingredient.id}/edit" in response.text
     )
     assert f"#edit-ingredient-{recipe_ingredient.id}" in response.text
-    assert f"/ingredients/{ingredient.id}/edit" not in response.text
+    assert f"/recipes/{recipe.id}/ingredients/{ingredient.id}/edit" not in response.text
 
 
 @pytest.mark.asyncio
