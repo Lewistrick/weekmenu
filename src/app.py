@@ -31,6 +31,13 @@ async def init_db() -> None:
 async def close_db() -> None:
     await Tortoise.close_connections()
 
+openapi_config = OpenAPIConfig(title="Weekmenu", version="1.0.0")
+logging_config = LoggingConfig(
+    handlers={"default": {"class": "src.log_utils.InterceptHandler"}},
+    formatters={"standard": {"format": "%(message)s"}},
+)
+static_config = StaticFilesConfig(path="/static", directories=["src/static"])
+template_config: TemplateConfig = TemplateConfig(engine=JinjaTemplateEngine, directory=Path("src/templates"))
 
 app = Litestar(
     route_handlers=[
@@ -42,20 +49,9 @@ app = Litestar(
     ],
     on_startup=[init_db],
     on_shutdown=[close_db],
-    openapi_config=OpenAPIConfig(
-        title="Weekmenu API",
-        version="1.0.0",
-    ),
-    logging_config=LoggingConfig(
-        handlers={"default": {"class": "src.log_utils.InterceptHandler"}},
-        formatters={"standard": {"format": "%(message)s"}},
-    ),
-    static_files_config=[
-        StaticFilesConfig(path="/static", directories=["src/static"]),
-    ],
-    template_config=TemplateConfig(
-        directory=Path("src/templates"),
-        engine=JinjaTemplateEngine,
-    ),
+    openapi_config=openapi_config,
+    logging_config=logging_config,
+    static_files_config=[static_config],
+    template_config=template_config,
     debug=DEBUG,
 )

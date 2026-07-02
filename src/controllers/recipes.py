@@ -1,7 +1,7 @@
 import random
 from typing import Annotated, Any
 
-from litestar import Controller, Request, delete, get, post
+from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import NotFoundException
 from litestar.params import Body
@@ -37,7 +37,9 @@ class RecipeController(Controller):
         recipes = await Recipe.all()
         random_recipe = random.choice(recipes)
         logger.debug(f"Random recipe: {random_recipe.name}")
-        ingredients = await RecipeIngredient.filter(recipe=random_recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(
+            recipe=random_recipe.id
+        ).select_related("ingredient", "unit")
 
         return Template(
             template_name="view-recipe.html",
@@ -54,7 +56,9 @@ class RecipeController(Controller):
             breakpoint()
             raise NotFoundException()
 
-        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
         return Template(
             template_name="view-recipe.html",
             context={
@@ -69,7 +73,9 @@ class RecipeController(Controller):
         if not recipe:
             raise NotFoundException()
 
-        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
         return Template(
             template_name="edit-recipe.html",
             context={
@@ -80,7 +86,10 @@ class RecipeController(Controller):
 
     @get(path="/delete/{recipe_id:int}", summary="Show the delete confirmation")
     async def delete_recipe_partial(self, recipe_id: int) -> Template:
-        return Template(template_name="partials/delete-confirmation.html", context={"recipe_id": recipe_id})
+        return Template(
+            template_name="partials/delete-confirmation.html",
+            context={"recipe_id": recipe_id},
+        )
 
     @get(path="/title-editor/{recipe_id:int}", summary="Title editor")
     async def title_editor(self, recipe_id: int) -> Template:
@@ -89,7 +98,9 @@ class RecipeController(Controller):
         if not recipe:
             raise NotFoundException()
 
-        return Template(template_name="partials/edit-recipe-title.html", context={"recipe": recipe})
+        return Template(
+            template_name="partials/edit-recipe-title.html", context={"recipe": recipe}
+        )
 
     @get(path="/desc-editor/{recipe_id:int}", summary="Description editor")
     async def desc_editor(self, recipe_id: int) -> Template:
@@ -98,13 +109,17 @@ class RecipeController(Controller):
         if not recipe:
             raise NotFoundException()
 
-        return Template(template_name="partials/edit-recipe-desc.html", context={"recipe": recipe})
+        return Template(
+            template_name="partials/edit-recipe-desc.html", context={"recipe": recipe}
+        )
 
     @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")
     async def edit_title(
         self,
         recipe_id: int,
-        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
     ) -> Template:
         """Edit the title, and return the updated title element."""
         recipe = await Recipe.get_or_none(id=recipe_id)
@@ -128,7 +143,9 @@ class RecipeController(Controller):
     async def edit_description(
         self,
         recipe_id: int,
-        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
     ) -> Template:
         """Edit the description, and return the updated title element."""
         recipe = await Recipe.get_or_none(id=recipe_id)
@@ -148,61 +165,71 @@ class RecipeController(Controller):
             context={"recipe": recipe, "messages": messages},
         )
 
-    @get(path="/{recipe_id:int}/ingredients/{ingredient_id:int}/edit", summary="Show ingredient edit form")
+    @get(
+        path="/{recipe_id:int}/ingredients/{ingredient_id:int}/edit",
+        summary="Show ingredient edit form",
+    )
     async def ingredient_editor(self, recipe_id: int, ingredient_id: int) -> Template:
         """Show the form to edit an ingredient's quantity and unit."""
-        recipe_ingredient = await RecipeIngredient.get_or_none(id=ingredient_id, recipe=recipe_id)
+        recipe_ingredient = await RecipeIngredient.get_or_none(
+            id=ingredient_id, recipe=recipe_id
+        )
         if not recipe_ingredient:
             raise NotFoundException()
 
-        # Load related objects
-        await recipe_ingredient.fetch_related("ingredient", "unit")
-        units = await Unit.all()
+        await recipe_ingredient.fetch_related("recipe", "ingredient", "unit")
 
         return Template(
             template_name="partials/edit-ingredient-form.html",
-            context={
-                "recipe": recipe_ingredient,
-                "units": units,
-                "recipe_id": recipe_id,
-            },
+            context={"recipe_ingredient": recipe_ingredient},
         )
 
-    @post(path="/{recipe_id:int}/ingredients/{ingredient_id:int}/edit", summary="Save ingredient edit")
+    @put(
+        path="/{recipe_id:int}/ingredients/{ingredient_id:int}/edit",
+        summary="Save ingredient edit",
+    )
     async def edit_ingredient(
         self,
         recipe_id: int,
         ingredient_id: int,
-        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
     ) -> Template:
         """Save the edited ingredient quantity and unit."""
-        recipe_ingredient = await RecipeIngredient.get_or_none(id=ingredient_id, recipe=recipe_id)
+        recipe_ingredient = await RecipeIngredient.get_or_none(
+            id=ingredient_id, recipe=recipe_id
+        )
         if not recipe_ingredient:
             raise NotFoundException()
 
-        await recipe_ingredient.fetch_related("ingredient", "unit")
-
         quantity = data.get("quantity")
-        unit_id = data.get("unit")
+        unit_abbrev = data.get("unit")
 
         messages = []
+        valid = True
         if quantity is not None:
             try:
                 recipe_ingredient.quantity = float(quantity)
             except (ValueError, TypeError):
                 messages.append("Invalid quantity, not saved.")
+                valid = False
         else:
             messages.append("No quantity found, not saved.")
+            valid = False
 
-        if unit_id is not None:
-            try:
-                recipe_ingredient.unit = int(unit_id)
-            except (ValueError, TypeError):
-                messages.append("Invalid unit, not saved.")
+        if unit_abbrev is not None:
+            unit = await Unit.find(unit_abbrev)
+            if unit:
+                recipe_ingredient.unit = unit
+            else:
+                messages.append("Could not find unit, not saved.")
+                valid = False
         else:
             messages.append("No unit found, not saved.")
+            valid = False
 
-        if quantity is not None and unit_id is not None:
+        if valid:
             await recipe_ingredient.save()
             messages.append("Ingredient updated")
 
@@ -225,7 +252,9 @@ class RecipeController(Controller):
     )
     async def delete_ingredient(self, recipe_id: int, ingredient_id: int) -> Template:
         """Delete an ingredient from a recipe."""
-        recipe_ingredient = await RecipeIngredient.get_or_none(id=ingredient_id, recipe=recipe_id)
+        recipe_ingredient = await RecipeIngredient.get_or_none(
+            id=ingredient_id, recipe=recipe_id
+        )
         if not recipe_ingredient:
             raise NotFoundException()
 
@@ -236,10 +265,12 @@ class RecipeController(Controller):
         if not recipe:
             raise NotFoundException()
 
-        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
 
         return Template(
-            template_name="partials/ingredient-list.html",
+            template_name="partials/edit-ingredient-list.html",
             context={
                 "recipe": recipe,
                 "ingredients": ingredients,
@@ -262,7 +293,9 @@ class RecipeController(Controller):
     async def add_ingredient(
         self,
         recipe_id: int,
-        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
     ) -> Template:
         """Add a new ingredient to a recipe."""
         recipe = await Recipe.get_or_none(id=recipe_id)
@@ -273,38 +306,45 @@ class RecipeController(Controller):
         unit_abbrev = data.get("unit")
         ingredient_name = data.get("ingredient")
 
-        unit = await Unit.get(abbrev=unit_abbrev)
-        ingredient, _ = await Ingredient.get_or_create(name=ingredient_name)
-
         messages = []
-        if not ingredient:
+        if not ingredient_name:
             messages.append("No ingredient selected.")
         elif not quantity:
             messages.append("No quantity provided.")
-        elif not unit_abbrev or not unit:
+        elif not unit_abbrev:
             messages.append("No unit selected.")
         else:
-            try:
-                # Check if ingredient already exists in this recipe
-                existing = await RecipeIngredient.filter(recipe=recipe_id, ingredient=ingredient.id).first()
-                if existing:
-                    messages.append("Ingredient already in recipe. Edit existing instead.")
-                else:
-                    await RecipeIngredient.create(
-                        recipe=recipe,
-                        ingredient=ingredient,
-                        quantity=float(quantity),
-                        unit=unit,
-                    )
-                    messages.append("Ingredient added")
-            except (ValueError, TypeError) as e:
-                messages.append(f"Error: {e}")
+            unit = await Unit.find(unit_abbrev)
+            if not unit:
+                messages.append(f"Could not find unit: {unit_abbrev}")
+            else:
+                try:
+                    ingredient, _ = await Ingredient.get_or_create(name=ingredient_name)
+                    existing = await RecipeIngredient.filter(
+                        recipe=recipe_id, ingredient=ingredient.id
+                    ).first()
+                    if existing:
+                        messages.append(
+                            "Ingredient already in recipe. Edit existing instead."
+                        )
+                    else:
+                        await RecipeIngredient.create(
+                            recipe=recipe,
+                            ingredient=ingredient,
+                            quantity=float(quantity),
+                            unit=unit,
+                        )
+                        messages.append("Ingredient added")
+                except (ValueError, TypeError) as e:
+                    messages.append(f"Error: {e}")
 
         # Reload ingredients for display
-        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
 
         return Template(
-            template_name="partials/ingredient-list.html",
+            template_name="partials/edit-ingredient-list.html",
             context={
                 "recipe": recipe,
                 "ingredients": ingredients,
@@ -312,7 +352,9 @@ class RecipeController(Controller):
             },
         )
 
-    @get(path="/delete-confirmation/{recipe_id:int}", summary="Delete the recipe by ID.")
+    @get(
+        path="/delete-confirmation/{recipe_id:int}", summary="Delete the recipe by ID."
+    )
     async def delete_recipe_page(self, recipe_id: int) -> Template:
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
@@ -326,7 +368,10 @@ class RecipeController(Controller):
     @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
     async def new_ingredient_input(self, request: Request) -> Template:
         """Return an HTML snippet for a new ingredient input field."""
-        return Template(template_name="partials/new-ingredient-input.html", context={"request": request})
+        return Template(
+            template_name="partials/new-ingredient-input.html",
+            context={"request": request},
+        )
 
     @get(path="/search", summary="Search recipe page")
     async def search_page(self, request: Request) -> Template:
@@ -338,7 +383,9 @@ class RecipeController(Controller):
         )
 
     @get(path="/search-recipe", summary="Search for recipes")
-    async def search_by_query(self, request: Request, search: str | None = None) -> Template:
+    async def search_by_query(
+        self, request: Request, search: str | None = None
+    ) -> Template:
         recipes: list[Recipe] = []
         if not search:
             # At some point this could show recent/popular recipes
@@ -363,13 +410,17 @@ class RecipeController(Controller):
         return q
 
     @get(path="/{recipe_id:int}/detail", summary="Get recipe details as HTML")
-    async def get_recipe_detail(self, request: Request, recipe_id: int, search: str | None = None) -> Template:
+    async def get_recipe_detail(
+        self, request: Request, recipe_id: int, search: str | None = None
+    ) -> Template:
         """Get recipe details and re-render the search results with the selection."""
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
             raise NotFoundException()
 
-        ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related(
+            "ingredient", "unit"
+        )
 
         search_results: list[Recipe] = []
         if search:
@@ -397,20 +448,6 @@ class RecipeController(Controller):
     async def user_profile_page(self, request: Request) -> Template:
         """Show the user profile page."""
         return Template(template_name="user-profile.html", context={"request": request})
-
-    @get(path="/{recipe_id:int}/ingredients", summary="Get detailed ingredient list.")
-    async def ingredient_list(self, request: Request, recipe_id: int) -> Template:
-        """Get the ingredient list for one recipe."""
-        if not await Recipe.exists(id=recipe_id):
-            raise NotFoundException()
-
-        logger.debug(f"Getting ingredients for {recipe_id=}")
-        ingredient_listing = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
-
-        return Template(
-            template_name="ingredient-list.html",
-            context={"request": request, "ingredients": ingredient_listing},
-        )
 
     @delete(path="/{recipe_id:int}", summary="Remove one recipe by id")
     async def delete(self, recipe_id: int) -> None:
@@ -442,15 +479,22 @@ class RecipeController(Controller):
         servings = form_data.get("servings")
         description = form_data.get("description")
         prep_time_minutes_str = form_data.get("prep_time_minutes")
-        prep_time_minutes = int(prep_time_minutes_str) if prep_time_minutes_str else None
+        prep_time_minutes = (
+            int(prep_time_minutes_str) if prep_time_minutes_str else None
+        )
         cook_time_minutes_str = form_data.get("cook_time_minutes")
-        cook_time_minutes = int(cook_time_minutes_str) if cook_time_minutes_str else None
+        cook_time_minutes = (
+            int(cook_time_minutes_str) if cook_time_minutes_str else None
+        )
 
         quantities = form_data.getall("quantity[]")
         units = form_data.getall("unit[]")
         ingredient_names = form_data.getall("ingredient_name[]")
 
-        ingredients = [{"quantity": q, "unit": u, "name": n} for q, u, n in zip(quantities, units, ingredient_names)]
+        ingredients = [
+            {"quantity": q, "unit": u, "name": n}
+            for q, u, n in zip(quantities, units, ingredient_names)
+        ]
 
         logger.debug(f"Adding recipe: {name}")
         recipe = await Recipe.create(
@@ -465,14 +509,20 @@ class RecipeController(Controller):
         messages = []
         for ing_dict in ingredients:
             logger.debug(f"Adding ingredient: {ing_dict['name']}")
-            ingredient, ing_created = await Ingredient.get_or_create(name=ing_dict["name"])
+            ingredient, ing_created = await Ingredient.get_or_create(
+                name=ing_dict["name"]
+            )
             if ing_created:
                 messages.append(f"Hey, I didn't know {ingredient.name} yet!")
 
-            logger.debug(f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}")
+            logger.debug(
+                f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}"
+            )
             unit = await Unit.find(ing_dict["unit"])
             if unit is None:
-                messages.append(f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})")
+                messages.append(
+                    f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})"
+                )
                 continue
 
             quantity = ing_dict["quantity"]

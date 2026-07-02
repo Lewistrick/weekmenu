@@ -1,13 +1,12 @@
-<!-- filepath: src/templates/partials/edited-ingredient.html -->
 <div id="edit-ingredient-{{ ingredient.id }}" class="edit-ingredient-row">
     <button class="emoji-button edit-ingredient-button"
-        hx-get="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}/edit" hx-target=".edit-ingredient-row"
-        hx-swap="outerHTML">
+        hx-get="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}/edit"
+        hx-target="#edit-ingredient-{{ ingredient.id }}" hx-swap="innerHTML">
         <span class="emoji-on-button">✏️</span>
     </button>
     <button class="emoji-button delete-ingredient-button"
-        hx-delete="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}" hx-target=".recipe-ingredients"
-        hx-swap="innerHTML">
+        hx-delete="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}"
+        hx-target="#edit-ingredient-{{ ingredient.id }}" hx-swap="delete">
         <span class="emoji-on-button">🗑️</span>
     </button>
     <span class="ingredient-span">
