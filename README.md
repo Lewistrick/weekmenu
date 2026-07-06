@@ -21,7 +21,7 @@
 
 ### Basic structure
 - The `recipes` table is the center of the database
-    - It contains a description, prep and cook time, and number of servings
+    - It contains a description, prep and cook time, number of servings, and an owner (`owner_id` → `user`)
 - Each recipe has a number of ingredients in `recipe_ingredients`
     - foreign key `recipe_ingredients.id` = `recipe.id`
 - Each recipe_ingredient points to a food in `ingredients` and a unit in `units`
