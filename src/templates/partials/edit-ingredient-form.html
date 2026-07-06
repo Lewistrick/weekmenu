@@ -1,0 +1,14 @@
+<form class="inline-form" hx-put="/recipes/{{ recipe_ingredient.recipe_id }}/ingredients/{{ recipe_ingredient.id }}/edit"
+    hx-target="#edit-ingredient-{{ recipe_ingredient.id }}" hx-swap="outerHTML">
+    <div class="form-group">
+        <div class="ingredient-input">
+            <input type="text" name="quantity" placeholder="Quantity" value="{{ recipe_ingredient.quantity }}" required />
+            <input type="text" name="unit" placeholder="Unit" value="{{ recipe_ingredient.unit.abbrev }}" required />
+            <input type="text" name="ingredient" placeholder="Name" value="{{ recipe_ingredient.ingredient.name }}"
+                required readonly />
+            <button type="submit" class="btn-ingredient-action">
+                <span class="emoji-on-button">✔️</span>
+            </button>
+        </div>
+    </div>
+</form>

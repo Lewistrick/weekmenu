@@ -1,0 +1,8 @@
+<form hx-post="/recipes/edit-desc/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="inline-form">
+    <div class="form-group">
+        <textarea name="new_desc" class="form-control" autofocus>{{ recipe.description }}</textarea>
+        <button type="submit" class="emoji-button">
+            <span class="emoji-on-button">✔️</span>
+        </button>
+    </div>
+</form>
