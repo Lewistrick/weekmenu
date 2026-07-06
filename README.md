@@ -43,6 +43,5 @@
 - HTTP tests use an in-memory SQLite database via the `test_client` fixture in `tests/conftest.py`; they do not write to `src/recipes.sqlite3`
 
 ### Formatting and hooks
-- Python: `uv run ruff format` and `uv run ruff check`
-- CSS: `uv run python scripts/format_css.py src/static/style.css` (do not use Ruff on CSS)
+- Python: `uv run ruff format` and `uv run ruff check` (`.py` files only)
 - Optional pre-commit hooks: `uv run pre-commit install`, then `uv run pre-commit run --all-files`

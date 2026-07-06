@@ -26,7 +26,7 @@ dev = [
 ]
 
 [tool.ruff]
-extend-exclude = ["src/static"]
+include = ["**/*.py"]
 
 [tool.aerich]
 tortoise_orm = "src.db_config.TORTOISE_CONFIG"
