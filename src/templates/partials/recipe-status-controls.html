@@ -1,5 +1,4 @@
 <div class="form-group" id="recipe-status-controls">
-    <label class="recipe-status-heading">Recipe status</label>
     <div class="recipe-status-editor">
         <form hx-post="/recipes/{{ recipe.id }}/toggle-private" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
             class="recipe-status-toggle">

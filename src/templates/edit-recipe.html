@@ -1,38 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}Edit recipe{% endblock %}
+{% block title %}Edit {{ recipe.name }}{% endblock %}
 
 {% block content %}
-<p class="small">You are now in edit mode. Click the eye to go back to view mode.</p>
-<button hx-get="/recipes/view/{{recipe.id}}" hx-target="body" class="emoji-button">
-    <span class="emoji-on-button">👁️</span>
-</button>
+<div class="recipe-edit-page">
+    <div class="page-toolbar">
+        <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary">← View recipe</a>
+        <span class="page-mode-badge">Edit mode</span>
+    </div>
 
-<div id="recipe-title">
-    <h2 class="recipe-title">{{ recipe.name }}</h2>
-    <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
-        class="emoji-button">
-        <span class="emoji-on-button">✏️</span>
-    </button>
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Title</h2>
+            <p class="section-hint">Click <strong>Edit title</strong> to rename this recipe.</p>
+        </div>
+        <div id="recipe-title" class="editable-field">
+            <h2 class="recipe-title-display">{{ recipe.name }}</h2>
+            <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
+                class="btn btn-ghost btn-sm" type="button">
+                Edit title
+            </button>
+        </div>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Ingredients</h2>
+            <p class="section-hint">Use <strong>Edit</strong> or <strong>Remove</strong> on each line, or add a new ingredient below.</p>
+        </div>
+        {% include "partials/edit-ingredient-list.html" %}
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Description</h2>
+            <p class="section-hint">Click <strong>Edit description</strong> to update preparation steps.</p>
+        </div>
+        <div id="recipe-desc" class="editable-field editable-field--stacked">
+            <div class="recipe-description-display">{{ recipe.description }}</div>
+            <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
+                class="btn btn-ghost btn-sm" type="button">
+                Edit description
+            </button>
+        </div>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Status</h2>
+            <p class="section-hint">Toggle visibility and whether this recipe is included in menus.</p>
+        </div>
+        {% include "partials/recipe-status-controls.html" %}
+    </section>
+
+    <section class="recipe-section recipe-section--danger">
+        <div class="section-heading">
+            <h2 class="section-title">Delete recipe</h2>
+            <p class="section-hint">This permanently removes the recipe and its ingredient lines.</p>
+        </div>
+        <button hx-get="/recipes/delete/{{ recipe.id }}" hx-target="#delete-confirmation" hx-swap="innerHTML"
+            class="btn btn-danger btn-sm" type="button">
+            Delete recipe
+        </button>
+        <div id="delete-confirmation"></div>
+    </section>
 </div>
-
-<h4>Ingredients</h4>
-{% include "partials/edit-ingredient-list.html" %}
-
-<h4>Description</h4>
-<div id="recipe-desc">
-    <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="emoji-button">
-        <span class="emoji-on-button">✏️</span>
-    </button>
-    <p>{{ recipe.description }}</p>
-</div>
-
-{% include "partials/recipe-status-controls.html" %}
-
-<hr />
-<a hx-get="/recipes/delete/{{recipe.id}}" hx-target="#delete-confirmation" hx-swap="innerHTML" class="emoji-button">
-    <span class="emoji-on-button">🗑️</span>
-</a>
-<div id="delete-confirmation"></div>
-
 {% endblock %}
