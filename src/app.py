@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 from litestar import Litestar, Request, get
 from litestar.contrib.jinja import JinjaTemplateEngine
@@ -7,6 +8,7 @@ from litestar.openapi import OpenAPIConfig
 from litestar.response import Template
 from litestar.static_files import create_static_files_router
 from litestar.template import TemplateConfig
+from litestar.types.internal_types import TemplateConfigType
 from tortoise import Tortoise
 
 from src.controllers.elements import ElementController
@@ -14,8 +16,27 @@ from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
 from src.db_config import TORTOISE_CONFIG
+from src.template_utils import render_markdown
 
 DEBUG = True
+
+
+def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
+    """Register custom Jinja filters."""
+    template_engine.engine.filters["markdown"] = render_markdown
+
+
+def create_template_engine() -> JinjaTemplateEngine:
+    """Create and configure the Jinja template engine."""
+    template_engine = JinjaTemplateEngine(directory=Path("src/templates"))
+    register_template_filters(template_engine)
+    return template_engine
+
+
+template_config = cast(
+    TemplateConfigType,
+    TemplateConfig(instance=create_template_engine()),
+)
 
 
 @get("/", tags=["home"])

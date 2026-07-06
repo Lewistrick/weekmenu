@@ -6,4 +6,4 @@
     {% endfor %}
 </ul>
 <h4>Description</h4>
-<p>{{ recipe.description }}</p>
+<div class="recipe-description">{{ recipe.description | markdown | safe }}</div>
