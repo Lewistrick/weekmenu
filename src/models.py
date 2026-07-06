@@ -103,7 +103,8 @@ class Unit(Model):
     single = TextField(null=True)
     plural = TextField(null=True)
 
-    async def find(query) -> "Unit | None":
+    @classmethod
+    async def find(cls, query: str) -> "Unit | None":
         unit = await Unit.filter(
             Q(abbrev=query) | Q(single=query) | Q(plural=query),
         ).first()

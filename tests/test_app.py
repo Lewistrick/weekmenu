@@ -1,4 +1,5 @@
 """Tests for application startup and configuration."""
+
 from pathlib import Path
 
 from litestar.contrib.jinja import JinjaTemplateEngine
