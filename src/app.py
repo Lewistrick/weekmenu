@@ -4,7 +4,7 @@ from litestar import Litestar, Request, get
 from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.logging import LoggingConfig
 from litestar.openapi import OpenAPIConfig
-from litestar.response import Template
+from litestar.response import File, Template
 from litestar.static_files import create_static_files_router
 from litestar.template import TemplateConfig
 from tortoise import Tortoise
@@ -17,10 +17,18 @@ from src.db_config import TORTOISE_CONFIG
 
 DEBUG = True
 
+FAVICON_PATH = Path("src/static/favicon.svg")
+
 
 @get("/", tags=["home"])
 async def index(request: Request) -> Template:
     return Template(template_name="index.html", context={"request": request})
+
+
+@get("/favicon.ico", include_in_schema=False)
+async def favicon() -> File:
+    """Serve the site icon for browsers that request /favicon.ico by default."""
+    return File(path=FAVICON_PATH, media_type="image/svg+xml")
 
 
 async def init_db() -> None:
@@ -47,6 +55,7 @@ template_config: TemplateConfig = TemplateConfig(
 app = Litestar(
     route_handlers=[
         index,
+        favicon,
         RecipeController,
         IngredientController,
         TagController,

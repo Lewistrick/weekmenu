@@ -244,7 +244,7 @@ async def test_toggle_recipe_status_updates_flags(
 
     response = await test_client.post(
         f"/recipes/{recipe.id}/toggle-enabled",
-        data={"enabled": "false"},
+        data={},
     )
 
     assert response.status_code == 200
