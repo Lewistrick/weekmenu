@@ -13,8 +13,14 @@ from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
 from src.db_config import TORTOISE_CONFIG
+from src.template_utils import render_markdown
 
 DEBUG = True
+
+
+def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
+    """Register custom Jinja filters."""
+    template_engine.engine.filters["markdown"] = render_markdown
 
 
 @get("/", tags=["home"])
@@ -51,9 +57,10 @@ app = Litestar(
     static_files_config=[
         StaticFilesConfig(path="/static", directories=["src/static"]),
     ],
-    template_config=TemplateConfig(
+    template_config=TemplateConfig[JinjaTemplateEngine](
         directory=Path("src/templates"),
         engine=JinjaTemplateEngine,
+        engine_callback=register_template_filters,
     ),
     debug=DEBUG,
 )

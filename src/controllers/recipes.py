@@ -34,7 +34,9 @@ class RecipeController(Controller):
         recipes = await Recipe.all()
         random_recipe = random.choice(recipes)
         logger.debug(f"Random recipe: {random_recipe.name}")
-        ingredients = await RecipeIngredient.filter(recipe=random_recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(
+            recipe=random_recipe.id
+        ).select_related("ingredient", "unit")
 
         return Template(
             template_name="view-recipe.html",
@@ -51,7 +53,9 @@ class RecipeController(Controller):
             breakpoint()
             raise NotFoundException()
 
-        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
         return Template(
             template_name="view-recipe.html",
             context={
@@ -63,7 +67,10 @@ class RecipeController(Controller):
     @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
     async def new_ingredient_input(self, request: Request) -> Template:
         """Return an HTML snippet for a new ingredient input field."""
-        return Template(template_name="partials/new-ingredient-input.html", context={"request": request})
+        return Template(
+            template_name="partials/new-ingredient-input.html",
+            context={"request": request},
+        )
 
     @get(path="/search", summary="Search recipe page")
     async def search_page(self, request: Request) -> Template:
@@ -75,7 +82,9 @@ class RecipeController(Controller):
         )
 
     @get(path="/search-recipe", summary="Search for recipes")
-    async def search_by_query(self, request: Request, search: str | None = None) -> Template:
+    async def search_by_query(
+        self, request: Request, search: str | None = None
+    ) -> Template:
         recipes: list[Recipe] = []
         if not search:
             # At some point this could show recent/popular recipes
@@ -100,13 +109,17 @@ class RecipeController(Controller):
         return q
 
     @get(path="/{recipe_id:int}/detail", summary="Get recipe details as HTML")
-    async def get_recipe_detail(self, request: Request, recipe_id: int, search: str | None = None) -> Template:
+    async def get_recipe_detail(
+        self, request: Request, recipe_id: int, search: str | None = None
+    ) -> Template:
         """Get recipe details and re-render the search results with the selection."""
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
             raise NotFoundException()
 
-        ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
+        ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related(
+            "ingredient", "unit"
+        )
 
         search_results: list[Recipe] = []
         if search:
@@ -142,7 +155,9 @@ class RecipeController(Controller):
             raise NotFoundException()
 
         logger.debug(f"Getting ingredients for {recipe_id=}")
-        ingredient_listing = await RecipeIngredient.filter(recipe=recipe_id).select_related("ingredient", "unit")
+        ingredient_listing = await RecipeIngredient.filter(
+            recipe=recipe_id
+        ).select_related("ingredient", "unit")
 
         return Template(
             template_name="ingredient-list.html",
@@ -179,9 +194,13 @@ class RecipeController(Controller):
         servings = form_data.get("servings")
         description = form_data.get("description")
         prep_time_minutes_str = form_data.get("prep_time_minutes")
-        prep_time_minutes = int(prep_time_minutes_str) if prep_time_minutes_str else None
+        prep_time_minutes = (
+            int(prep_time_minutes_str) if prep_time_minutes_str else None
+        )
         cook_time_minutes_str = form_data.get("cook_time_minutes")
-        cook_time_minutes = int(cook_time_minutes_str) if cook_time_minutes_str else None
+        cook_time_minutes = (
+            int(cook_time_minutes_str) if cook_time_minutes_str else None
+        )
 
         def get_as_list(key: str) -> list[str]:
             """Helper function to guarantee we always get a list, even for a single ingredient."""
@@ -194,7 +213,10 @@ class RecipeController(Controller):
         units = get_as_list("unit[]")
         ingredient_names = get_as_list("ingredient_name[]")
 
-        ingredients = [{"quantity": q, "unit": u, "name": n} for q, u, n in zip(quantities, units, ingredient_names)]
+        ingredients = [
+            {"quantity": q, "unit": u, "name": n}
+            for q, u, n in zip(quantities, units, ingredient_names)
+        ]
 
         logger.debug(f"Adding recipe: {name}")
         recipe = await Recipe.create(
@@ -209,14 +231,20 @@ class RecipeController(Controller):
         messages = []
         for ing_dict in ingredients:
             logger.debug(f"Adding ingredient: {ing_dict['name']}")
-            ingredient, ing_created = await Ingredient.get_or_create(name=ing_dict["name"])
+            ingredient, ing_created = await Ingredient.get_or_create(
+                name=ing_dict["name"]
+            )
             if ing_created:
                 messages.append(f"Hey, I didn't know {ingredient.name} yet!")
 
-            logger.debug(f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}")
+            logger.debug(
+                f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}"
+            )
             unit = await Unit.find(ing_dict["unit"])
             if unit is None:
-                messages.append(f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})")
+                messages.append(
+                    f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})"
+                )
                 continue
 
             quantity = ing_dict["quantity"]
