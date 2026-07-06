@@ -5,8 +5,9 @@ from collections.abc import AsyncIterator
 import pytest
 from litestar.testing import AsyncTestClient
 from tortoise import Tortoise
+from tortoise.exceptions import ConfigurationError
 
-import src.app as app_module
+import src.db_config as db_config_module
 from src.app import app
 from src.models import User
 
@@ -21,21 +22,39 @@ TEST_DB_CONFIG = {
 }
 
 
+async def init_test_db() -> None:
+    """Initialize Tortoise against the in-memory test database."""
+    try:
+        await Tortoise.close_connections()
+    except ConfigurationError:
+        pass
+    await Tortoise.init(config=TEST_DB_CONFIG)
+    await Tortoise.generate_schemas(safe=True)
+
+
+async def close_test_db() -> None:
+    """Close any open Tortoise connections."""
+    try:
+        await Tortoise.close_connections()
+    except ConfigurationError:
+        pass
+
+
 @pytest.fixture
 async def test_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[AsyncTestClient]:
     """Provide a test client backed by an in-memory database."""
+    monkeypatch.setattr(db_config_module, "TORTOISE_CONFIG", TEST_DB_CONFIG)
+    monkeypatch.setattr(app, "on_startup", [])
+    monkeypatch.setattr(app, "on_shutdown", [])
 
-    async def init_test_db() -> None:
-        await Tortoise.init(config=TEST_DB_CONFIG)
-        await Tortoise.generate_schemas(safe=True)
-
-    monkeypatch.setattr(app_module, "TORTOISE_CONFIG", TEST_DB_CONFIG)
-    monkeypatch.setattr(app_module, "init_db", init_test_db)
-
-    async with AsyncTestClient(app=app) as client:
-        yield client
+    await init_test_db()
+    try:
+        async with AsyncTestClient(app=app) as client:
+            yield client
+    finally:
+        await close_test_db()
 
 
 @pytest.fixture

@@ -1,0 +1,13 @@
+---
+description: Keep CSS files compact and run the project CSS formatter
+globs: **/*.css
+alwaysApply: false
+---
+
+# CSS formatting
+
+- Do not insert blank lines between properties inside a CSS rule block.
+- Keep a single blank line between separate rule blocks.
+- After editing any `.css` file, run: `uv run python scripts/format_css.py <path>`
+- Do not run `ruff format` on CSS files; Ruff is for Python only.
+- Pre-commit runs the CSS formatter automatically when hooks are installed.
