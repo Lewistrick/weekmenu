@@ -1,11 +1,10 @@
-<button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="emoji-button">
-    <span class="emoji-on-button">✏️</span>
-</button>
+<button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
+    class="btn btn--icon">✏️</button>
 <p>{{ recipe.description }}</p>
 {% if messages %}
-<div class="messages">
+<div class="notices">
     {% for message in messages %}
-    <p class="single-message">{{ message }}</p>
+    <p class="notice">{{ message }}</p>
     {% endfor %}
 </div>
 {% endif %}

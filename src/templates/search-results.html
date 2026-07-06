@@ -1,7 +1,7 @@
 <h2>Search results</h2>
 {% for recipe in recipes %}
 <div>
-    <button hx-get="/recipes/view/{{ recipe.id }}" hx-target="body" class="recipe-button">
+    <button hx-get="/recipes/view/{{ recipe.id }}" hx-target="body" class="btn btn--outline btn--block">
         #{{ recipe.id }} {{ recipe.name }}
     </button>
 </div>

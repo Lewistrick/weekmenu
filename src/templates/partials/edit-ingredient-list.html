@@ -1,31 +1,21 @@
 <div id="recipe-ingredients">
     {% for ingredient in ingredients %}
-    <div id="edit-ingredient-{{ingredient.id}}" class="edit-ingredient-row">
-        <button id="edit-btn-ingredient-{{ingredient.id}}" class="emoji-button edit-ingredient-button"
-            hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit"
-            hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="innerHTML">
-            <span class="emoji-on-button">✏️</span>
-        </button>
-        <button class="emoji-button delete-ingredient-button"
-            hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}"
-            hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="delete">
-            <span class="emoji-on-button">🗑️</span>
-        </button>
-        <span class="ingredient-span">
-            {{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}
-        </span>
+    <div id="edit-ingredient-{{ingredient.id}}" class="row">
+        <button hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit"
+            hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="innerHTML" class="btn btn--icon">✏️</button>
+        <button hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}"
+            hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="delete" class="btn btn--icon">🗑️</button>
+        <span>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</span>
     </div>
     {% endfor %}
     <button hx-get="/recipes/{{ recipe.id }}/ingredients/add" hx-target="#add-ingredient-form" hx-swap="innerHTML"
-        class="emoji-button">
-        <span class="emoji-on-button">➕</span>
-    </button>
+        class="btn btn--icon">➕</button>
     <div id="add-ingredient-form"></div>
 </div>
 {% if messages %}
-<div class="messages">
+<div class="notices">
     {% for message in messages %}
-    <p class="single-message">{{ message }}</p>
+    <p class="notice">{{ message }}</p>
     {% endfor %}
 </div>
 {% endif %}

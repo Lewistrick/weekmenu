@@ -1,10 +1,8 @@
-<div class="recipe-status" id="recipe-status-{{ recipe.id }}" aria-label="recipe metadata">
-    <span class="status-pill">
-        <span class="status-icon">{% if recipe.private %}🔒{% else %}🌐{% endif %}</span>
-        <span class="status-label">{% if recipe.private %}Private{% else %}Public{% endif %}</span>
+<div class="status" id="recipe-status-{{ recipe.id }}" aria-label="recipe metadata">
+    <span class="pill">
+        {% if recipe.private %}🔒 Private{% else %}🌐 Public{% endif %}
     </span>
-    <span class="status-pill">
-        <span class="status-icon">{% if recipe.enabled %}✅{% else %}⏸️{% endif %}</span>
-        <span class="status-label">{% if recipe.enabled %}Enabled{% else %}Disabled{% endif %}</span>
+    <span class="pill">
+        {% if recipe.enabled %}✅ Enabled{% else %}⏸️ Disabled{% endif %}
     </span>
 </div>

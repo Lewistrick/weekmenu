@@ -1,24 +1,24 @@
-<div class="form-group" id="recipe-status-controls">
-    <label class="recipe-status-heading">Recipe status</label>
-    <div class="recipe-status-editor">
-        <form hx-post="/recipes/{{ recipe.id }}/toggle-private" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
-            class="recipe-status-toggle">
-            <label class="switch-row">
+<div class="field" id="recipe-status-controls">
+    <label>Recipe status</label>
+    <div class="toggle-group">
+        <form hx-post="/recipes/{{ recipe.id }}/toggle-private" hx-trigger="change" hx-target="#recipe-status-controls"
+            hx-swap="outerHTML">
+            <label class="toggle">
                 <span>Public recipe</span>
-                <label class="switch">
+                <span class="switch">
                     <input type="checkbox" name="private" value="true" {% if not recipe.private %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
+                    <span class="switch-slider"></span>
+                </span>
             </label>
         </form>
-        <form hx-post="/recipes/{{ recipe.id }}/toggle-enabled" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
-            class="recipe-status-toggle">
-            <label class="switch-row">
+        <form hx-post="/recipes/{{ recipe.id }}/toggle-enabled" hx-trigger="change" hx-target="#recipe-status-controls"
+            hx-swap="outerHTML">
+            <label class="toggle">
                 <span>Enabled recipe</span>
-                <label class="switch">
+                <span class="switch">
                     <input type="checkbox" name="enabled" value="true" {% if recipe.enabled %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
+                    <span class="switch-slider"></span>
+                </span>
             </label>
         </form>
     </div>

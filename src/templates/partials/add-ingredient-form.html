@@ -1,17 +1,12 @@
-<form class="inline-form" hx-post="/recipes/{{ recipe_id }}/ingredients/add" hx-target="#recipe-ingredients"
-    hx-swap="outerHTML">
-    <div class="form-group">
-        <div class="ingredient-input">
+<form hx-post="/recipes/{{ recipe_id }}/ingredients/add" hx-target="#recipe-ingredients" hx-swap="outerHTML">
+    <div class="field">
+        <div class="row">
             <input type="text" name="quantity" placeholder="Quantity" required />
             <input type="text" name="unit" placeholder="Unit" required />
             <input type="text" name="ingredient" placeholder="Name" required />
-            <button type="submit" class="btn-ingredient-action">
-                <span class="emoji-on-button">✔️</span>
-            </button>
-            <button type="button" class="btn-ingredient-action" hx-get="/elements/empty/div/add-ingredient-form"
-                hx-target="#add-ingredient-form" hx-swap="innerHTML">
-                <span class="emoji-on-button">❌</span>
-            </button>
+            <button type="submit" class="btn btn--primary">✔️</button>
+            <button type="button" class="btn btn--icon" hx-get="/elements/empty/div/add-ingredient-form"
+                hx-target="#add-ingredient-form" hx-swap="innerHTML">❌</button>
         </div>
     </div>
 </form>

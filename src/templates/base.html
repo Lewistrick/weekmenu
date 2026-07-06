@@ -11,29 +11,27 @@
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="navbar-title">
+    <nav class="nav">
+        <div class="nav-brand">
             <a href="/">Weekmenu</a>
         </div>
-        <div class="navbar-links">
-            <a href="/recipes/search" class="nav-button">Find recipe</a>
-            <a href="/recipes/add" class="nav-button">Add recipe</a>
-            <a href="/recipes/random" class="nav-button">Random recipe</a>
-        </div>
-        <div class="navbar-right">
-            <a href="/recipes/user-profile" class="nav-button">User profile</a>
+        <div class="nav-links">
+            <a href="/recipes/search" class="btn btn--outline">Find recipe</a>
+            <a href="/recipes/add" class="btn btn--outline">Add recipe</a>
+            <a href="/recipes/random" class="btn btn--outline">Random recipe</a>
+            <a href="/recipes/user-profile" class="btn btn--outline">User profile</a>
         </div>
     </nav>
 
     {% if messages %}
-    <div class="container messages">
+    <div class="page notices">
         {% for message in messages %}
-        <p class="single-message">{{ message }}</p>
+        <p class="notice">{{ message }}</p>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div class="container">
+    <div class="page">
         {% block content %}{% endblock %}
     </div>
 </body>

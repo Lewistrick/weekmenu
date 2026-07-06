@@ -3,17 +3,13 @@
 {% block title %}Edit recipe{% endblock %}
 
 {% block content %}
-<p class="small">You are now in edit mode. Click the eye to go back to view mode.</p>
-<button hx-get="/recipes/view/{{recipe.id}}" hx-target="body" class="emoji-button">
-    <span class="emoji-on-button">👁️</span>
-</button>
+<p class="text-muted">You are now in edit mode. Click the eye to go back to view mode.</p>
+<button hx-get="/recipes/view/{{recipe.id}}" hx-target="body" class="btn btn--icon">👁️</button>
 
 <div id="recipe-title">
-    <h2 class="recipe-title">{{ recipe.name }}</h2>
+    <h2 class="heading">{{ recipe.name }}</h2>
     <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
-        class="emoji-button">
-        <span class="emoji-on-button">✏️</span>
-    </button>
+        class="btn btn--icon">✏️</button>
 </div>
 
 <h4>Ingredients</h4>
@@ -21,18 +17,15 @@
 
 <h4>Description</h4>
 <div id="recipe-desc">
-    <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="emoji-button">
-        <span class="emoji-on-button">✏️</span>
-    </button>
+    <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
+        class="btn btn--icon">✏️</button>
     <p>{{ recipe.description }}</p>
 </div>
 
 {% include "partials/recipe-status-controls.html" %}
 
 <hr />
-<a hx-get="/recipes/delete/{{recipe.id}}" hx-target="#delete-confirmation" hx-swap="innerHTML" class="emoji-button">
-    <span class="emoji-on-button">🗑️</span>
-</a>
+<a hx-get="/recipes/delete/{{recipe.id}}" hx-target="#delete-confirmation" hx-swap="innerHTML" class="btn btn--icon">🗑️</a>
 <div id="delete-confirmation"></div>
 
 {% endblock %}

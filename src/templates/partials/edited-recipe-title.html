@@ -1,12 +1,10 @@
-<h2 class="recipe-title">{{ recipe.name }}</h2>
+<h2 class="heading">{{ recipe.name }}</h2>
 <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
-    class="emoji-button">
-    <span class="emoji-on-button">✏️</span>
-</button>
+    class="btn btn--icon">✏️</button>
 {% if messages %}
-<div class="messages">
+<div class="notices">
     {% for message in messages %}
-    <p class="single-message">{{ message }}</p>
+    <p class="notice">{{ message }}</p>
     {% endfor %}
 </div>
 {% endif %}

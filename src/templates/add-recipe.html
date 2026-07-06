@@ -3,47 +3,45 @@
 {% block title %}Add a new recipe{% endblock %}
 
 {% block content %}
-<div class="add-recipe-container">
-    <h1 class="page-title">Add a New Recipe</h1>
+<div class="panel">
+    <h1 class="heading heading--center">Add a New Recipe</h1>
 
-    <form hx-post="/recipes" hx-target="#response-message" hx-swap="innerHTML" class="recipe-form">
-        <div class="form-group">
+    <form hx-post="/recipes" hx-target="#response-message" hx-swap="innerHTML" class="stack">
+        <div class="field">
             <label for="name">Recipe Name</label>
             <input type="text" id="name" name="name" required>
         </div>
 
-        <div class="form-group">
+        <div class="field">
             <label for="servings">Servings</label>
             <input type="number" id="servings" name="servings" required>
         </div>
 
-        <div class="form-group">
+        <div class="field">
             <label for="prep_time_minutes">Prep Time (minutes)</label>
             <input type="number" id="prep_time_minutes" name="prep_time_minutes">
         </div>
 
-        <div class="form-group">
+        <div class="field">
             <label for="cook_time_minutes">Cook Time (minutes)</label>
             <input type="number" id="cook_time_minutes" name="cook_time_minutes">
         </div>
 
-        <div class="form-group">
+        <div class="field">
             <label for="description">Description</label>
             <textarea id="description" name="description" rows="5"></textarea>
         </div>
 
-        <div class="form-group">
+        <div class="field">
             <h2>Ingredients</h2>
-            <div id="ingredients-container">
-                <!-- Ingredient inputs will be added here -->
-            </div>
-            <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container" hx-swap="beforeend"
-                class="btn-ingredient-action">Add Ingredient</button>
+            <div id="ingredients-container"></div>
+            <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container"
+                hx-swap="beforeend" class="btn btn--primary">Add Ingredient</button>
         </div>
 
-        <button type="submit" class="btn-submit">Add Recipe</button>
+        <button type="submit" class="btn btn--success">Add Recipe</button>
     </form>
 
-    <div id="response-message" class="response-message"></div>
+    <div id="response-message" class="notices"></div>
 </div>
 {% endblock %}
