@@ -69,7 +69,6 @@ logging_config = LoggingConfig(
     formatters={"standard": {"format": "%(message)s"}},
 )
 static_files_router = create_static_files_router(path="/static", directories=["src/static"])
-template_config: TemplateConfig = TemplateConfig(engine=JinjaTemplateEngine, directory=Path("src/templates"))
 
 app = Litestar(
     route_handlers=[
