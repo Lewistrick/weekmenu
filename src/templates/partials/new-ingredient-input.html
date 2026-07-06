@@ -1,6 +1,9 @@
 <div class="ingredient-input">
-    <input type="text" name="quantity[]" placeholder="Quantity" required>
-    <input type="text" name="unit[]" placeholder="Unit" required>
-    <input type="text" name="ingredient_name[]" placeholder="Name" required>
-    <button type="button" class="btn-remove-ingredient" onclick="this.closest('.ingredient-input').remove()">🗑️</button>
+    <input type="text" name="quantity[]" class="form-control" placeholder="Quantity" required>
+    <input type="text" name="unit[]" class="form-control" placeholder="Unit" required>
+    <input type="text" name="ingredient_name[]" class="form-control" placeholder="Name" required>
+    <button type="button" class="btn btn-ghost btn-sm btn-danger"
+        onclick="this.closest('.ingredient-input').remove()">
+        Remove
+    </button>
 </div>
