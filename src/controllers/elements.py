@@ -3,6 +3,7 @@ from litestar import Controller, get
 
 class ElementController(Controller):
     """Controller for htmx elements."""
+
     path = "/elements"
     tags = ["elements"]
 
