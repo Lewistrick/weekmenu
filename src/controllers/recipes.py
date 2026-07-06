@@ -10,7 +10,7 @@ from loguru import logger
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-from src.models import Ingredient, Recipe, RecipeIngredient, Unit
+from src.models import Ingredient, Recipe, RecipeIngredient, Unit, User
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
 IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
@@ -184,13 +184,17 @@ class RecipeController(Controller):
     async def toggle_private(
         self,
         recipe_id: int,
-        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
     ) -> Template:
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
             raise NotFoundException()
 
-        recipe.private = not self._toggle_recipe_flag(data.get("private"), recipe.private)
+        recipe.private = not self._toggle_recipe_flag(
+            data.get("private"), recipe.private
+        )
         await recipe.save()
         return Template(
             template_name="partials/recipe-status-controls.html",
@@ -201,7 +205,9 @@ class RecipeController(Controller):
     async def toggle_enabled(
         self,
         recipe_id: int,
-        data: Annotated[dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
     ) -> Template:
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
@@ -538,7 +544,11 @@ class RecipeController(Controller):
 
         quantities = form_data.getall("quantity[]") if "quantity[]" in form_data else []
         units = form_data.getall("unit[]") if "unit[]" in form_data else []
-        ingredient_names = form_data.getall("ingredient_name[]") if "ingredient_name[]" in form_data else []
+        ingredient_names = (
+            form_data.getall("ingredient_name[]")
+            if "ingredient_name[]" in form_data
+            else []
+        )
 
         ingredients = [
             {"quantity": q, "unit": u, "name": n}
@@ -546,12 +556,14 @@ class RecipeController(Controller):
         ]
 
         logger.debug(f"Adding recipe: {name}")
+        owner = await User.get_default()
         recipe = await Recipe.create(
             name=name,
             description=description or name,
             prep_time_minutes=prep_time_minutes,
             cook_time_minutes=cook_time_minutes,
             servings=servings,
+            owner=owner,
             private=True,
             enabled=True,
         )

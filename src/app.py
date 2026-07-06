@@ -16,6 +16,7 @@ from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
 from src.db_config import TORTOISE_CONFIG
+from src.models import User
 from src.template_utils import render_markdown
 
 DEBUG = True
@@ -44,6 +45,31 @@ async def index(request: Request) -> Template:
     return Template(template_name="index.html", context={"request": request})
 
 
+async def _ensure_recipe_owners(conn) -> None:
+    """Add recipe.owner_id when missing and backfill null values."""
+    table_info = await conn.execute_query("PRAGMA table_info(recipe)")
+    columns = {row[1] for row in table_info[1]}
+
+    default_user_id: int | None = None
+    user_count = await User.all().count()
+    if user_count == 1:
+        default_user = await User.get_default()
+        default_user_id = default_user.id
+
+    if "owner_id" not in columns:
+        if default_user_id is not None:
+            await conn.execute_query(
+                f"ALTER TABLE recipe ADD COLUMN owner_id INT NOT NULL DEFAULT {default_user_id}"
+            )
+        else:
+            await conn.execute_query("ALTER TABLE recipe ADD COLUMN owner_id INT")
+
+    if default_user_id is not None:
+        await conn.execute_query(
+            f"UPDATE recipe SET owner_id = {default_user_id} WHERE owner_id IS NULL"
+        )
+
+
 async def init_db() -> None:
     await Tortoise.init(config=TORTOISE_CONFIG)
     await Tortoise.generate_schemas(safe=True)
@@ -53,9 +79,14 @@ async def init_db() -> None:
         table_info = await conn.execute_query("PRAGMA table_info(recipe)")
         columns = {row[1] for row in table_info[1]}
         if "private" not in columns:
-            await conn.execute_query("ALTER TABLE recipe ADD COLUMN private BOOLEAN NOT NULL DEFAULT 1")
+            await conn.execute_query(
+                "ALTER TABLE recipe ADD COLUMN private BOOLEAN NOT NULL DEFAULT 1"
+            )
         if "enabled" not in columns:
-            await conn.execute_query("ALTER TABLE recipe ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT 1")
+            await conn.execute_query(
+                "ALTER TABLE recipe ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT 1"
+            )
+        await _ensure_recipe_owners(conn)
     except Exception:
         pass
 
@@ -63,12 +94,15 @@ async def init_db() -> None:
 async def close_db() -> None:
     await Tortoise.close_connections()
 
+
 openapi_config = OpenAPIConfig(title="Weekmenu", version="1.0.0")
 logging_config = LoggingConfig(
     handlers={"default": {"class": "src.log_utils.InterceptHandler"}},
     formatters={"standard": {"format": "%(message)s"}},
 )
-static_files_router = create_static_files_router(path="/static", directories=["src/static"])
+static_files_router = create_static_files_router(
+    path="/static", directories=["src/static"]
+)
 
 app = Litestar(
     route_handlers=[

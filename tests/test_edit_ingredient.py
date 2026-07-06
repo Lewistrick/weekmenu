@@ -2,36 +2,8 @@
 
 import pytest
 from litestar.testing import AsyncTestClient
-from tortoise import Tortoise
 
-import src.app as app_module
-from src.app import app
-from src.models import Ingredient, Recipe, RecipeIngredient, Unit
-
-TEST_DB_CONFIG = {
-    "connections": {"default": "sqlite://:memory:"},
-    "apps": {
-        "models": {
-            "models": ["src.models", "aerich.models"],
-            "default_connection": "default",
-        }
-    },
-}
-
-
-@pytest.fixture
-async def test_client(monkeypatch: pytest.MonkeyPatch) -> AsyncTestClient:
-    """Provide a test client backed by an in-memory database."""
-
-    async def init_test_db() -> None:
-        await Tortoise.init(config=TEST_DB_CONFIG)
-        await Tortoise.generate_schemas(safe=True)
-
-    monkeypatch.setattr(app_module, "TORTOISE_CONFIG", TEST_DB_CONFIG)
-    monkeypatch.setattr(app_module, "init_db", init_test_db)
-
-    async with AsyncTestClient(app=app) as client:
-        yield client
+from src.models import Ingredient, Recipe, RecipeIngredient, Unit, User
 
 
 @pytest.mark.asyncio
@@ -39,12 +11,15 @@ async def test_test_client_uses_isolated_database(
     test_client: AsyncTestClient,
 ) -> None:
     """The test fixture should point the app at an in-memory database."""
+    import src.app as app_module
+
     assert app_module.TORTOISE_CONFIG["connections"]["default"] == "sqlite://:memory:"
 
 
 @pytest.fixture
 async def recipe_with_ingredient(
     test_client: AsyncTestClient,
+    default_user: User,
 ) -> tuple[Recipe, RecipeIngredient]:
     """Create a recipe with one ingredient line for edit tests."""
     recipe = await Recipe.create(
@@ -53,6 +28,7 @@ async def recipe_with_ingredient(
         prep_time_minutes=10,
         cook_time_minutes=20,
         servings=4,
+        owner=default_user,
     )
     await Ingredient.create(name="placeholder")
     ingredient = await Ingredient.create(name="potatoes")
@@ -69,6 +45,7 @@ async def recipe_with_ingredient(
 @pytest.fixture
 async def recipe(
     test_client: AsyncTestClient,
+    default_user: User,
 ) -> Recipe:
     """Create a recipe without ingredients for add tests."""
     return await Recipe.create(
@@ -77,6 +54,7 @@ async def recipe(
         prep_time_minutes=10,
         cook_time_minutes=20,
         servings=4,
+        owner=default_user,
     )
 
 
@@ -197,6 +175,7 @@ async def test_add_ingredient_form_targets_recipe_ingredient_list(
 @pytest.mark.asyncio
 async def test_add_recipe_defaults_to_enabled_and_private(
     test_client: AsyncTestClient,
+    default_user: User,
 ) -> None:
     """New recipes should start out enabled but private."""
     response = await test_client.post(
@@ -216,11 +195,14 @@ async def test_add_recipe_defaults_to_enabled_and_private(
     assert recipe is not None
     assert recipe.enabled is True
     assert recipe.private is True
+    owner = await recipe.owner
+    assert owner.id == default_user.id
 
 
 @pytest.mark.asyncio
 async def test_toggle_recipe_status_updates_flags(
     test_client: AsyncTestClient,
+    default_user: User,
 ) -> None:
     """The status toggle endpoints should persist the selected state."""
     recipe = await Recipe.create(
@@ -229,6 +211,7 @@ async def test_toggle_recipe_status_updates_flags(
         prep_time_minutes=5,
         cook_time_minutes=10,
         servings=2,
+        owner=default_user,
         private=True,
         enabled=True,
     )
@@ -255,6 +238,7 @@ async def test_toggle_recipe_status_updates_flags(
 @pytest.mark.asyncio
 async def test_edit_recipe_page_uses_change_trigger_for_status_toggles(
     test_client: AsyncTestClient,
+    default_user: User,
 ) -> None:
     """The edit page should submit status changes immediately when the switch changes."""
     recipe = await Recipe.create(
@@ -263,6 +247,7 @@ async def test_edit_recipe_page_uses_change_trigger_for_status_toggles(
         prep_time_minutes=5,
         cook_time_minutes=10,
         servings=2,
+        owner=default_user,
         private=True,
         enabled=True,
     )

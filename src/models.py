@@ -18,7 +18,7 @@ class Recipe(Model):
     prep_time_minutes = IntField()
     cook_time_minutes = IntField()
     servings = IntField()
-    owner = ForeignKeyField("models.User", related_name="recipes", null=True)
+    owner = ForeignKeyField("models.User", related_name="recipes")
     private = BooleanField(default=True)
     enabled = BooleanField(default=True)
 
@@ -78,9 +78,27 @@ class RecipeIngredient(Model):
 
 
 class User(Model):
+    """An application user who owns recipes and shopping preferences."""
+
     id = IntField(primary_key=True)
     username = TextField(required=True)
     email = TextField(required=True)
+
+    @classmethod
+    async def get_default(cls) -> "User":
+        """Return the sole user in the database.
+
+        Returns:
+            The only user record.
+
+        Raises:
+            RuntimeError: If there is not exactly one user.
+        """
+        users = await cls.all()
+        if len(users) != 1:
+            msg = f"Expected exactly one user for default ownership, found {len(users)}"
+            raise RuntimeError(msg)
+        return users[0]
 
 
 class Shop(Model):
