@@ -20,6 +20,7 @@ from src.models import (
     Unit,
     User,
 )
+from src.week_menu import assign_recipe_to_unpinned_day, load_start_day, load_week_menu, save_week_menu
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
 IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
@@ -70,6 +71,29 @@ class RecipeController(Controller):
             )
             category_data["tags"].append(tag)
         return list(groups.values())
+
+    @staticmethod
+    async def _recipes_missing_any_tag_group() -> list[dict[str, Any]]:
+        """Return recipes missing at least one tag group with missing group names."""
+        categories = await TagCategory.all().order_by("name")
+        if not categories:
+            return []
+
+        recipes = await Recipe.all().order_by("name")
+        missing_rows: list[dict[str, Any]] = []
+        for recipe in recipes:
+            tagged_category_ids = set(
+                await RecipeTag.filter(recipe_id=recipe.id).values_list(
+                    "tag__category_id", flat=True
+                )
+            )
+            missing_groups = [
+                category for category in categories if category.id not in tagged_category_ids
+            ]
+            if missing_groups:
+                missing_rows.append({"recipe": recipe, "missing_groups": missing_groups})
+
+        return missing_rows
 
     @staticmethod
     def _toggle_recipe_flag(value: Any | None, current_value: bool) -> bool:
@@ -135,6 +159,64 @@ class RecipeController(Controller):
                 "recipe": recipe,
                 "ingredients": ingredients,
                 "recipe_tag_groups": await self._recipe_tags_by_category(recipe.id),
+            },
+        )
+
+    @get(path="/missing-tags", summary="Find recipes missing tag groups")
+    async def recipes_missing_tags_page(self, request: Request) -> Template:
+        """Show recipes that have no tag in one or more tag groups."""
+        return Template(
+            template_name="recipes-missing-tags.html",
+            context={
+                "request": request,
+                "rows": await self._recipes_missing_any_tag_group(),
+            },
+        )
+
+    @post(path="/{recipe_id:int}/add-to-week-menu", summary="Add recipe to week menu")
+    async def add_to_week_menu(self, request: Request, recipe_id: int) -> Template:
+        """Assign recipe to first unpinned day or return warning when all are pinned."""
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        source = str((await request.form()).get("source", "view"))
+        menu = load_week_menu(request)
+        start_day = load_start_day(request)
+        assigned_day = assign_recipe_to_unpinned_day(menu, recipe.id, start_day=start_day)
+
+        messages: list[str] = []
+        warnings: list[str] = []
+        if assigned_day is None:
+            warnings.append("All days are pinned. Unpin a day before adding a recipe.")
+        else:
+            save_week_menu(request, menu)
+            messages.append(f"Added to week menu: {assigned_day.title()}")
+
+        if source == "missing-tags":
+            return Template(
+                template_name="recipes-missing-tags.html",
+                context={
+                    "request": request,
+                    "rows": await self._recipes_missing_any_tag_group(),
+                    "messages": messages,
+                    "warnings": warnings,
+                },
+            )
+
+        await recipe.fetch_related("owner")
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
+        return Template(
+            template_name="view-recipe.html",
+            context={
+                "request": request,
+                "recipe": recipe,
+                "ingredients": ingredients,
+                "recipe_tag_groups": await self._recipe_tags_by_category(recipe.id),
+                "messages": messages,
+                "warnings": warnings,
             },
         )
 

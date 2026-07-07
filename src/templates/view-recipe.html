@@ -8,7 +8,13 @@
         <p class="recipe-owner-line">By <strong>{{ recipe.owner.username }}</strong></p>
         <div class="recipe-title-row">
             <h1 class="recipe-title-main">#{{ recipe.id }} {{ recipe.name }}</h1>
-            <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">Edit recipe</a>
+            <div class="recipe-title-actions">
+                <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">Edit recipe</a>
+                <form method="post" action="/recipes/{{ recipe.id }}/add-to-week-menu">
+                    <input type="hidden" name="source" value="view">
+                    <button type="submit" class="btn btn-primary">🗓️ Add to week menu</button>
+                </form>
+            </div>
         </div>
         <div class="recipe-status" aria-label="recipe metadata">
             <span class="status-pill">

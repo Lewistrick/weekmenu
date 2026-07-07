@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Recipes missing tags{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Recipes missing tags</h1>
+        <p class="page-lead">Find recipes that are missing one or more tag groups and fix them quickly.</p>
+    </header>
+
+    {% if rows %}
+    <div class="week-menu-panel">
+        {% for row in rows %}
+        <article class="week-menu-day">
+            <header class="week-menu-day-header">
+                <h2 class="week-menu-day-title">#{{ row.recipe.id }} {{ row.recipe.name }}</h2>
+                <div class="week-menu-day-actions">
+                    <a href="/recipes/view/{{ row.recipe.id }}" class="btn btn-sm icon-btn week-menu-action-btn" title="View recipe" aria-label="View recipe">👁️</a>
+                    <a href="/recipes/edit/{{ row.recipe.id }}" class="btn btn-sm icon-btn week-menu-action-btn" title="Edit recipe" aria-label="Edit recipe">✏️</a>
+                    <form method="post" action="/recipes/{{ row.recipe.id }}/add-to-week-menu">
+                        <input type="hidden" name="source" value="missing-tags">
+                        <button type="submit" class="btn btn-sm icon-btn week-menu-action-btn" title="Add to week menu" aria-label="Add to week menu">🗓️</button>
+                    </form>
+                </div>
+            </header>
+            <p class="section-hint">Missing groups:
+                {% for group in row.missing_groups %}
+                <span class="status-pill">{{ group.name }}</span>
+                {% endfor %}
+            </p>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="search-placeholder">Every recipe has at least one tag in every tag group.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -16,7 +16,7 @@ a {
     gap: 1rem;
     background-color: #222;
     color: #ddd;
-    padding: 0.65rem 1.25rem;
+    padding: 0.65rem 1.75rem 0.65rem 1.25rem;
     border-bottom: 1px solid #444;
 }
 
@@ -68,6 +68,11 @@ a {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.nav-group--right .nav-group-menu {
+    left: auto;
+    right: 0;
 }
 
 .nav-link {
@@ -704,6 +709,12 @@ div.recipe-detail {
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 0.75rem;
+}
+
+.recipe-title-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .recipe-title-main,
