@@ -430,6 +430,11 @@ div.recipe-detail {
     gap: 0.35rem;
 }
 
+.week-menu-day-actions form {
+    margin: 0;
+    display: inline-flex;
+}
+
 .week-menu-action-btn {
     height: 2rem;
     width: 2rem;
@@ -715,6 +720,10 @@ div.recipe-detail {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.home-group-section {
+    margin-top: 1.5rem;
 }
 
 .recipe-title-main,
