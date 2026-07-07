@@ -158,3 +158,51 @@ async def test_clear_recipe_from_day(
 
     assert response.status_code == 200
     assert "No recipe selected" in response.text
+
+
+@pytest.mark.asyncio
+async def test_search_results_are_limited_to_five(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Per-day search should return at most five matches."""
+    for idx in range(8):
+        await Recipe.create(
+            name=f"Limit Dish {idx}",
+            description="search limit",
+            prep_time_minutes=5,
+            cook_time_minutes=5,
+            servings=2,
+            owner=default_user,
+            enabled=True,
+        )
+
+    response = await test_client.get(
+        "/week-menu/monday/search",
+        params={"search": "Limit Dish"},
+    )
+
+    assert response.status_code == 200
+    assert response.text.count("search-result-item") <= 5
+
+
+@pytest.mark.asyncio
+async def test_randomize_warns_when_all_days_pinned(
+    test_client: AsyncTestClient,
+) -> None:
+    """Randomize should warn when every day is pinned."""
+    for day in [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]:
+        await test_client.post(f"/week-menu/{day}/pin")
+
+    response = await test_client.post("/week-menu/randomize")
+
+    assert response.status_code == 200
+    assert "All days are pinned" in response.text

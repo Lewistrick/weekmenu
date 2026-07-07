@@ -3,37 +3,5 @@
 {% block title %}Week menu{% endblock %}
 
 {% block content %}
-<div class="content-page" id="week-menu-root">
-    <header class="page-header">
-        <h1 class="page-title-main">Week menu</h1>
-        <p class="page-lead">Plan dinners for the week. Pin days you like, randomize the rest, or search for recipes yourself.</p>
-    </header>
-
-    <div class="week-menu-toolbar">
-        <form class="week-menu-start-day">
-            <label class="field-label" for="week-start-day">Start week on</label>
-            <select
-                id="week-start-day"
-                name="start_day"
-                class="form-control"
-                hx-post="/week-menu/start-day"
-                hx-trigger="change"
-                hx-target="#week-menu-root"
-                hx-swap="outerHTML"
-            >
-                {% for day in day_options %}
-                <option value="{{ day }}" {% if day == start_day %}selected{% endif %}>{{ day | title }}</option>
-                {% endfor %}
-            </select>
-        </form>
-        <button type="button" class="btn btn-primary" hx-post="/week-menu/randomize" hx-target="#week-menu-panel"
-            hx-swap="innerHTML">
-            🎲 Randomize week
-        </button>
-    </div>
-
-    <div id="week-menu-panel" class="week-menu-panel">
-        {% include "partials/week-menu-days.html" %}
-    </div>
-</div>
+{% include "partials/week-menu-content.html" %}
 {% endblock %}

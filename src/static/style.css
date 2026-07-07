@@ -39,6 +39,37 @@ a {
     gap: 0.5rem;
 }
 
+.nav-group {
+    position: relative;
+}
+
+.nav-group>summary {
+    list-style: none;
+}
+
+.nav-group>summary::-webkit-details-marker {
+    display: none;
+}
+
+.nav-group-menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    display: none;
+    min-width: 13rem;
+    padding: 0.4rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #2f2f2f;
+    z-index: 10;
+}
+
+.nav-group[open] .nav-group-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
 .nav-link {
     color: #d8d8d8;
     text-decoration: none;
@@ -394,6 +425,15 @@ div.recipe-detail {
     gap: 0.35rem;
 }
 
+.week-menu-action-btn {
+    height: 2rem;
+    width: 2rem;
+    min-width: 2rem;
+    padding: 0;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
 .week-menu-day-title {
     margin: 0;
     font-size: 0.95rem;
@@ -439,7 +479,15 @@ div.recipe-detail {
 }
 
 .week-menu-search-toggle summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    vertical-align: middle;
     list-style: none;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .week-menu-search-toggle summary::-webkit-details-marker {

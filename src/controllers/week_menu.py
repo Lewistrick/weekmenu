@@ -36,6 +36,16 @@ class WeekMenuController(Controller):
 
     async def _render_page(self, request: Request) -> Template:
         """Render the full week menu page."""
+        return await self._render_page_with_feedback(request)
+
+    async def _render_page_with_feedback(
+        self,
+        request: Request,
+        *,
+        messages: list[str] | None = None,
+        warnings: list[str] | None = None,
+    ) -> Template:
+        """Render the week menu content partial with optional feedback."""
         menu = load_week_menu(request)
         start_day = load_start_day(request)
         recipe_ids = [
@@ -43,12 +53,14 @@ class WeekMenuController(Controller):
         ]
         recipes_by_id = await self._recipes_by_id(recipe_ids)
         return Template(
-            template_name="week-menu.html",
+            template_name="partials/week-menu-content.html",
             context={
                 "request": request,
                 "days": await build_day_rows(menu, recipes_by_id, start_day),
                 "start_day": start_day,
                 "day_options": ordered_week_days("monday"),
+                "messages": messages or [],
+                "warnings": warnings or [],
             },
         )
 
@@ -71,7 +83,21 @@ class WeekMenuController(Controller):
     @get(summary="Week menu planner page")
     async def week_menu_page(self, request: Request) -> Template:
         """Show the week menu planner."""
-        return await self._render_page(request)
+        menu = load_week_menu(request)
+        start_day = load_start_day(request)
+        recipe_ids = [
+            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
+        ]
+        recipes_by_id = await self._recipes_by_id(recipe_ids)
+        return Template(
+            template_name="week-menu.html",
+            context={
+                "request": request,
+                "days": await build_day_rows(menu, recipes_by_id, start_day),
+                "start_day": start_day,
+                "day_options": ordered_week_days("monday"),
+            },
+        )
 
     @post(path="/start-day", summary="Set week start day")
     async def set_start_day(self, request: Request) -> Template:
@@ -88,10 +114,15 @@ class WeekMenuController(Controller):
     async def randomize(self, request: Request) -> Template:
         """Pick random enabled recipes for all unpinned days."""
         menu = load_week_menu(request)
+        if all(slot["pinned"] for slot in menu.values()):
+            return await self._render_page_with_feedback(
+                request,
+                warnings=["All days are pinned. Unpin at least one day to randomize."],
+            )
         recipe_ids = await Recipe.filter(enabled=True).values_list("id", flat=True)
         menu = randomize_week_menu(menu, list(recipe_ids))
         save_week_menu(request, menu)
-        return await self._render_days(request)
+        return await self._render_page_with_feedback(request)
 
     @post(path="/{day:str}/pin", summary="Toggle pin for a day")
     async def pin_day(self, request: Request, day: str) -> Template:
@@ -142,7 +173,7 @@ class WeekMenuController(Controller):
 
         recipes: list[Recipe] = []
         if search:
-            recipes = await Recipe.search(search, limit=10)
+            recipes = await Recipe.search(search, limit=5)
 
         return Template(
             template_name="partials/week-menu-day-search-results.html",
