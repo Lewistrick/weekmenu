@@ -16,11 +16,13 @@
             <header class="week-menu-day-header">
                 <h2 class="week-menu-day-title">#{{ row.recipe.id }} {{ row.recipe.name }}</h2>
                 <div class="week-menu-day-actions">
-                    <a href="/recipes/view/{{ row.recipe.id }}" class="btn btn-sm icon-btn week-menu-action-btn" title="View recipe" aria-label="View recipe">👁️</a>
-                    <a href="/recipes/edit/{{ row.recipe.id }}" class="btn btn-sm icon-btn week-menu-action-btn" title="Edit recipe" aria-label="Edit recipe">✏️</a>
+                    <button href="/recipes/view/{{ row.recipe.id }}" class="btn btn-sm icon-btn icon-action-btn" title="View recipe"
+                        aria-label="View recipe">👁️</button>
+                    <button href="/recipes/edit/{{ row.recipe.id }}" class="btn btn-sm icon-btn icon-action-btn" title="Edit recipe"
+                        aria-label="Edit recipe">✏️</button>
                     <form method="post" action="/recipes/{{ row.recipe.id }}/add-to-week-menu">
                         <input type="hidden" name="source" value="missing-tags">
-                        <button type="submit" class="btn btn-sm icon-btn week-menu-action-btn" title="Add to week menu" aria-label="Add to week menu">🗓️</button>
+                        <button type="submit" class="btn btn-sm icon-btn icon-action-btn" title="Add to week menu" aria-label="Add to week menu">🗓️</button>
                     </form>
                 </div>
             </header>

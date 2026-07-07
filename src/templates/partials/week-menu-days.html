@@ -3,19 +3,19 @@
     <header class="week-menu-day-header">
         <h2 class="week-menu-day-title">{{ day_row.label }}</h2>
         <div class="week-menu-day-actions">
-            <button type="button" class="btn btn-sm icon-btn week-menu-action-btn{% if day_row.pinned %} icon-btn--active{% endif %}"
+            <button type="button" class="btn btn-sm icon-btn icon-action-btn{% if day_row.pinned %} icon-btn--active{% endif %}"
                 hx-post="/week-menu/{{ day_row.day }}/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
                 title="{% if day_row.pinned %}Unpin day{% else %}Pin day{% endif %}"
                 aria-label="{% if day_row.pinned %}Unpin day{% else %}Pin day{% endif %}">
                 📌
             </button>
-            <button type="button" class="btn btn-sm icon-btn week-menu-action-btn"
+            <button type="button" class="btn btn-sm icon-btn icon-action-btn"
                 hx-post="/week-menu/{{ day_row.day }}/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
                 title="Clear day recipe" aria-label="Clear day recipe">
                 🗑️
             </button>
             <details class="week-menu-search-toggle">
-                <summary class="btn btn-sm icon-btn week-menu-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+                <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
                 <div class="week-menu-day-search">
                     <label class="field-label" for="search-{{ day_row.day }}">Search recipe</label>
                     <input id="search-{{ day_row.day }}" class="form-control" type="search" name="search"

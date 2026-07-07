@@ -5,7 +5,7 @@
 {% block content %}
 <div class="recipe-edit-page">
     <div class="page-toolbar">
-        <a href="/recipes/view/{{ recipe.id }}" class="btn btn-sm icon-btn week-menu-action-btn" title="View recipe" aria-label="View recipe">👁️</a>
+        <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm" title="View recipe" aria-label="View recipe">← View recipe</a>
         <span class="page-mode-badge">Edit mode</span>
     </div>
 
@@ -17,7 +17,7 @@
         <div id="recipe-title" class="editable-field">
             <h2 class="recipe-title-display">{{ recipe.name }}</h2>
             <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
-                class="btn btn-sm icon-btn week-menu-action-btn" type="button" title="Edit title" aria-label="Edit title">✏️</button>
+                class="btn btn-secondary btn-sm" type="button" title="Edit title" aria-label="Edit title">✏️ Edit title</button>
         </div>
     </section>
 
@@ -37,7 +37,7 @@
         <div id="recipe-desc" class="editable-field editable-field--stacked">
             <div class="recipe-description-display">{{ recipe.description }}</div>
             <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
-                class="btn btn-sm icon-btn week-menu-action-btn" type="button" title="Edit description" aria-label="Edit description">✏️</button>
+                class="btn btn-secondary btn-sm" type="button" title="Edit description" aria-label="Edit description">✏️ Edit description</button>
         </div>
     </section>
 
@@ -61,7 +61,7 @@
                 </div>
             </fieldset>
             {% endfor %}
-            <button class="btn btn-sm icon-btn week-menu-action-btn" type="submit" title="Save tags" aria-label="Save tags">💾</button>
+            <button class="btn btn-primary btn-sm" type="submit" title="Save tags" aria-label="Save tags">💾 Save tags</button>
             {% else %}
             <p class="search-placeholder">No tag groups yet. Add them on the Tag groups page.</p>
             {% endif %}
@@ -82,7 +82,7 @@
             <p class="section-hint">This permanently removes the recipe and its ingredient lines.</p>
         </div>
         <button hx-get="/recipes/delete/{{ recipe.id }}" hx-target="#delete-confirmation" hx-swap="innerHTML"
-            class="btn btn-sm icon-btn week-menu-action-btn" type="button" title="Delete recipe" aria-label="Delete recipe">🗑️</button>
+            class="btn btn-danger btn-sm" type="button" title="Delete recipe" aria-label="Delete recipe">🗑️ Delete recipe</button>
         <div id="delete-confirmation"></div>
     </section>
 </div>

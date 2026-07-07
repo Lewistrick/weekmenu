@@ -5,12 +5,12 @@
             {{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}
         </span>
         <div class="ingredient-actions">
-            <button id="edit-btn-ingredient-{{ingredient.id}}" class="btn btn-sm icon-btn week-menu-action-btn edit-ingredient-button"
+            <button id="edit-btn-ingredient-{{ingredient.id}}" class="btn btn-sm icon-btn icon-action-btn edit-ingredient-button"
                 hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit"
                 hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="innerHTML" type="button" title="Edit ingredient" aria-label="Edit ingredient">
                 ✏️
             </button>
-            <button class="btn btn-sm icon-btn week-menu-action-btn delete-ingredient-button"
+            <button class="btn btn-sm icon-btn icon-action-btn delete-ingredient-button"
                 hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}"
                 hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="delete" type="button" title="Remove ingredient" aria-label="Remove ingredient">
                 🗑️
@@ -19,7 +19,7 @@
     </div>
     {% endfor %}
     <button hx-get="/recipes/{{ recipe.id }}/ingredients/add" hx-target="#add-ingredient-form" hx-swap="innerHTML"
-        class="btn btn-sm icon-btn week-menu-action-btn" type="button" title="Add ingredient" aria-label="Add ingredient">
+        class="btn btn-sm icon-btn icon-action-btn" type="button" title="Add ingredient" aria-label="Add ingredient">
         ➕
     </button>
     <div id="add-ingredient-form"></div>
