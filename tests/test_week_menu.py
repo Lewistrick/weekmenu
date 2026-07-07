@@ -578,14 +578,14 @@ async def test_constraint_field_visibility_by_mode(
     assert f'data-constraint-mode="{mode}"' in row_html
 
     if shows_tag:
-        assert 'week-menu-constraint-tag-field is-hidden' not in row_html
+        assert "week-menu-constraint-tag-field is-hidden" not in row_html
     else:
-        assert 'week-menu-constraint-tag-field is-hidden' in row_html
+        assert "week-menu-constraint-tag-field is-hidden" in row_html
 
     if shows_min:
-        assert 'week-menu-constraint-min-field is-hidden' not in row_html
+        assert "week-menu-constraint-min-field is-hidden" not in row_html
     else:
-        assert 'week-menu-constraint-min-field is-hidden' in row_html
+        assert "week-menu-constraint-min-field is-hidden" in row_html
 
 
 @pytest.mark.asyncio
