@@ -16,9 +16,11 @@
             <header class="week-menu-day-header">
                 <h2 class="week-menu-day-title">#{{ row.recipe.id }} {{ row.recipe.name }}</h2>
                 <div class="week-menu-day-actions">
-                    <button href="/recipes/view/{{ row.recipe.id }}" class="btn btn-sm icon-btn icon-action-btn" title="View recipe"
+                    <button type="button" hx-get="/recipes/view/{{ row.recipe.id }}" hx-target="body" hx-swap="innerHTML"
+                        class="btn btn-sm icon-btn icon-action-btn" title="View recipe"
                         aria-label="View recipe">👁️</button>
-                    <button href="/recipes/edit/{{ row.recipe.id }}" class="btn btn-sm icon-btn icon-action-btn" title="Edit recipe"
+                    <button type="button" hx-get="/recipes/edit/{{ row.recipe.id }}" hx-target="body" hx-swap="innerHTML"
+                        class="btn btn-sm icon-btn icon-action-btn" title="Edit recipe"
                         aria-label="Edit recipe">✏️</button>
                     <form method="post" action="/recipes/{{ row.recipe.id }}/add-to-week-menu">
                         <input type="hidden" name="source" value="missing-tags">
