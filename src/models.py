@@ -23,22 +23,40 @@ class Recipe(Model):
     enabled = BooleanField(default=True)
 
     @classmethod
-    async def search(cls, query: str, *, limit: int | None = None) -> list["Recipe"]:
-        """Return recipes matching a query in name, description, or ingredients.
+    async def search(
+        cls,
+        query: str | None = None,
+        *,
+        tag_filters: dict[int, int] | None = None,
+        limit: int | None = None,
+    ) -> list["Recipe"]:
+        """Return recipes matching text and optional tag-group filters.
 
         Args:
-            query: Text to match case-insensitively.
+            query: Optional text to match case-insensitively.
+            tag_filters: Mapping of tag-category id to selected tag id.
             limit: Optional maximum number of recipes to return.
 
         Returns:
             Distinct recipes that match the query.
         """
-        filters = (
-            Q(name__icontains=query)
-            | Q(description__icontains=query)
-            | Q(recipe__ingredient__name__icontains=query)
-        )
-        queryset = cls.filter(filters).distinct()
+        queryset = cls.all()
+        if query:
+            filters = (
+                Q(name__icontains=query)
+                | Q(description__icontains=query)
+                | Q(recipe__ingredient__name__icontains=query)
+            )
+            queryset = queryset.filter(filters)
+
+        if tag_filters:
+            for _category_id, tag_id in tag_filters.items():
+                matching_recipe_ids = await RecipeTag.filter(tag_id=tag_id).values_list(
+                    "recipe_id", flat=True
+                )
+                queryset = queryset.filter(Q(id__in=matching_recipe_ids))
+
+        queryset = queryset.distinct()
         if limit is not None:
             queryset = queryset.limit(limit)
         return await queryset

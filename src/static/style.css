@@ -77,6 +77,15 @@ a {
     padding: 5px;
 }
 
+.warning-message {
+    background-color: rgba(255, 193, 7, 0.18);
+    border-radius: 5px;
+    border: 1px solid #d4a017;
+    color: #ffe08a;
+    margin: 5px;
+    padding: 5px;
+}
+
 .recipe-button {
     background-color: transparent;
     border: 1px solid #5a9fd4;
@@ -260,6 +269,74 @@ div.recipe-detail {
 
 .form-section {
     margin-bottom: 1.5rem;
+}
+
+.search-panel .form-section {
+    margin-top: 1.25rem;
+}
+
+.tag-group-fieldset {
+    margin: 0 0 1rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.tag-group-fieldset legend {
+    padding: 0 0.35rem;
+    color: #e0e0e0;
+}
+
+.tag-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+}
+
+.tag-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.manage-tag-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.manage-tag-form .form-control {
+    flex: 1;
+}
+
+.manage-tag-form--create .form-control {
+    flex: initial;
+}
+
+.manage-tag-label {
+    width: 6rem;
+    margin-top: 0.45rem;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.icon-btn {
+    height: 2.25rem;
+    min-width: 2.25rem;
+    padding: 0;
+    background-color: #4a4a4a;
+    border-color: #666;
+    color: #f0f0f0;
+    font-size: 1rem;
+}
+
+.icon-btn:hover {
+    background-color: #555;
+    border-color: #777;
+    color: #fff;
 }
 
 .ingredients-container {
@@ -485,6 +562,19 @@ div.recipe-detail {
 
 .recipe-section {
     margin-bottom: 2rem;
+}
+
+.recipe-tag-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.recipe-tag-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
 }
 
 .section-heading {

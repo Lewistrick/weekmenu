@@ -47,6 +47,33 @@
 
     <section class="recipe-section">
         <div class="section-heading">
+            <h2 class="section-title">Tags</h2>
+            <p class="section-hint">Update tag values used for searching and filtering.</p>
+        </div>
+        <form method="post" action="/recipes/{{ recipe.id }}/tags" class="form-panel">
+            {% if tag_groups %}
+            {% for group in tag_groups %}
+            <fieldset class="tag-group-fieldset">
+                <legend>{{ group.category.name }}</legend>
+                <div class="tag-options">
+                    {% for tag in group.tags %}
+                    <label class="tag-option">
+                        <input type="checkbox" name="tag_ids[]" value="{{ tag.id }}" {% if tag.id in selected_tag_ids %}checked{% endif %}>
+                        <span>{{ tag.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            {% endfor %}
+            <button class="btn btn-primary btn-sm" type="submit">Save tags</button>
+            {% else %}
+            <p class="search-placeholder">No tag groups yet. Add them on the Tag groups page.</p>
+            {% endif %}
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
             <h2 class="section-title">Status</h2>
             <p class="section-hint">Toggle visibility and whether this recipe is included in menus.</p>
         </div>

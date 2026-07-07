@@ -9,15 +9,33 @@
         <p class="page-lead">Search your cookbook by name, description, or ingredient.</p>
     </header>
 
-    <div class="search-panel">
+    <form class="search-panel" hx-get="/recipes/search-recipe" hx-target="#search-results" hx-swap="innerHTML"
+        hx-trigger="keyup changed delay:200ms from:#recipe-search-input, change from:select">
         <label class="field-label" for="recipe-search-input">Search</label>
         <input id="recipe-search-input" class="form-control" type="search" name="search"
-            placeholder="Name, description, or ingredient…" hx-get="/recipes/search-recipe" hx-trigger="keyup changed delay:200ms"
-            hx-target="#search-results" hx-swap="innerHTML">
-
+            placeholder="Name, description, or ingredient…">
+        {% if tag_groups %}
+        <section class="form-section">
+            <div class="section-heading">
+                <h2 class="section-title">Filter by tags</h2>
+                <p class="section-hint">Recipes with no tag in a group always stay included for that group.</p>
+            </div>
+            {% for group in tag_groups %}
+            <div class="form-group">
+                <label for="tag-group-{{ group.category.id }}">{{ group.category.name }}</label>
+                <select id="tag-group-{{ group.category.id }}" name="tag_group_{{ group.category.id }}" class="form-control">
+                    <option value="">Any</option>
+                    {% for tag in group.tags %}
+                    <option value="{{ tag.id }}">{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
         <div id="search-results" class="search-results-panel">
             <p class="search-placeholder">Results will appear here as you type.</p>
         </div>
-    </div>
+    </form>
 </div>
 {% endblock %}

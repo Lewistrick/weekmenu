@@ -48,6 +48,30 @@
                 </button>
             </section>
 
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2 class="section-title">Tags</h2>
+                    <p class="section-hint">Select any tag values that describe this recipe.</p>
+                </div>
+                {% if tag_groups %}
+                {% for group in tag_groups %}
+                <fieldset class="tag-group-fieldset">
+                    <legend>{{ group.category.name }}</legend>
+                    <div class="tag-options">
+                        {% for tag in group.tags %}
+                        <label class="tag-option">
+                            <input type="checkbox" name="tag_ids[]" value="{{ tag.id }}">
+                            <span>{{ tag.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                {% endfor %}
+                {% else %}
+                <p class="search-placeholder">No tag groups yet. Add them on the Tag groups page.</p>
+                {% endif %}
+            </section>
+
             <button type="submit" class="btn btn-primary">Add recipe</button>
         </form>
 

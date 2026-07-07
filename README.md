@@ -7,8 +7,10 @@
 
 ### What will it be able to do
 - Compose your own cookbook
+- Organize recipes with tag groups and values (for example: season, carb type, diet)
 - Create a random week menu, giving you a random recipe for each day of the week
 - Generate a grocery list given a week menu
+- Search recipes by name, description, ingredients, and optional tag filters
 
 ### To see the API docs
 - [http://127.0.0.1:8000/schema/swagger](http://127.0.0.1:8000/schema/swagger)

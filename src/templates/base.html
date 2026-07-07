@@ -15,6 +15,7 @@
         <div class="navbar-links">
             <a href="/recipes/search" class="nav-link">Find recipe</a>
             <a href="/recipes/add" class="nav-link">Add recipe</a>
+            <a href="/tags/manage" class="nav-link">Tag groups</a>
             <a href="/recipes/random" class="nav-link">Random recipe</a>
         </div>
         <div class="navbar-right">
@@ -26,6 +27,13 @@
     <div class="container messages">
         {% for message in messages %}
         <p class="single-message">{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if warnings %}
+    <div class="container messages">
+        {% for warning in warnings %}
+        <p class="warning-message">{{ warning }}</p>
         {% endfor %}
     </div>
     {% endif %}

@@ -10,7 +10,16 @@ from loguru import logger
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-from src.models import Ingredient, Recipe, RecipeIngredient, Unit, User
+from src.models import (
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    RecipeTag,
+    Tag,
+    TagCategory,
+    Unit,
+    User,
+)
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
 IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
@@ -25,6 +34,42 @@ class RecipeIngredientDetail(BaseModel):
 class RecipeController(Controller):
     path = "/recipes"
     tags = ["recipes"]
+
+    @staticmethod
+    async def _tag_groups() -> list[dict[str, Any]]:
+        """Return tag categories with their tag values."""
+        groups: list[dict[str, Any]] = []
+        categories = await TagCategory.all().order_by("name")
+        for category in categories:
+            tags = await Tag.filter(category=category.id).order_by("name")
+            groups.append({"category": category, "tags": tags})
+        return groups
+
+    @staticmethod
+    async def _recipe_tag_ids(recipe_id: int) -> set[int]:
+        """Return selected tag ids for a recipe."""
+        ids = await RecipeTag.filter(recipe_id=recipe_id).values_list(
+            "tag_id", flat=True
+        )
+        return set(ids)
+
+    @staticmethod
+    async def _recipe_tags_by_category(
+        recipe_id: int,
+    ) -> list[dict[str, Any]]:
+        """Return a recipe's selected tags grouped by category."""
+        groups: dict[int, dict[str, Any]] = {}
+        recipe_tags = await RecipeTag.filter(recipe_id=recipe_id).select_related(
+            "tag", "tag__category"
+        )
+        for recipe_tag in recipe_tags:
+            tag = await recipe_tag.tag
+            category = await tag.category
+            category_data = groups.setdefault(
+                category.id, {"category": category, "tags": []}
+            )
+            category_data["tags"].append(tag)
+        return list(groups.values())
 
     @staticmethod
     def _toggle_recipe_flag(value: Any | None, current_value: bool) -> bool:
@@ -44,7 +89,13 @@ class RecipeController(Controller):
     @get(path="/add", summary="Get the page to add a new recipe")
     async def add_recipe_page(self, request: Request) -> Template:
         """Show the page for adding a new recipe."""
-        return Template(template_name="add-recipe.html", context={"request": request})
+        return Template(
+            template_name="add-recipe.html",
+            context={
+                "request": request,
+                "tag_groups": await self._tag_groups(),
+            },
+        )
 
     @get(path="/random", summary="View a random recipe")
     async def random_recipe_page(self) -> Template:
@@ -62,6 +113,9 @@ class RecipeController(Controller):
             context={
                 "recipe": random_recipe,
                 "ingredients": ingredients,
+                "recipe_tag_groups": await self._recipe_tags_by_category(
+                    random_recipe.id
+                ),
             },
         )
 
@@ -80,6 +134,7 @@ class RecipeController(Controller):
             context={
                 "recipe": recipe,
                 "ingredients": ingredients,
+                "recipe_tag_groups": await self._recipe_tags_by_category(recipe.id),
             },
         )
 
@@ -98,6 +153,8 @@ class RecipeController(Controller):
             context={
                 "recipe": recipe,
                 "ingredients": ingredients,
+                "tag_groups": await self._tag_groups(),
+                "selected_tag_ids": await self._recipe_tag_ids(recipe.id),
             },
         )
 
@@ -409,6 +466,44 @@ class RecipeController(Controller):
             },
         )
 
+    @post(path="/{recipe_id:int}/tags", summary="Update selected tags for recipe")
+    async def update_recipe_tags(self, recipe_id: int, request: Request) -> Template:
+        """Replace a recipe's selected tags with submitted values."""
+        recipe = await Recipe.get_or_none(id=recipe_id)
+        if not recipe:
+            raise NotFoundException()
+
+        form_data = await request.form()
+        submitted_tag_ids = (
+            [int(tag_id) for tag_id in form_data.getall("tag_ids[]")]
+            if "tag_ids[]" in form_data
+            else []
+        )
+
+        valid_tag_ids = set(
+            await Tag.filter(id__in=submitted_tag_ids).values_list("id", flat=True)
+        )
+
+        await RecipeTag.filter(recipe_id=recipe_id).delete()
+        for tag_id in valid_tag_ids:
+            await RecipeTag.create(recipe_id=recipe_id, tag_id=tag_id)
+
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
+        await recipe.fetch_related("owner")
+        return Template(
+            template_name="edit-recipe.html",
+            context={
+                "request": request,
+                "recipe": recipe,
+                "ingredients": ingredients,
+                "tag_groups": await self._tag_groups(),
+                "selected_tag_ids": await self._recipe_tag_ids(recipe.id),
+                "messages": ["Recipe tags updated"],
+            },
+        )
+
     @get(
         path="/delete-confirmation/{recipe_id:int}", summary="Delete the recipe by ID."
     )
@@ -436,19 +531,26 @@ class RecipeController(Controller):
 
         return Template(
             template_name="search-recipes.html",
-            context={"request": request},
+            context={"request": request, "tag_groups": await self._tag_groups()},
         )
 
     @get(path="/search-recipe", summary="Search for recipes")
     async def search_by_query(
         self, request: Request, search: str | None = None
     ) -> Template:
-        recipes: list[Recipe] = []
-        if not search:
-            # At some point this could show recent/popular recipes
-            pass
+        tag_filters: dict[int, int] = {}
+        for key, value in request.query_params.items():
+            if not key.startswith("tag_group_") or not value:
+                continue
+            category_id_str = key.removeprefix("tag_group_")
+            if not category_id_str.isdigit() or not value.isdigit():
+                continue
+            tag_filters[int(category_id_str)] = int(value)
+
+        if not search and not tag_filters:
+            recipes: list[Recipe] = []
         else:
-            recipes = await Recipe.search(search)
+            recipes = await Recipe.search(search, tag_filters=tag_filters)
 
         return Template(
             template_name="search-results.html",
@@ -551,6 +653,11 @@ class RecipeController(Controller):
             if "ingredient_name[]" in form_data
             else []
         )
+        tag_ids = (
+            [int(tag_id) for tag_id in form_data.getall("tag_ids[]")]
+            if "tag_ids[]" in form_data
+            else []
+        )
 
         ingredients = [
             {"quantity": q, "unit": u, "name": n}
@@ -570,6 +677,10 @@ class RecipeController(Controller):
             enabled=True,
         )
         logger.debug(f"Added - {recipe.id=}")
+
+        valid_tag_ids = await Tag.filter(id__in=tag_ids).values_list("id", flat=True)
+        for tag_id in set(valid_tag_ids):
+            await RecipeTag.create(recipe=recipe, tag_id=tag_id)
 
         messages = []
         for ing_dict in ingredients:
