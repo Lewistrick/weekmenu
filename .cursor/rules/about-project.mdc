@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+This project is focused around recipes for dinners. In it, a user can search recipes, add or edit recipes. Recipes have ingredients, which is also an important concept in this app.
