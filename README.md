@@ -9,6 +9,7 @@
 - Compose your own cookbook
 - Organize recipes with tag groups and values (for example: season, carb type, diet)
 - Create a random week menu, giving you a random recipe for each day of the week
+    - Optional tag constraints when randomizing: same tag for every day, vary tags across the week, or at least N days with a chosen tag
 - Generate a grocery list given a week menu
 - Search recipes by name, description, ingredients, and optional tag filters
 

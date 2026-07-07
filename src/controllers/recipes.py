@@ -20,7 +20,12 @@ from src.models import (
     Unit,
     User,
 )
-from src.week_menu import assign_recipe_to_unpinned_day, load_start_day, load_week_menu, save_week_menu
+from src.week_menu import (
+    assign_recipe_to_unpinned_day,
+    load_start_day,
+    load_week_menu,
+    save_week_menu,
+)
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
 IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
@@ -88,10 +93,14 @@ class RecipeController(Controller):
                 )
             )
             missing_groups = [
-                category for category in categories if category.id not in tagged_category_ids
+                category
+                for category in categories
+                if category.id not in tagged_category_ids
             ]
             if missing_groups:
-                missing_rows.append({"recipe": recipe, "missing_groups": missing_groups})
+                missing_rows.append(
+                    {"recipe": recipe, "missing_groups": missing_groups}
+                )
 
         return missing_rows
 
@@ -183,7 +192,9 @@ class RecipeController(Controller):
         source = str((await request.form()).get("source", "view"))
         menu = load_week_menu(request)
         start_day = load_start_day(request)
-        assigned_day = assign_recipe_to_unpinned_day(menu, recipe.id, start_day=start_day)
+        assigned_day = assign_recipe_to_unpinned_day(
+            menu, recipe.id, start_day=start_day
+        )
 
         messages: list[str] = []
         warnings: list[str] = []

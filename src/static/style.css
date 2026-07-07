@@ -404,6 +404,51 @@ div.recipe-detail {
     width: 10rem;
 }
 
+.week-menu-options {
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #353535;
+}
+
+.week-menu-options-header {
+    margin-bottom: 0.65rem;
+}
+
+.week-menu-options-header .section-title {
+    margin: 0 0 0.2rem;
+    font-size: 0.95rem;
+}
+
+.week-menu-options-header .section-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #b5b5b5;
+}
+
+.week-menu-constraints-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.week-menu-constraint-row {
+    display: grid;
+    grid-template-columns: minmax(6rem, 8rem) minmax(9rem, 1.2fr) minmax(8rem, 1fr) 4.5rem;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.week-menu-constraint-row .field-label {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.week-menu-constraint-min {
+    width: 4.5rem;
+}
+
 .week-menu-panel {
     display: flex;
     flex-direction: column;
@@ -1010,6 +1055,14 @@ div.recipe-detail {
     }
 
     .week-menu-start-day .form-control {
+        width: 100%;
+    }
+
+    .week-menu-constraint-row {
+        grid-template-columns: 1fr;
+    }
+
+    .week-menu-constraint-min {
         width: 100%;
     }
 
