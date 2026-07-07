@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import cast
 
 from litestar import Litestar, Request, get
+from litestar.middleware.session.client_side import CookieBackendConfig
 from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.logging import LoggingConfig
 from litestar.openapi import OpenAPIConfig
@@ -15,11 +16,14 @@ from src.controllers.elements import ElementController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
+from src.controllers.week_menu import WeekMenuController
 import src.db_config as db_config
 from src.models import User
 from src.template_utils import render_markdown
 
 DEBUG = True
+SESSION_SECRET = b"weekmenu-session-secret-key-32b!"
+session_config = CookieBackendConfig(secret=SESSION_SECRET)
 
 
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
@@ -110,9 +114,11 @@ app = Litestar(
         RecipeController,
         IngredientController,
         TagController,
+        WeekMenuController,
         ElementController,
         static_files_router,
     ],
+    middleware=[session_config.middleware],
     on_startup=[init_db],
     on_shutdown=[close_db],
     openapi_config=openapi_config,

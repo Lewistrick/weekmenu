@@ -339,6 +339,113 @@ div.recipe-detail {
     color: #fff;
 }
 
+.icon-btn--active {
+    background-color: #5a9fd4;
+    border-color: #5a9fd4;
+    color: #fff;
+}
+
+.week-menu-toolbar {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.week-menu-start-day {
+    display: flex;
+    align-items: end;
+    gap: 0.6rem;
+}
+
+.week-menu-start-day .field-label {
+    margin-bottom: 0.25rem;
+}
+
+.week-menu-start-day .form-control {
+    width: 10rem;
+}
+
+.week-menu-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.week-menu-day {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #3d3d3d;
+}
+
+.week-menu-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+}
+
+.week-menu-day-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.week-menu-day-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e8e8e8;
+}
+
+.week-menu-day-recipe {
+    margin-bottom: 0.4rem;
+}
+
+.week-menu-recipe-link {
+    color: #b8d9f0;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.week-menu-recipe-link:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.week-menu-day-search {
+    margin-top: 0.1rem;
+    padding: 0.5rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #353535;
+}
+
+.week-menu-search-results {
+    margin-top: 0.3rem;
+}
+
+.week-menu-day-search .field-label {
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.week-menu-day-search .form-control {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.85rem;
+}
+
+.week-menu-search-toggle summary {
+    list-style: none;
+}
+
+.week-menu-search-toggle summary::-webkit-details-marker {
+    display: none;
+}
+
 .ingredients-container {
     display: flex;
     flex-direction: column;
@@ -823,4 +930,18 @@ div.recipe-detail {
     .ingredient-actions {
         justify-content: flex-end;
     }
+
+    .week-menu-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .week-menu-start-day {
+        align-items: stretch;
+    }
+
+    .week-menu-start-day .form-control {
+        width: 100%;
+    }
+
 }

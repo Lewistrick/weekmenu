@@ -1,0 +1,15 @@
+{% if recipes %}
+<ul class="search-result-list">
+    {% for recipe in recipes %}
+    <li>
+        <button type="button" class="search-result-item"
+            hx-post="/week-menu/{{ day }}/recipe/{{ recipe.id }}" hx-target="#week-menu-panel" hx-swap="innerHTML">
+            <span class="search-result-id">#{{ recipe.id }}</span>
+            <span class="search-result-name">{{ recipe.name }}</span>
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% elif search %}
+<p class="search-placeholder">No recipes matched your search.</p>
+{% endif %}
