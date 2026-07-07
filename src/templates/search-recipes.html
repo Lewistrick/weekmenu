@@ -6,13 +6,13 @@
 <div class="content-page">
     <header class="page-header">
         <h1 class="page-title-main">Find recipe</h1>
-        <p class="page-lead">Search your cookbook by recipe name.</p>
+        <p class="page-lead">Search your cookbook by name, description, or ingredient.</p>
     </header>
 
     <div class="search-panel">
-        <label class="field-label" for="recipe-search-input">Recipe name</label>
+        <label class="field-label" for="recipe-search-input">Search</label>
         <input id="recipe-search-input" class="form-control" type="search" name="search"
-            placeholder="Start typing to search…" hx-get="/recipes/search-recipe" hx-trigger="keyup changed delay:200ms"
+            placeholder="Name, description, or ingredient…" hx-get="/recipes/search-recipe" hx-trigger="keyup changed delay:200ms"
             hx-target="#search-results" hx-swap="innerHTML">
 
         <div id="search-results" class="search-results-panel">
