@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import cast
 
@@ -74,7 +75,19 @@ async def _ensure_recipe_owners(conn) -> None:
         )
 
 
+async def _ensure_not_using_production_db_in_tests() -> None:
+    """Block accidental production database use while pytest is running."""
+    if not os.environ.get("PYTEST_CURRENT_TEST"):
+        return
+
+    db_url = str(db_config.TORTOISE_CONFIG["connections"]["default"])
+    if "recipes.sqlite3" in db_url:
+        msg = "Tests must use the in-memory database, not src/recipes.sqlite3."
+        raise RuntimeError(msg)
+
+
 async def init_db() -> None:
+    await _ensure_not_using_production_db_in_tests()
     await Tortoise.init(config=db_config.TORTOISE_CONFIG)
     await Tortoise.generate_schemas(safe=True)
 

@@ -43,7 +43,8 @@
 ## Development
 ### Tests
 - Run the suite with `uv run pytest`
-- HTTP tests use an in-memory SQLite database via the `test_client` fixture in `tests/conftest.py`; they do not write to `src/recipes.sqlite3`
+- HTTP tests use an in-memory SQLite database via autouse fixtures in `tests/conftest.py`; they do not write to `src/recipes.sqlite3`
+- If `init_db` runs during pytest while still pointed at `src/recipes.sqlite3`, the app raises an error instead of touching production data
 
 ### Formatting and hooks
 - Python: `uv run ruff format` and `uv run ruff check` (`.py` files only)

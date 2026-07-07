@@ -17,3 +17,10 @@ def test_render_markdown_empty() -> None:
     """Empty descriptions should render as an empty string."""
     assert render_markdown("") == ""
     assert render_markdown(None) == ""
+
+
+def test_render_markdown_links() -> None:
+    """Markdown links should render as anchor tags."""
+    html = render_markdown("See [the docs](https://example.com/recipe).")
+
+    assert '<a href="https://example.com/recipe">the docs</a>' in html

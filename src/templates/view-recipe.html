@@ -25,12 +25,19 @@
                 <span class="status-icon">{% if recipe.enabled %}✅{% else %}⏸️{% endif %}</span>
                 <span class="status-label">{% if recipe.enabled %}Enabled{% else %}Disabled{% endif %}</span>
             </span>
+        </div>
+        {% if recipe_tag_groups %}
+        <div class="recipe-tag-groups" aria-label="recipe tags">
             {% for group in recipe_tag_groups %}
-            {% for tag in group.tags %}
-            <span class="status-pill">{{ group.category.name }}: {{ tag.name }}</span>
-            {% endfor %}
+            <div class="recipe-tag-group">
+                <span class="recipe-tag-group-label">{{ group.category.name }}</span>
+                {% for tag in group.tags %}
+                <span class="status-pill">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
             {% endfor %}
         </div>
+        {% endif %}
     </header>
 
     <section class="recipe-section">
