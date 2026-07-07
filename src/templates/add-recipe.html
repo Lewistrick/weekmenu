@@ -10,7 +10,7 @@
     </header>
 
     <div class="form-panel">
-        <form hx-post="/recipes" hx-target="#response-message" hx-swap="innerHTML" class="recipe-form">
+        <form method="post" action="/recipes" class="recipe-form">
             <div class="form-group">
                 <label for="name">Recipe name</label>
                 <input type="text" id="name" name="name" class="form-control" required>
@@ -75,7 +75,6 @@
             <button type="submit" class="btn btn-primary">Add recipe</button>
         </form>
 
-        <div id="response-message" class="response-message"></div>
     </div>
 </div>
 {% endblock %}

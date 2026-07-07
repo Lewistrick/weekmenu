@@ -196,9 +196,11 @@ async def test_add_recipe_defaults_to_enabled_and_private(
             "prep_time_minutes": "10",
             "cook_time_minutes": "20",
         },
+        follow_redirects=False,
     )
 
-    assert response.status_code == 200
+    assert response.status_code in {302, 303, 307, 308}
+    assert response.headers.get("location", "").startswith("/recipes/view/")
 
     recipe = (
         await Recipe.filter(name="__pytest_default_flags__").order_by("-id").first()

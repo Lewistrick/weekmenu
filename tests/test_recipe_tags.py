@@ -34,9 +34,11 @@ async def test_add_recipe_stores_selected_tags(
             "cook_time_minutes": "20",
             "tag_ids[]": str(summer.id),
         },
+        follow_redirects=False,
     )
 
-    assert response.status_code == 200
+    assert response.status_code in {302, 303, 307, 308}
+    assert response.headers.get("location", "").startswith("/recipes/view/")
     recipe = await Recipe.get(name="Tagged soup")
     tag_ids = await RecipeTag.filter(recipe_id=recipe.id).values_list(
         "tag_id", flat=True

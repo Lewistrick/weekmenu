@@ -5,7 +5,7 @@ from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import NotFoundException
 from litestar.params import Body
-from litestar.response import Template
+from litestar.response import Redirect, Template
 from loguru import logger
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
@@ -616,7 +616,7 @@ class RecipeController(Controller):
         await recipe.delete()
 
     @post(name="Add a recipe")
-    async def add(self, request: Request) -> Template:
+    async def add(self, request: Request) -> Redirect:
         """Create a new recipe, user-style.
 
         Accepts
@@ -712,7 +712,4 @@ class RecipeController(Controller):
             )
             logger.info(f"Added ingredient to recipe: {recipe_ing}")
 
-        return Template(
-            template_name="partials/add-recipe-response.html",
-            context={"request": request, "recipe": recipe, "messages": messages},
-        )
+        return Redirect(path=f"/recipes/view/{recipe.id}")
