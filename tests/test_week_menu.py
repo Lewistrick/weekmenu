@@ -1,6 +1,7 @@
 """Tests for week menu planning."""
 
 import random
+import re
 
 import pytest
 from litestar.testing import AsyncTestClient
@@ -531,6 +532,60 @@ async def test_week_menu_shows_tag_constraint_options(
     assert "Tag constraints" in response.text
     assert "carb_type" in response.text
     assert "Vary across week" in response.text
+
+
+def _constraint_row_html(page_html: str, category_name: str) -> str:
+    """Return the HTML for one tag constraint row."""
+    match = re.search(
+        rf'<div class="week-menu-constraint-row"[^>]*>.*?>{category_name}</label>.*?</div>\s*</div>',
+        page_html,
+        flags=re.DOTALL,
+    )
+    assert match is not None
+    return match.group(0)
+
+
+@pytest.mark.parametrize(
+    ("mode", "shows_tag", "shows_min"),
+    [
+        ("off", False, False),
+        ("uniform", True, False),
+        ("vary", False, False),
+        ("minimum", True, True),
+    ],
+)
+@pytest.mark.asyncio
+async def test_constraint_field_visibility_by_mode(
+    test_client: AsyncTestClient,
+    carb_tags: tuple[TagCategory, Tag, Tag, Tag],
+    mode: str,
+    shows_tag: bool,
+    shows_min: bool,
+) -> None:
+    """Constraint rows should only show tag and amount fields when relevant."""
+    category, potato, _, _ = carb_tags
+    response = await test_client.post(
+        "/week-menu/constraints",
+        data={
+            f"constraint_mode_{category.id}": mode,
+            f"constraint_tag_{category.id}": str(potato.id),
+            f"constraint_min_{category.id}": "2",
+        },
+    )
+
+    assert response.status_code == 200
+    row_html = _constraint_row_html(response.text, category.name)
+    assert f'data-constraint-mode="{mode}"' in row_html
+
+    if shows_tag:
+        assert 'week-menu-constraint-tag-field is-hidden' not in row_html
+    else:
+        assert 'week-menu-constraint-tag-field is-hidden' in row_html
+
+    if shows_min:
+        assert 'week-menu-constraint-min-field is-hidden' not in row_html
+    else:
+        assert 'week-menu-constraint-min-field is-hidden' in row_html
 
 
 @pytest.mark.asyncio
