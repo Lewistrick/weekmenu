@@ -75,7 +75,7 @@ class RecipeController(Controller):
                 category.id, {"category": category, "tags": []}
             )
             category_data["tags"].append(tag)
-        return list(groups.values())
+        return sorted(groups.values(), key=lambda group: group["category"].name.lower())
 
     @staticmethod
     async def _recipes_missing_any_tag_group() -> list[dict[str, Any]]:

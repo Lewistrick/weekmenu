@@ -40,21 +40,19 @@ async def close_test_db() -> None:
         pass
 
 
-@pytest.fixture
-async def test_client(
-    monkeypatch: pytest.MonkeyPatch,
-) -> AsyncIterator[AsyncTestClient]:
-    """Provide a test client backed by an in-memory database."""
+@pytest.fixture(autouse=True)
+def _use_in_memory_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force every test to use the isolated in-memory SQLite database."""
     monkeypatch.setattr(db_config_module, "TORTOISE_CONFIG", TEST_DB_CONFIG)
-    monkeypatch.setattr(app, "on_startup", [])
-    monkeypatch.setattr(app, "on_shutdown", [])
+    monkeypatch.setattr(app, "on_startup", [init_test_db])
+    monkeypatch.setattr(app, "on_shutdown", [close_test_db])
 
-    await init_test_db()
-    try:
-        async with AsyncTestClient(app=app) as client:
-            yield client
-    finally:
-        await close_test_db()
+
+@pytest.fixture
+async def test_client() -> AsyncIterator[AsyncTestClient]:
+    """Provide a test client backed by an in-memory database."""
+    async with AsyncTestClient(app=app) as client:
+        yield client
 
 
 @pytest.fixture
