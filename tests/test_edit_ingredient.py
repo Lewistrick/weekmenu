@@ -93,6 +93,93 @@ async def test_edit_ingredient_updates_quantity_and_unit(
 
 
 @pytest.mark.asyncio
+async def test_edit_ingredient_updates_ingredient_name(
+    test_client: AsyncTestClient,
+    recipe_with_ingredient: tuple[Recipe, RecipeIngredient],
+) -> None:
+    """Saving the edit form should persist ingredient name changes."""
+    recipe, recipe_ingredient = recipe_with_ingredient
+
+    response = await test_client.put(
+        f"/recipes/{recipe.id}/ingredients/{recipe_ingredient.id}/edit",
+        data={"quantity": "350", "unit": "g", "ingredient": "sweet potatoes"},
+    )
+
+    assert response.status_code == 200
+    assert "sweet potatoes" in response.text
+
+    await recipe_ingredient.refresh_from_db()
+    await recipe_ingredient.fetch_related("ingredient")
+    assert recipe_ingredient.ingredient.name == "sweet potatoes"
+
+
+@pytest.mark.asyncio
+async def test_edit_ingredient_rejects_duplicate_ingredient_name(
+    test_client: AsyncTestClient,
+    recipe_with_ingredient: tuple[Recipe, RecipeIngredient],
+) -> None:
+    """Renaming a line to an ingredient already on the recipe should fail."""
+    recipe, recipe_ingredient = recipe_with_ingredient
+    carrots = await Ingredient.create(name="carrots")
+    unit = await recipe_ingredient.unit
+    await RecipeIngredient.create(
+        recipe=recipe,
+        ingredient=carrots,
+        quantity=50.0,
+        unit=unit,
+    )
+
+    response = await test_client.put(
+        f"/recipes/{recipe.id}/ingredients/{recipe_ingredient.id}/edit",
+        data={"quantity": "200", "unit": "g", "ingredient": "carrots"},
+    )
+
+    assert response.status_code == 200
+    assert "already in recipe" in response.text
+
+    await recipe_ingredient.refresh_from_db()
+    await recipe_ingredient.fetch_related("ingredient")
+    assert recipe_ingredient.ingredient.name == "potatoes"
+
+
+@pytest.mark.asyncio
+async def test_ingredient_edit_form_allows_editing_name(
+    test_client: AsyncTestClient,
+    recipe_with_ingredient: tuple[Recipe, RecipeIngredient],
+) -> None:
+    """The ingredient name field should be editable."""
+    recipe, recipe_ingredient = recipe_with_ingredient
+
+    response = await test_client.get(
+        f"/recipes/{recipe.id}/ingredients/{recipe_ingredient.id}/edit",
+    )
+
+    assert response.status_code == 200
+    assert 'name="ingredient"' in response.text
+    assert "readonly" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_cancel_ingredient_edit_returns_row(
+    test_client: AsyncTestClient,
+    recipe_with_ingredient: tuple[Recipe, RecipeIngredient],
+) -> None:
+    """Canceling an edit should restore the read-only ingredient row."""
+    recipe, recipe_ingredient = recipe_with_ingredient
+
+    response = await test_client.get(
+        f"/recipes/{recipe.id}/ingredients/{recipe_ingredient.id}",
+    )
+
+    assert response.status_code == 200
+    assert "edit-ingredient-form" not in response.text
+    assert "200" in response.text
+    assert "potatoes" in response.text
+    assert 'title="Edit ingredient"' in response.text
+    assert 'title="Cancel edit"' not in response.text
+
+
+@pytest.mark.asyncio
 async def test_ingredient_editor_uses_recipe_ingredient_id(
     test_client: AsyncTestClient,
     recipe_with_ingredient: tuple[Recipe, RecipeIngredient],
@@ -111,6 +198,7 @@ async def test_ingredient_editor_uses_recipe_ingredient_id(
     )
     assert f"#edit-ingredient-{recipe_ingredient.id}" in response.text
     assert f"/recipes/{recipe.id}/ingredients/{ingredient.id}/edit" not in response.text
+    assert 'title="Cancel edit"' in response.text
 
 
 @pytest.mark.asyncio

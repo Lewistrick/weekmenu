@@ -1,0 +1,17 @@
+<div id="edit-ingredient-{{ ingredient.id }}" class="edit-ingredient-row">
+    <span class="ingredient-span">
+        {{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}
+    </span>
+    <div class="ingredient-actions">
+        <button id="edit-btn-ingredient-{{ ingredient.id }}" class="btn btn-sm icon-btn icon-action-btn edit-ingredient-button"
+            hx-get="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}/edit"
+            hx-target="#edit-ingredient-{{ ingredient.id }}" hx-swap="innerHTML" type="button" title="Edit ingredient" aria-label="Edit ingredient">
+            ✏️
+        </button>
+        <button class="btn btn-sm icon-btn icon-action-btn delete-ingredient-button"
+            hx-delete="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}"
+            hx-target="#edit-ingredient-{{ ingredient.id }}" hx-swap="delete" type="button" title="Remove ingredient" aria-label="Remove ingredient">
+            🗑️
+        </button>
+    </div>
+</div>

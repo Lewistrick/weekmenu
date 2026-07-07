@@ -373,11 +373,33 @@ class RecipeController(Controller):
         )
 
     @get(
+        path="/{recipe_id:int}/ingredients/{ingredient_id:int}",
+        summary="Show ingredient row",
+    )
+    async def ingredient_row(self, recipe_id: int, ingredient_id: int) -> Template:
+        """Return the read-only ingredient row, for example when canceling an edit."""
+        recipe_ingredient = await RecipeIngredient.get_or_none(
+            id=ingredient_id, recipe=recipe_id
+        )
+        if not recipe_ingredient:
+            raise NotFoundException()
+
+        await recipe_ingredient.fetch_related("ingredient", "unit")
+
+        return Template(
+            template_name="partials/ingredient-row.html",
+            context={
+                "ingredient": recipe_ingredient,
+                "recipe_id": recipe_id,
+            },
+        )
+
+    @get(
         path="/{recipe_id:int}/ingredients/{ingredient_id:int}/edit",
         summary="Show ingredient edit form",
     )
     async def ingredient_editor(self, recipe_id: int, ingredient_id: int) -> Template:
-        """Show the form to edit an ingredient's quantity and unit."""
+        """Show the form to edit an ingredient's quantity, unit, and name."""
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
         )
@@ -403,7 +425,7 @@ class RecipeController(Controller):
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
-        """Save the edited ingredient quantity and unit."""
+        """Save the edited ingredient quantity, unit, and name."""
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
         )
@@ -412,6 +434,7 @@ class RecipeController(Controller):
 
         quantity = data.get("quantity")
         unit_abbrev = data.get("unit")
+        ingredient_name = data.get("ingredient")
 
         messages = []
         valid = True
@@ -434,6 +457,26 @@ class RecipeController(Controller):
                 valid = False
         else:
             messages.append("No unit found, not saved.")
+            valid = False
+
+        if ingredient_name is not None and str(ingredient_name).strip():
+            ingredient, _ = await Ingredient.get_or_create(
+                name=str(ingredient_name).strip()
+            )
+            duplicate = (
+                await RecipeIngredient.filter(
+                    recipe=recipe_id, ingredient=ingredient.id
+                )
+                .exclude(id=ingredient_id)
+                .first()
+            )
+            if duplicate:
+                messages.append("Ingredient already in recipe. Not saved.")
+                valid = False
+            else:
+                recipe_ingredient.ingredient = ingredient
+        else:
+            messages.append("No ingredient name found, not saved.")
             valid = False
 
         if valid:

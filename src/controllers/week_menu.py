@@ -199,8 +199,7 @@ class WeekMenuController(Controller):
         category_ids = await self._category_ids()
         constraints = load_tag_constraints(request, category_ids)
         recipe_ids = [
-            recipe.id
-            for recipe in await Recipe.filter(enabled=True).only("id")
+            recipe.id for recipe in await Recipe.filter(enabled=True).only("id")
         ]
         recipe_tag_map = await self._recipe_tag_map(recipe_ids)
         menu, warnings = randomize_week_menu(

@@ -5,8 +5,14 @@
             <input type="text" name="quantity" placeholder="Quantity" value="{{ recipe_ingredient.quantity }}" required />
             <input type="text" name="unit" placeholder="Unit" value="{{ recipe_ingredient.unit.abbrev }}" required />
             <input type="text" name="ingredient" placeholder="Name" value="{{ recipe_ingredient.ingredient.name }}"
-                required readonly />
+                required />
             <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+                hx-get="/recipes/{{ recipe_ingredient.recipe_id }}/ingredients/{{ recipe_ingredient.id }}"
+                hx-target="#edit-ingredient-{{ recipe_ingredient.id }}" hx-swap="outerHTML"
+                title="Cancel edit" aria-label="Cancel edit">
+                ✕
+            </button>
         </div>
     </div>
 </form>
