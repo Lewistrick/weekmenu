@@ -2,6 +2,7 @@
 
 import pytest
 from litestar.testing import AsyncTestClient
+from tortoise import Tortoise
 
 from src.models import Ingredient, Recipe, RecipeIngredient, Unit, User
 
@@ -11,9 +12,17 @@ async def test_test_client_uses_isolated_database(
     test_client: AsyncTestClient,
 ) -> None:
     """The test fixture should point the app at an in-memory database."""
-    import src.app as app_module
+    import src.db_config as db_config_module
 
-    assert app_module.TORTOISE_CONFIG["connections"]["default"] == "sqlite://:memory:"
+    assert (
+        db_config_module.TORTOISE_CONFIG["connections"]["default"]
+        == "sqlite://:memory:"
+    )
+
+    conn = Tortoise.get_connection("default")
+    database_list = await conn.execute_query("PRAGMA database_list")
+    database_files = [row[2] for row in database_list[1]]
+    assert not any(file and "recipes.sqlite3" in str(file) for file in database_files)
 
 
 @pytest.fixture
@@ -181,7 +190,7 @@ async def test_add_recipe_defaults_to_enabled_and_private(
     response = await test_client.post(
         "/recipes",
         data={
-            "name": "Default Flags",
+            "name": "__pytest_default_flags__",
             "servings": "2",
             "description": "A recipe with defaults",
             "prep_time_minutes": "10",
@@ -191,7 +200,9 @@ async def test_add_recipe_defaults_to_enabled_and_private(
 
     assert response.status_code == 200
 
-    recipe = await Recipe.filter(name="Default Flags").order_by("-id").first()
+    recipe = (
+        await Recipe.filter(name="__pytest_default_flags__").order_by("-id").first()
+    )
     assert recipe is not None
     assert recipe.enabled is True
     assert recipe.private is True

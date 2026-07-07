@@ -5,12 +5,10 @@
             <input type="text" name="quantity" placeholder="Quantity" required />
             <input type="text" name="unit" placeholder="Unit" required />
             <input type="text" name="ingredient" placeholder="Name" required />
-            <button type="submit" class="btn-ingredient-action">
-                <span class="emoji-on-button">✔️</span>
-            </button>
-            <button type="button" class="btn-ingredient-action" hx-get="/elements/empty/div/add-ingredient-form"
+            <button type="submit" class="btn btn-primary btn-sm">Add</button>
+            <button type="button" class="btn btn-ghost btn-sm" hx-get="/elements/empty/div/add-ingredient-form"
                 hx-target="#add-ingredient-form" hx-swap="innerHTML">
-                <span class="emoji-on-button">❌</span>
+                Cancel
             </button>
         </div>
     </div>

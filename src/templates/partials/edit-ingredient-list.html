@@ -1,24 +1,26 @@
 <div id="recipe-ingredients">
     {% for ingredient in ingredients %}
     <div id="edit-ingredient-{{ingredient.id}}" class="edit-ingredient-row">
-        <button id="edit-btn-ingredient-{{ingredient.id}}" class="emoji-button edit-ingredient-button"
-            hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit"
-            hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="innerHTML">
-            <span class="emoji-on-button">✏️</span>
-        </button>
-        <button class="emoji-button delete-ingredient-button"
-            hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}"
-            hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="delete">
-            <span class="emoji-on-button">🗑️</span>
-        </button>
         <span class="ingredient-span">
             {{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}
         </span>
+        <div class="ingredient-actions">
+            <button id="edit-btn-ingredient-{{ingredient.id}}" class="btn btn-ghost btn-sm edit-ingredient-button"
+                hx-get="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}/edit"
+                hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="innerHTML" type="button">
+                Edit
+            </button>
+            <button class="btn btn-ghost btn-sm btn-danger delete-ingredient-button"
+                hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ingredient.id }}"
+                hx-target="#edit-ingredient-{{ingredient.id}}" hx-swap="delete" type="button">
+                Remove
+            </button>
+        </div>
     </div>
     {% endfor %}
     <button hx-get="/recipes/{{ recipe.id }}/ingredients/add" hx-target="#add-ingredient-form" hx-swap="innerHTML"
-        class="emoji-button">
-        <span class="emoji-on-button">➕</span>
+        class="btn btn-secondary btn-sm" type="button">
+        + Add ingredient
     </button>
     <div id="add-ingredient-form"></div>
 </div>

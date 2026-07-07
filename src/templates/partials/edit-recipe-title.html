@@ -1,8 +1,6 @@
 <form hx-post="/recipes/edit-title/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML" class="inline-form">
-    <div class="form-group">
+    <div class="form-group form-group--inline">
         <input type="text" name="new_title" value="{{ recipe.name }}" class="form-control" autofocus />
-        <button type="submit" class="emoji-button">
-            <span class="emoji-on-button">✔️</span>
-        </button>
+        <button type="submit" class="btn btn-primary btn-sm">Save title</button>
     </div>
 </form>

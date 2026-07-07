@@ -1,9 +1,12 @@
-<p>Recipe '{{ recipe.name }}' added successfully!</p>
+<div class="success-message">
+    <p>Recipe <strong>{{ recipe.name }}</strong> added successfully.</p>
+    <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm">View recipe</a>
+</div>
 
 {% if messages %}
-<ul>
+<ul class="message-list">
     {% for message in messages %}
-    <li>{{ message }}</li>
+    <li class="single-message">{{ message }}</li>
     {% endfor %}
 </ul>
 {% endif %}

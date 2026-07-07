@@ -1,0 +1,6 @@
+---
+description: 
+alwaysApply: true
+---
+
+Backend: litestar API + SQLite database + aerich migrations. Frontend: htmx. See the README file for more specifications.

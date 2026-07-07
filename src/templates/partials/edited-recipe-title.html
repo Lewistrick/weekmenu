@@ -1,7 +1,7 @@
-<h2 class="recipe-title">{{ recipe.name }}</h2>
+<h2 class="recipe-title-display">{{ recipe.name }}</h2>
 <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
-    class="emoji-button">
-    <span class="emoji-on-button">✏️</span>
+    class="btn btn-ghost btn-sm" type="button">
+    Edit title
 </button>
 {% if messages %}
 <div class="messages">

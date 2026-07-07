@@ -3,47 +3,55 @@
 {% block title %}Add a new recipe{% endblock %}
 
 {% block content %}
-<div class="add-recipe-container">
-    <h1 class="page-title">Add a New Recipe</h1>
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Add a new recipe</h1>
+        <p class="page-lead">Fill in the details below. You can add ingredients one line at a time.</p>
+    </header>
 
-    <form hx-post="/recipes" hx-target="#response-message" hx-swap="innerHTML" class="recipe-form">
-        <div class="form-group">
-            <label for="name">Recipe Name</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-
-        <div class="form-group">
-            <label for="servings">Servings</label>
-            <input type="number" id="servings" name="servings" required>
-        </div>
-
-        <div class="form-group">
-            <label for="prep_time_minutes">Prep Time (minutes)</label>
-            <input type="number" id="prep_time_minutes" name="prep_time_minutes">
-        </div>
-
-        <div class="form-group">
-            <label for="cook_time_minutes">Cook Time (minutes)</label>
-            <input type="number" id="cook_time_minutes" name="cook_time_minutes">
-        </div>
-
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="5"></textarea>
-        </div>
-
-        <div class="form-group">
-            <h2>Ingredients</h2>
-            <div id="ingredients-container">
-                <!-- Ingredient inputs will be added here -->
+    <div class="form-panel">
+        <form hx-post="/recipes" hx-target="#response-message" hx-swap="innerHTML" class="recipe-form">
+            <div class="form-group">
+                <label for="name">Recipe name</label>
+                <input type="text" id="name" name="name" class="form-control" required>
             </div>
-            <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container" hx-swap="beforeend"
-                class="btn-ingredient-action">Add Ingredient</button>
-        </div>
 
-        <button type="submit" class="btn-submit">Add Recipe</button>
-    </form>
+            <div class="form-group">
+                <label for="servings">Servings</label>
+                <input type="number" id="servings" name="servings" class="form-control" required>
+            </div>
 
-    <div id="response-message" class="response-message"></div>
+            <div class="form-group">
+                <label for="prep_time_minutes">Prep time (minutes)</label>
+                <input type="number" id="prep_time_minutes" name="prep_time_minutes" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="cook_time_minutes">Cook time (minutes)</label>
+                <input type="number" id="cook_time_minutes" name="cook_time_minutes" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="5" class="form-control"></textarea>
+            </div>
+
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2 class="section-title">Ingredients</h2>
+                    <p class="section-hint">Add quantity, unit, and ingredient name for each line.</p>
+                </div>
+                <div id="ingredients-container" class="ingredients-container"></div>
+                <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container"
+                    hx-swap="beforeend" class="btn btn-secondary btn-sm">
+                    + Add ingredient
+                </button>
+            </section>
+
+            <button type="submit" class="btn btn-primary">Add recipe</button>
+        </form>
+
+        <div id="response-message" class="response-message"></div>
+    </div>
 </div>
 {% endblock %}

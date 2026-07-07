@@ -55,6 +55,7 @@ class RecipeController(Controller):
         ingredients = await RecipeIngredient.filter(
             recipe=random_recipe.id
         ).select_related("ingredient", "unit")
+        await random_recipe.fetch_related("owner")
 
         return Template(
             template_name="view-recipe.html",
@@ -68,9 +69,9 @@ class RecipeController(Controller):
     async def view_recipe_page(self, recipe_id: int) -> Template:
         recipe = await Recipe.get_or_none(id=recipe_id)
         if not recipe:
-            breakpoint()
             raise NotFoundException()
 
+        await recipe.fetch_related("owner")
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
@@ -88,6 +89,7 @@ class RecipeController(Controller):
         if not recipe:
             raise NotFoundException()
 
+        await recipe.fetch_related("owner")
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
@@ -446,7 +448,7 @@ class RecipeController(Controller):
             # At some point this could show recent/popular recipes
             pass
         else:
-            recipes = await Recipe.filter(name__icontains=search)
+            recipes = await Recipe.search(search)
 
         return Template(
             template_name="search-results.html",
@@ -479,7 +481,7 @@ class RecipeController(Controller):
 
         search_results: list[Recipe] = []
         if search:
-            search_results = await Recipe.filter(name__icontains=search).limit(10)
+            search_results = await Recipe.search(search, limit=10)
 
         return Template(
             template_name="partials/recipe-detail-and-search-results.html",

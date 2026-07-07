@@ -1,8 +1,15 @@
-<h2>Search results</h2>
-{% for recipe in recipes %}
-<div>
-    <button hx-get="/recipes/view/{{ recipe.id }}" hx-target="body" class="recipe-button">
-        #{{ recipe.id }} {{ recipe.name }}
-    </button>
-</div>
-{% endfor %}
+{% if recipes %}
+<h2 class="section-title">Search results</h2>
+<ul class="search-result-list">
+    {% for recipe in recipes %}
+    <li>
+        <button hx-get="/recipes/view/{{ recipe.id }}" hx-target="body" class="search-result-item" type="button">
+            <span class="search-result-id">#{{ recipe.id }}</span>
+            <span class="search-result-name">{{ recipe.name }}</span>
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="search-placeholder">No recipes matched your search.</p>
+{% endif %}

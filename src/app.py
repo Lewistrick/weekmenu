@@ -15,7 +15,7 @@ from src.controllers.elements import ElementController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
-from src.db_config import TORTOISE_CONFIG
+import src.db_config as db_config
 from src.models import User
 from src.template_utils import render_markdown
 
@@ -71,7 +71,7 @@ async def _ensure_recipe_owners(conn) -> None:
 
 
 async def init_db() -> None:
-    await Tortoise.init(config=TORTOISE_CONFIG)
+    await Tortoise.init(config=db_config.TORTOISE_CONFIG)
     await Tortoise.generate_schemas(safe=True)
 
     conn = Tortoise.get_connection("default")

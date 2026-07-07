@@ -1,26 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}View recipe{% endblock %}
+{% block title %}{{ recipe.name }}{% endblock %}
 
 {% block content %}
-<h2 class="recipe-title">#{{ recipe.id }} {{ recipe.name }}</h2>
-<a href="/recipes/edit/{{recipe.id}}" class="emoji-button"><span class="emoji-on-button">✏️</span></a>
-<div class="recipe-status" aria-label="recipe metadata">
-    <span class="status-pill">
-        <span class="status-icon">{% if recipe.private %}🔒{% else %}🌐{% endif %}</span>
-        <span class="status-label">{% if recipe.private %}Private{% else %}Public{% endif %}</span>
-    </span>
-    <span class="status-pill">
-        <span class="status-icon">{% if recipe.enabled %}✅{% else %}⏸️{% endif %}</span>
-        <span class="status-label">{% if recipe.enabled %}Enabled{% else %}Disabled{% endif %}</span>
-    </span>
-</div>
-<h4>Ingredients</h4>
-<ul>
-    {% for ingredient in ingredients %}
-    <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
-    {% endfor %}
-</ul>
-<h4>Description</h4>
-<div class="recipe-description">{{ recipe.description | markdown | safe }}</div>
+<article class="recipe-view">
+    <header class="recipe-header">
+        <p class="recipe-owner-line">By <strong>{{ recipe.owner.username }}</strong></p>
+        <div class="recipe-title-row">
+            <h1 class="recipe-title-main">#{{ recipe.id }} {{ recipe.name }}</h1>
+            <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">Edit recipe</a>
+        </div>
+        <div class="recipe-status" aria-label="recipe metadata">
+            <span class="status-pill">
+                <span class="status-icon">{% if recipe.private %}🔒{% else %}🌐{% endif %}</span>
+                <span class="status-label">{% if recipe.private %}Private{% else %}Public{% endif %}</span>
+            </span>
+            <span class="status-pill">
+                <span class="status-icon">{% if recipe.enabled %}✅{% else %}⏸️{% endif %}</span>
+                <span class="status-label">{% if recipe.enabled %}Enabled{% else %}Disabled{% endif %}</span>
+            </span>
+        </div>
+    </header>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Ingredients</h2>
+        <ul class="recipe-ingredient-list">
+            {% for ingredient in ingredients %}
+            <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Description</h2>
+        <div class="recipe-description">{{ recipe.description | markdown | safe }}</div>
+    </section>
+</article>
 {% endblock %}

@@ -22,6 +22,27 @@ class Recipe(Model):
     private = BooleanField(default=True)
     enabled = BooleanField(default=True)
 
+    @classmethod
+    async def search(cls, query: str, *, limit: int | None = None) -> list["Recipe"]:
+        """Return recipes matching a query in name, description, or ingredients.
+
+        Args:
+            query: Text to match case-insensitively.
+            limit: Optional maximum number of recipes to return.
+
+        Returns:
+            Distinct recipes that match the query.
+        """
+        filters = (
+            Q(name__icontains=query)
+            | Q(description__icontains=query)
+            | Q(recipe__ingredient__name__icontains=query)
+        )
+        queryset = cls.filter(filters).distinct()
+        if limit is not None:
+            queryset = queryset.limit(limit)
+        return await queryset
+
 
 class Ingredient(Model):
     """Any ingredient (to add quantity and unit, see RecipeIngredient)."""

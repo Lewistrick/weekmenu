@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+The models are in src/models.py and reflect the database. Always use the ORM instead of raw SQL.
