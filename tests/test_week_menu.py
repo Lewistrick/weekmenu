@@ -5,6 +5,7 @@ from litestar.testing import AsyncTestClient
 
 from src.models import Recipe, User
 from src.week_menu import (
+    assign_recipe_to_unpinned_day,
     empty_week_menu,
     randomize_week_menu,
     set_day_recipe,
@@ -65,6 +66,15 @@ def test_randomize_fills_unpinned_days() -> None:
     assigned = [slot["recipe_id"] for slot in randomized.values()]
     assert all(recipe_id is not None for recipe_id in assigned)
     assert len(set(assigned)) == len(assigned)
+
+
+def test_assign_recipe_to_unpinned_day_returns_none_when_all_pinned() -> None:
+    """Assign helper should fail gracefully if every day is pinned."""
+    menu = empty_week_menu()
+    for day in menu:
+        menu[day]["pinned"] = True
+    assigned_day = assign_recipe_to_unpinned_day(menu, recipe_id=99)
+    assert assigned_day is None
 
 
 @pytest.mark.asyncio

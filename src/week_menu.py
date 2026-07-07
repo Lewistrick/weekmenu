@@ -119,6 +119,21 @@ def set_day_recipe(
     return menu
 
 
+def assign_recipe_to_unpinned_day(
+    menu: dict[str, DaySlot], recipe_id: int, start_day: str = "monday"
+) -> str | None:
+    """Assign recipe to first unpinned day in display order.
+
+    Returns:
+        Assigned day key, or ``None`` when all days are pinned.
+    """
+    for day in ordered_week_days(start_day):
+        if not menu[day]["pinned"]:
+            menu[day]["recipe_id"] = recipe_id
+            return day
+    return None
+
+
 def randomize_week_menu(
     menu: dict[str, DaySlot], recipe_ids: list[int]
 ) -> dict[str, DaySlot]:

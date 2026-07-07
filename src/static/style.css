@@ -16,7 +16,7 @@ a {
     gap: 1rem;
     background-color: #222;
     color: #ddd;
-    padding: 0.65rem 1.25rem;
+    padding: 0.65rem 1.75rem 0.65rem 1.25rem;
     border-bottom: 1px solid #444;
 }
 
@@ -68,6 +68,11 @@ a {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.nav-group--right .nav-group-menu {
+    left: auto;
+    right: 0;
 }
 
 .nav-link {
@@ -386,12 +391,13 @@ div.recipe-detail {
 
 .week-menu-start-day {
     display: flex;
-    align-items: end;
+    align-items: flex-start;
     gap: 0.6rem;
 }
 
 .week-menu-start-day .field-label {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0;
+    margin-top: 0.45rem;
 }
 
 .week-menu-start-day .form-control {
@@ -425,7 +431,12 @@ div.recipe-detail {
     gap: 0.35rem;
 }
 
-.week-menu-action-btn {
+.week-menu-day-actions form {
+    margin: 0;
+    display: inline-flex;
+}
+
+.icon-action-btn {
     height: 2rem;
     width: 2rem;
     min-width: 2rem;
@@ -704,6 +715,16 @@ div.recipe-detail {
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 0.75rem;
+}
+
+.recipe-title-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.home-group-section {
+    margin-top: 1.5rem;
 }
 
 .recipe-title-main,
