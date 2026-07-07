@@ -41,6 +41,66 @@
         </button>
     </div>
 
+    {% if tag_constraint_rows %}
+    <section class="week-menu-options">
+        <div class="week-menu-options-header">
+            <h2 class="section-title">Tag constraints</h2>
+            <p class="section-hint">Optional rules for randomize. Pinned days count toward constraints.</p>
+        </div>
+        <form
+            class="week-menu-constraints-form"
+            hx-post="/week-menu/constraints"
+            hx-trigger="change"
+            hx-target="#week-menu-root"
+            hx-swap="outerHTML"
+        >
+            {% for row in tag_constraint_rows %}
+            {% set constraint = row.constraint %}
+            {% set mode = constraint.mode if constraint else "off" %}
+            <div class="week-menu-constraint-row" data-constraint-mode="{{ mode }}">
+                <label class="field-label" for="constraint-mode-{{ row.category.id }}">{{ row.category.name }}</label>
+                <select
+                    id="constraint-mode-{{ row.category.id }}"
+                    name="constraint_mode_{{ row.category.id }}"
+                    class="form-control week-menu-constraint-mode"
+                >
+                    <option value="off" {% if mode == "off" %}selected{% endif %}>Ignore</option>
+                    <option value="uniform" {% if mode == "uniform" %}selected{% endif %}>Same tag everywhere</option>
+                    <option value="vary" {% if mode == "vary" %}selected{% endif %}>Vary across week</option>
+                    <option value="minimum" {% if mode == "minimum" %}selected{% endif %}>At least N with tag</option>
+                </select>
+                <div class="week-menu-constraint-tag-field{% if mode not in ["uniform", "minimum"] %} is-hidden{% endif %}">
+                    <label class="visually-hidden" for="constraint-tag-{{ row.category.id }}">Tag for {{ row.category.name }}</label>
+                    <select
+                        id="constraint-tag-{{ row.category.id }}"
+                        name="constraint_tag_{{ row.category.id }}"
+                        class="form-control week-menu-constraint-tag"
+                    >
+                        <option value="">Choose tag</option>
+                        {% for tag in row.tags %}
+                        <option value="{{ tag.id }}" {% if constraint and constraint.tag_id == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="week-menu-constraint-min-field{% if mode != "minimum" %} is-hidden{% endif %}">
+                    <label class="visually-hidden" for="constraint-min-{{ row.category.id }}">Minimum count for {{ row.category.name }}</label>
+                    <input
+                        id="constraint-min-{{ row.category.id }}"
+                        name="constraint_min_{{ row.category.id }}"
+                        class="form-control week-menu-constraint-min"
+                        type="number"
+                        min="1"
+                        max="7"
+                        value="{{ constraint.minimum_count if constraint else 1 }}"
+                        aria-label="Minimum days with tag for {{ row.category.name }}"
+                    >
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+    </section>
+    {% endif %}
+
     <div id="week-menu-panel" class="week-menu-panel">
         {% include "partials/week-menu-days.html" %}
     </div>

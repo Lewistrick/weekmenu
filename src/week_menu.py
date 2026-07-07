@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+from enum import StrEnum
 from typing import Any, TypedDict
 
 from litestar import Request
@@ -29,6 +30,29 @@ DAY_LABELS: dict[str, str] = {
 
 SESSION_KEY = "week_menu"
 START_DAY_SESSION_KEY = "week_menu_start_day"
+TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
+
+
+class TagConstraintMode(StrEnum):
+    """How a tag group constrains week menu randomization."""
+
+    OFF = "off"
+    UNIFORM = "uniform"
+    VARY = "vary"
+    MINIMUM = "minimum"
+
+
+class TagGroupConstraint(TypedDict):
+    """User-selected constraint for one tag group."""
+
+    category_id: int
+    mode: str
+    tag_id: int | None
+    minimum_count: int
+
+
+RecipeTagsByCategory = dict[int, set[int]]
+RecipeTagMap = dict[int, RecipeTagsByCategory]
 
 
 class DaySlot(TypedDict):
@@ -134,13 +158,388 @@ def assign_recipe_to_unpinned_day(
     return None
 
 
+def default_tag_constraints(category_ids: list[int]) -> list[TagGroupConstraint]:
+    """Return disabled constraints for each tag group."""
+    return [
+        TagGroupConstraint(
+            category_id=category_id,
+            mode=TagConstraintMode.OFF,
+            tag_id=None,
+            minimum_count=1,
+        )
+        for category_id in category_ids
+    ]
+
+
+def _normalize_constraint(raw: dict[str, Any], category_id: int) -> TagGroupConstraint:
+    """Coerce stored constraint data into a valid shape."""
+    mode_value = str(raw.get("mode", TagConstraintMode.OFF))
+    if mode_value not in {item.value for item in TagConstraintMode}:
+        mode_value = TagConstraintMode.OFF
+
+    tag_id = raw.get("tag_id")
+    minimum_count = raw.get("minimum_count", 1)
+    try:
+        minimum_count = max(1, min(len(WEEK_DAYS), int(minimum_count)))
+    except (TypeError, ValueError):
+        minimum_count = 1
+
+    return TagGroupConstraint(
+        category_id=category_id,
+        mode=mode_value,
+        tag_id=int(tag_id) if tag_id is not None else None,
+        minimum_count=minimum_count,
+    )
+
+
+def load_tag_constraints(
+    request: Request, category_ids: list[int]
+) -> list[TagGroupConstraint]:
+    """Load tag constraints from session, filling defaults for each group."""
+    stored = request.session.get(TAG_CONSTRAINTS_SESSION_KEY, [])
+    by_category: dict[int, dict[str, Any]] = {}
+    if isinstance(stored, list):
+        for item in stored:
+            if not isinstance(item, dict):
+                continue
+            category_id = item.get("category_id")
+            if isinstance(category_id, int):
+                by_category[category_id] = item
+
+    return [
+        _normalize_constraint(by_category.get(category_id, {}), category_id)
+        for category_id in category_ids
+    ]
+
+
+def save_tag_constraints(
+    request: Request, constraints: list[TagGroupConstraint]
+) -> None:
+    """Persist tag constraints to the session."""
+    request.session[TAG_CONSTRAINTS_SESSION_KEY] = constraints
+
+
+def parse_tag_constraints_from_form(
+    form_data: dict[str, Any], category_ids: list[int]
+) -> list[TagGroupConstraint]:
+    """Parse tag constraint settings submitted from the week menu form."""
+    constraints: list[TagGroupConstraint] = []
+    for category_id in category_ids:
+        mode = str(
+            form_data.get(f"constraint_mode_{category_id}", TagConstraintMode.OFF)
+        )
+        if mode not in {item.value for item in TagConstraintMode}:
+            mode = TagConstraintMode.OFF
+
+        tag_value = form_data.get(f"constraint_tag_{category_id}")
+        tag_id = int(str(tag_value)) if tag_value not in {None, ""} else None
+
+        minimum_raw = form_data.get(f"constraint_min_{category_id}", 1)
+        try:
+            minimum_count = max(1, min(len(WEEK_DAYS), int(minimum_raw)))
+        except (TypeError, ValueError):
+            minimum_count = 1
+
+        constraints.append(
+            TagGroupConstraint(
+                category_id=category_id,
+                mode=mode,
+                tag_id=tag_id,
+                minimum_count=minimum_count,
+            )
+        )
+    return constraints
+
+
+def active_tag_constraints(
+    constraints: list[TagGroupConstraint],
+) -> list[TagGroupConstraint]:
+    """Return only constraints that affect randomization."""
+    return [
+        constraint
+        for constraint in constraints
+        if constraint["mode"] != TagConstraintMode.OFF
+    ]
+
+
+def _recipe_tags(
+    recipe_id: int,
+    recipe_tag_map: RecipeTagMap,
+    category_id: int,
+) -> set[int]:
+    """Return tag ids a recipe has within one category."""
+    return set(recipe_tag_map.get(recipe_id, {}).get(category_id, set()))
+
+
+def _recipe_has_tag(
+    recipe_id: int,
+    recipe_tag_map: RecipeTagMap,
+    category_id: int,
+    tag_id: int,
+) -> bool:
+    """Return whether a recipe carries a specific tag in a category."""
+    return tag_id in _recipe_tags(recipe_id, recipe_tag_map, category_id)
+
+
+def _count_recipes_with_tag(
+    assignment: dict[str, int | None],
+    recipe_tag_map: RecipeTagMap,
+    category_id: int,
+    tag_id: int,
+) -> int:
+    """Count assigned days whose recipe has the given tag."""
+    return sum(
+        1
+        for recipe_id in assignment.values()
+        if recipe_id is not None
+        and _recipe_has_tag(recipe_id, recipe_tag_map, category_id, tag_id)
+    )
+
+
+def _uniform_allows(
+    recipe_id: int,
+    constraint: TagGroupConstraint,
+    recipe_tag_map: RecipeTagMap,
+) -> bool:
+    """Return whether a recipe satisfies a same-tag-everywhere constraint."""
+    tag_id = constraint["tag_id"]
+    if tag_id is None:
+        return False
+    return _recipe_has_tag(recipe_id, recipe_tag_map, constraint["category_id"], tag_id)
+
+
+def _vary_allows(
+    recipe_id: int,
+    assignment: dict[str, int | None],
+    constraint: TagGroupConstraint,
+    recipe_tag_map: RecipeTagMap,
+    *,
+    day: str,
+) -> bool:
+    """Return whether assigning a recipe keeps tag variation within a group."""
+    category_id = constraint["category_id"]
+    candidate_tags = _recipe_tags(recipe_id, recipe_tag_map, category_id)
+    if not candidate_tags:
+        return True
+
+    for other_day, assigned_id in assignment.items():
+        if other_day == day or assigned_id is None:
+            continue
+        assigned_tags = _recipe_tags(assigned_id, recipe_tag_map, category_id)
+        if candidate_tags & assigned_tags:
+            return False
+    return True
+
+
+def _minimum_can_still_be_met(
+    assignment: dict[str, int | None],
+    remaining_day_count: int,
+    constraint: TagGroupConstraint,
+    recipe_tag_map: RecipeTagMap,
+) -> bool:
+    """Return whether a minimum-count constraint can still be satisfied."""
+    tag_id = constraint["tag_id"]
+    if tag_id is None:
+        return False
+
+    current = _count_recipes_with_tag(
+        assignment, recipe_tag_map, constraint["category_id"], tag_id
+    )
+    return current + remaining_day_count >= constraint["minimum_count"]
+
+
+def _minimum_is_met(
+    assignment: dict[str, int | None],
+    constraint: TagGroupConstraint,
+    recipe_tag_map: RecipeTagMap,
+) -> bool:
+    """Return whether a minimum-count constraint is satisfied."""
+    tag_id = constraint["tag_id"]
+    if tag_id is None:
+        return False
+    return (
+        _count_recipes_with_tag(
+            assignment, recipe_tag_map, constraint["category_id"], tag_id
+        )
+        >= constraint["minimum_count"]
+    )
+
+
+def _candidate_is_valid(
+    recipe_id: int,
+    day: str,
+    assignment: dict[str, int | None],
+    constraints: list[TagGroupConstraint],
+    recipe_tag_map: RecipeTagMap,
+    *,
+    slots_remaining_after_assign: int,
+) -> bool:
+    """Return whether a recipe can be assigned under active constraints."""
+    hypothetical = dict(assignment)
+    hypothetical[day] = recipe_id
+
+    for constraint in constraints:
+        mode = constraint["mode"]
+        if mode == TagConstraintMode.UNIFORM and not _uniform_allows(
+            recipe_id, constraint, recipe_tag_map
+        ):
+            return False
+        if mode == TagConstraintMode.VARY and not _vary_allows(
+            recipe_id, assignment, constraint, recipe_tag_map, day=day
+        ):
+            return False
+        if mode == TagConstraintMode.MINIMUM:
+            tag_id = constraint["tag_id"]
+            if tag_id is None:
+                return False
+            current = _count_recipes_with_tag(
+                hypothetical, recipe_tag_map, constraint["category_id"], tag_id
+            )
+            if current + slots_remaining_after_assign < constraint["minimum_count"]:
+                return False
+    return True
+
+
+def _all_minimums_met(
+    assignment: dict[str, int | None],
+    constraints: list[TagGroupConstraint],
+    recipe_tag_map: RecipeTagMap,
+) -> bool:
+    """Return whether every minimum-count constraint is satisfied."""
+    for constraint in constraints:
+        if constraint["mode"] != TagConstraintMode.MINIMUM:
+            continue
+        if not _minimum_is_met(assignment, constraint, recipe_tag_map):
+            return False
+    return True
+
+
+def _ordered_candidates(
+    recipe_ids: list[int],
+    assignment: dict[str, int | None],
+    *,
+    rng: random.Random,
+) -> list[int]:
+    """Return recipe ids to try, preferring recipes used fewer times."""
+    usage_count = {
+        recipe_id: sum(1 for value in assignment.values() if value == recipe_id)
+        for recipe_id in recipe_ids
+    }
+    candidates = list(recipe_ids)
+    rng.shuffle(candidates)
+    return sorted(candidates, key=lambda recipe_id: usage_count[recipe_id])
+
+
+def _solve_random_assignment(
+    menu: dict[str, DaySlot],
+    recipe_ids: list[int],
+    constraints: list[TagGroupConstraint],
+    recipe_tag_map: RecipeTagMap,
+    *,
+    rng: random.Random,
+) -> dict[str, int | None] | None:
+    """Find a random valid assignment for unpinned days using backtracking."""
+    assignment: dict[str, int | None] = {
+        day: slot["recipe_id"] for day, slot in menu.items()
+    }
+    unpinned_days = [day for day in WEEK_DAYS if not menu[day]["pinned"]]
+
+    def backtrack(index: int) -> bool:
+        if index == len(unpinned_days):
+            return _all_minimums_met(assignment, constraints, recipe_tag_map)
+
+        day = unpinned_days[index]
+        slots_after = len(unpinned_days) - index - 1
+        previous_recipe_id = assignment[day]
+        for recipe_id in _ordered_candidates(recipe_ids, assignment, rng=rng):
+            if not _candidate_is_valid(
+                recipe_id,
+                day,
+                assignment,
+                constraints,
+                recipe_tag_map,
+                slots_remaining_after_assign=slots_after,
+            ):
+                continue
+
+            assignment[day] = recipe_id
+            if backtrack(index + 1):
+                return True
+            assignment[day] = previous_recipe_id
+        return False
+
+    if backtrack(0):
+        return assignment
+    return None
+
+
 def randomize_week_menu(
-    menu: dict[str, DaySlot], recipe_ids: list[int]
+    menu: dict[str, DaySlot],
+    recipe_ids: list[int],
+    *,
+    constraints: list[TagGroupConstraint] | None = None,
+    recipe_tag_map: RecipeTagMap | None = None,
+    rng: random.Random | None = None,
+) -> tuple[dict[str, DaySlot], list[str]]:
+    """Fill unpinned days with random recipes that satisfy tag constraints.
+
+    Returns:
+        Updated menu and any warnings when constraints could not be satisfied.
+    """
+    warnings: list[str] = []
+    if not recipe_ids:
+        return menu, warnings
+
+    active_constraints = active_tag_constraints(constraints or [])
+    tag_map = recipe_tag_map or {}
+    randomizer = rng or random.Random()
+
+    if not active_constraints:
+        return _randomize_without_constraints(
+            menu, recipe_ids, rng=randomizer
+        ), warnings
+
+    for constraint in active_constraints:
+        if (
+            constraint["mode"]
+            in {
+                TagConstraintMode.UNIFORM,
+                TagConstraintMode.MINIMUM,
+            }
+            and constraint["tag_id"] is None
+        ):
+            warnings.append(
+                "Select a tag for each active tag constraint before randomizing."
+            )
+            return menu, warnings
+
+    for _attempt in range(30):
+        solution = _solve_random_assignment(
+            menu,
+            recipe_ids,
+            active_constraints,
+            tag_map,
+            rng=randomizer,
+        )
+        if solution is not None:
+            for day in WEEK_DAYS:
+                if not menu[day]["pinned"]:
+                    menu[day]["recipe_id"] = solution[day]
+            return menu, warnings
+
+    warnings.append(
+        "Could not build a week menu that satisfies the selected tag constraints."
+    )
+    return menu, warnings
+
+
+def _randomize_without_constraints(
+    menu: dict[str, DaySlot],
+    recipe_ids: list[int],
+    *,
+    rng: random.Random,
 ) -> dict[str, DaySlot]:
     """Fill unpinned days with random enabled recipes, avoiding duplicates when possible."""
-    if not recipe_ids:
-        return menu
-
     used_ids = {
         slot["recipe_id"]
         for day, slot in menu.items()
@@ -152,7 +551,7 @@ def randomize_week_menu(
     for day in unpinned_days:
         if not available_ids:
             available_ids = list(recipe_ids)
-        chosen_id = random.choice(available_ids)
+        chosen_id = rng.choice(available_ids)
         menu[day]["recipe_id"] = chosen_id
         used_ids.add(chosen_id)
         if len(available_ids) > 1:
