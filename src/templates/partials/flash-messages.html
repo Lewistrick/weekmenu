@@ -1,0 +1,19 @@
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    {% set flash_id = message_scope ~ "-message-" ~ loop.index0 %}
+    <div id="{{ flash_id }}" class="flash-banner single-message"
+        hx-get="/elements/empty/div/{{ flash_id }}"
+        hx-trigger="load delay:5s"
+        hx-target="this"
+        hx-swap="delete">
+        <span class="flash-banner-text">{{ message }}</span>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-get="/elements/empty/div/{{ flash_id }}"
+            hx-target="#{{ flash_id }}"
+            hx-swap="delete"
+            title="Dismiss" aria-label="Dismiss">✕</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

@@ -3,10 +3,6 @@
     class="btn btn-ghost btn-sm" type="button">
     Edit title
 </button>
-{% if messages %}
-<div class="messages">
-    {% for message in messages %}
-    <p class="single-message">{{ message }}</p>
-    {% endfor %}
-</div>
-{% endif %}
+{% with message_scope="recipe-title" %}
+{% include "partials/flash-messages.html" %}
+{% endwith %}

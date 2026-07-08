@@ -1,10 +1,6 @@
 <div class="recipe-description recipe-description-display">{{ recipe.description | markdown | safe }}</div>
 <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
     class="btn btn-secondary btn-sm" type="button" title="Edit description" aria-label="Edit description">✏️ Edit description</button>
-{% if messages %}
-<div class="messages">
-    {% for message in messages %}
-    <p class="single-message">{{ message }}</p>
-    {% endfor %}
-</div>
-{% endif %}
+{% with message_scope="recipe-desc" %}
+{% include "partials/flash-messages.html" %}
+{% endwith %}
