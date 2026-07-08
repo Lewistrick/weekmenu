@@ -10,7 +10,11 @@
 - Organize recipes with tag groups and values (for example: season, carb type, diet)
 - Create a random week menu, giving you a random recipe for each day of the week
     - Optional tag constraints when randomizing: same tag for every day, vary tags across the week, or at least N days with a chosen tag
-- Generate a grocery list given a week menu
+    - Reorder meals by moving a day's recipe up or down the week
+    - Enter the number of servings for each day; amounts are scaled from each recipe's own serving count
+- Generate a grocery list from the week menu
+    - Ingredient quantities are scaled to each day's servings, then ingredients sharing the same name and unit are added together
+    - Open it from the "🛒 Grocery list" button on the week menu page (`/week-menu/grocery-list`)
 - Search recipes by name, description, ingredients, and optional tag filters
 
 ### To see the API docs

@@ -7,21 +7,27 @@ from litestar.exceptions import NotFoundException
 from litestar.response import Template
 from loguru import logger
 
-from src.models import Recipe, RecipeTag, Tag, TagCategory
+from src.models import Recipe, RecipeIngredient, RecipeTag, Tag, TagCategory
 from src.week_menu import (
+    GroceryItem,
     TagGroupConstraint,
     build_day_rows,
+    build_grocery_list,
     is_valid_day,
     load_start_day,
     load_tag_constraints,
     load_week_menu,
+    move_day,
+    normalize_servings,
     ordered_week_days,
     parse_tag_constraints_from_form,
     randomize_week_menu,
     save_start_day,
     save_tag_constraints,
     save_week_menu,
+    scale_ingredient_quantity,
     set_day_recipe,
+    set_day_servings,
     toggle_pin,
 )
 
@@ -239,6 +245,83 @@ class WeekMenuController(Controller):
         menu = set_day_recipe(menu, day, recipe_id)
         save_week_menu(request, menu)
         return await self._render_days(request)
+
+    @post(
+        path="/{day:str}/move/{direction:str}", summary="Move a day's recipe up or down"
+    )
+    async def move_day_recipe(
+        self, request: Request, day: str, direction: str
+    ) -> Template:
+        """Swap a day's meal with the neighbouring day in display order."""
+        if not is_valid_day(day) or direction not in {"up", "down"}:
+            raise NotFoundException()
+
+        menu = load_week_menu(request)
+        start_day = load_start_day(request)
+        menu = move_day(menu, day, direction, start_day=start_day)
+        save_week_menu(request, menu)
+        return await self._render_days(request)
+
+    @post(path="/{day:str}/servings", summary="Set planned servings for a day")
+    async def set_servings(self, request: Request, day: str) -> Template:
+        """Persist the number of servings planned for a specific day."""
+        if not is_valid_day(day):
+            raise NotFoundException()
+
+        form_data = await request.form()
+        servings = normalize_servings(form_data.get("servings"))
+        menu = load_week_menu(request)
+        menu = set_day_servings(menu, day, servings)
+        save_week_menu(request, menu)
+        return await self._render_days(request)
+
+    @get(path="/grocery-list", summary="Generate grocery list for the week menu")
+    async def grocery_list(self, request: Request) -> Template:
+        """Build an aggregated grocery list scaled to each day's servings."""
+        menu = load_week_menu(request)
+        start_day = load_start_day(request)
+        recipe_ids = [
+            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
+        ]
+        recipes_by_id = await self._recipes_by_id(recipe_ids)
+
+        ingredients_by_recipe: dict[int, list[RecipeIngredient]] = defaultdict(list)
+        if recipe_ids:
+            recipe_ingredients = await RecipeIngredient.filter(
+                recipe_id__in=recipe_ids
+            ).select_related("recipe", "ingredient", "unit")
+            for recipe_ingredient in recipe_ingredients:
+                ingredients_by_recipe[recipe_ingredient.recipe.id].append(
+                    recipe_ingredient
+                )
+
+        entries: list[GroceryItem] = []
+        for slot in menu.values():
+            recipe = recipes_by_id.get(slot["recipe_id"]) if slot["recipe_id"] else None
+            if recipe is None:
+                continue
+            recipe_servings = normalize_servings(recipe.servings)
+            for recipe_ingredient in ingredients_by_recipe.get(recipe.id, []):
+                entries.append(
+                    GroceryItem(
+                        name=recipe_ingredient.ingredient.name,
+                        unit=recipe_ingredient.unit.abbrev,
+                        quantity=scale_ingredient_quantity(
+                            recipe_ingredient.quantity,
+                            slot["servings"],
+                            recipe_servings,
+                        ),
+                    )
+                )
+
+        return Template(
+            template_name="grocery-list.html",
+            context={
+                "request": request,
+                "days": await build_day_rows(menu, recipes_by_id, start_day),
+                "grocery_items": build_grocery_list(entries),
+            },
+        )
 
     @post(path="/{day:str}/clear", summary="Clear recipe for day")
     async def clear_day(self, request: Request, day: str) -> Template:

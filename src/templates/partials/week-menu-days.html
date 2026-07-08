@@ -1,41 +1,59 @@
 {% for day_row in days %}
 <article class="week-menu-day" id="week-menu-day-{{ day_row.day }}">
-    <header class="week-menu-day-header">
-        <h2 class="week-menu-day-title">{{ day_row.label }}</h2>
-        <div class="week-menu-day-actions">
-            <button type="button" class="btn btn-sm icon-btn icon-action-btn{% if day_row.pinned %} icon-btn--active{% endif %}"
-                hx-post="/week-menu/{{ day_row.day }}/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
-                title="{% if day_row.pinned %}Unpin day{% else %}Pin day{% endif %}"
-                aria-label="{% if day_row.pinned %}Unpin day{% else %}Pin day{% endif %}">
-                📌
-            </button>
-            <button type="button" class="btn btn-sm icon-btn icon-action-btn"
-                hx-post="/week-menu/{{ day_row.day }}/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
-                title="Clear day recipe" aria-label="Clear day recipe">
-                🗑️
-            </button>
-            <details class="week-menu-search-toggle">
-                <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
-                <div class="week-menu-day-search">
-                    <label class="field-label" for="search-{{ day_row.day }}">Search recipe</label>
-                    <input id="search-{{ day_row.day }}" class="form-control" type="search" name="search"
-                        placeholder="Name, description, or ingredient…" hx-get="/week-menu/{{ day_row.day }}/search"
-                        hx-trigger="keyup changed delay:200ms" hx-target="#search-results-{{ day_row.day }}" hx-swap="innerHTML">
-                    <div id="search-results-{{ day_row.day }}" class="week-menu-search-results"></div>
-                </div>
-            </details>
-        </div>
-    </header>
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/{{ day_row.day }}/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move {{ day_row.label }} up" {% if loop.first %}disabled{% endif %}>
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/{{ day_row.day }}/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move {{ day_row.label }} down" {% if loop.last %}disabled{% endif %}>
+            ▼
+        </button>
+    </div>
 
-    <div class="week-menu-day-recipe">
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">{{ day_row.label }}</span>
         {% if day_row.recipe %}
         <a href="/recipes/view/{{ day_row.recipe.id }}" class="week-menu-recipe-link">
             #{{ day_row.recipe.id }} {{ day_row.recipe.name }}
         </a>
         {% else %}
-        <p class="search-placeholder">No recipe selected</p>
+        <span class="search-placeholder">No recipe selected</span>
         {% endif %}
     </div>
 
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-{{ day_row.day }}">Servings</label>
+        <input id="servings-{{ day_row.day }}" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="{{ day_row.servings }}" hx-post="/week-menu/{{ day_row.day }}/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for {{ day_row.label }}">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn{% if day_row.pinned %} icon-btn--active{% endif %}"
+            hx-post="/week-menu/{{ day_row.day }}/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="{% if day_row.pinned %}Unpin day{% else %}Pin day{% endif %}"
+            aria-label="{% if day_row.pinned %}Unpin day{% else %}Pin day{% endif %}">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/{{ day_row.day }}/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-{{ day_row.day }}">Search recipe</label>
+                <input id="search-{{ day_row.day }}" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/{{ day_row.day }}/search"
+                    hx-trigger="keyup changed delay:200ms" hx-target="#search-results-{{ day_row.day }}" hx-swap="innerHTML">
+                <div id="search-results-{{ day_row.day }}" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
 </article>
 {% endfor %}

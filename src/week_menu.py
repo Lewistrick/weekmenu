@@ -33,6 +33,8 @@ SESSION_KEY = "week_menu"
 START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 
+DEFAULT_SERVINGS = 2
+
 
 class TagConstraintMode(StrEnum):
     """How a tag group constrains week menu randomization."""
@@ -61,6 +63,31 @@ class DaySlot(TypedDict):
 
     recipe_id: int | None
     pinned: bool
+    servings: int
+
+
+class GroceryItem(TypedDict):
+    """A single aggregated line on the grocery list."""
+
+    name: str
+    unit: str
+    quantity: float
+
+
+def normalize_servings(value: Any) -> int:
+    """Coerce a servings value into a positive integer.
+
+    Args:
+        value: Raw servings value from a form or the session.
+
+    Returns:
+        A positive integer, falling back to ``DEFAULT_SERVINGS`` when invalid.
+    """
+    try:
+        servings = int(value)
+    except (TypeError, ValueError):
+        return DEFAULT_SERVINGS
+    return servings if servings >= 1 else DEFAULT_SERVINGS
 
 
 def is_valid_day(day: str) -> bool:
@@ -95,7 +122,10 @@ def ordered_week_days(start_day: str) -> list[str]:
 
 def empty_week_menu() -> dict[str, DaySlot]:
     """Return a week menu with empty unpinned slots."""
-    return {day: DaySlot(recipe_id=None, pinned=False) for day in WEEK_DAYS}
+    return {
+        day: DaySlot(recipe_id=None, pinned=False, servings=DEFAULT_SERVINGS)
+        for day in WEEK_DAYS
+    }
 
 
 def load_week_menu(request: Request) -> dict[str, DaySlot]:
@@ -115,6 +145,7 @@ def load_week_menu(request: Request) -> dict[str, DaySlot]:
         menu[day] = DaySlot(
             recipe_id=int(recipe_id) if recipe_id is not None else None,
             pinned=pinned,
+            servings=normalize_servings(day_data.get("servings", DEFAULT_SERVINGS)),
         )
 
     return menu
@@ -135,7 +166,9 @@ def toggle_pin(menu: dict[str, DaySlot], day: str) -> dict[str, DaySlot]:
     return menu
 
 
-def set_day_recipe(menu: dict[str, DaySlot], day: str, recipe_id: int | None) -> dict[str, DaySlot]:
+def set_day_recipe(
+    menu: dict[str, DaySlot], day: str, recipe_id: int | None
+) -> dict[str, DaySlot]:
     """Assign a recipe to a day."""
     if not is_valid_day(day):
         msg = f"Unknown day: {day}"
@@ -144,7 +177,58 @@ def set_day_recipe(menu: dict[str, DaySlot], day: str, recipe_id: int | None) ->
     return menu
 
 
-def assign_recipe_to_unpinned_day(menu: dict[str, DaySlot], recipe_id: int, start_day: str = "monday") -> str | None:
+def set_day_servings(
+    menu: dict[str, DaySlot], day: str, servings: int
+) -> dict[str, DaySlot]:
+    """Set the number of servings planned for a day."""
+    if not is_valid_day(day):
+        msg = f"Unknown day: {day}"
+        raise ValueError(msg)
+    menu[day]["servings"] = normalize_servings(servings)
+    return menu
+
+
+def move_day(
+    menu: dict[str, DaySlot], day: str, direction: str, start_day: str = "monday"
+) -> dict[str, DaySlot]:
+    """Swap a day's slot with its neighbour in display order.
+
+    Moving a day exchanges its full slot (recipe, servings, and pin) with the
+    adjacent day, so the whole meal moves up or down the week.
+
+    Args:
+        menu: Current week menu state.
+        day: Day whose slot should move.
+        direction: Either ``"up"`` or ``"down"`` relative to display order.
+        start_day: Day the week is displayed from, used to resolve neighbours.
+
+    Returns:
+        The updated menu. Moving past the first or last day is a no-op.
+
+    Raises:
+        ValueError: If ``day`` is unknown or ``direction`` is not up/down.
+    """
+    if not is_valid_day(day):
+        msg = f"Unknown day: {day}"
+        raise ValueError(msg)
+    if direction not in {"up", "down"}:
+        msg = f"Unknown direction: {direction}"
+        raise ValueError(msg)
+
+    order = ordered_week_days(start_day)
+    index = order.index(day)
+    target_index = index - 1 if direction == "up" else index + 1
+    if target_index < 0 or target_index >= len(order):
+        return menu
+
+    target_day = order[target_index]
+    menu[day], menu[target_day] = menu[target_day], menu[day]
+    return menu
+
+
+def assign_recipe_to_unpinned_day(
+    menu: dict[str, DaySlot], recipe_id: int, start_day: str = "monday"
+) -> str | None:
     """Assign recipe to first unpinned day in display order.
 
     Returns:
@@ -191,7 +275,9 @@ def _normalize_constraint(raw: dict[str, Any], category_id: int) -> TagGroupCons
     )
 
 
-def load_tag_constraints(request: Request, category_ids: list[int]) -> list[TagGroupConstraint]:
+def load_tag_constraints(
+    request: Request, category_ids: list[int]
+) -> list[TagGroupConstraint]:
     """Load tag constraints from session, filling defaults for each group."""
     stored = request.session.get(TAG_CONSTRAINTS_SESSION_KEY, [])
     by_category: dict[int, dict[str, Any]] = {}
@@ -203,19 +289,28 @@ def load_tag_constraints(request: Request, category_ids: list[int]) -> list[TagG
             if isinstance(category_id, int):
                 by_category[category_id] = item
 
-    return [_normalize_constraint(by_category.get(category_id, {}), category_id) for category_id in category_ids]
+    return [
+        _normalize_constraint(by_category.get(category_id, {}), category_id)
+        for category_id in category_ids
+    ]
 
 
-def save_tag_constraints(request: Request, constraints: list[TagGroupConstraint]) -> None:
+def save_tag_constraints(
+    request: Request, constraints: list[TagGroupConstraint]
+) -> None:
     """Persist tag constraints to the session."""
     request.session[TAG_CONSTRAINTS_SESSION_KEY] = constraints
 
 
-def parse_tag_constraints_from_form(form_data: dict[str, Any], category_ids: list[int]) -> list[TagGroupConstraint]:
+def parse_tag_constraints_from_form(
+    form_data: dict[str, Any], category_ids: list[int]
+) -> list[TagGroupConstraint]:
     """Parse tag constraint settings submitted from the week menu form."""
     constraints: list[TagGroupConstraint] = []
     for category_id in category_ids:
-        mode = str(form_data.get(f"constraint_mode_{category_id}", TagConstraintMode.OFF))
+        mode = str(
+            form_data.get(f"constraint_mode_{category_id}", TagConstraintMode.OFF)
+        )
         if mode not in {item.value for item in TagConstraintMode}:
             mode = TagConstraintMode.OFF
 
@@ -243,7 +338,11 @@ def active_tag_constraints(
     constraints: list[TagGroupConstraint],
 ) -> list[TagGroupConstraint]:
     """Return only constraints that affect randomization."""
-    return [constraint for constraint in constraints if constraint["mode"] != TagConstraintMode.OFF]
+    return [
+        constraint
+        for constraint in constraints
+        if constraint["mode"] != TagConstraintMode.OFF
+    ]
 
 
 def _recipe_tags(
@@ -275,7 +374,8 @@ def _count_recipes_with_tag(
     return sum(
         1
         for recipe_id in assignment.values()
-        if recipe_id is not None and _recipe_has_tag(recipe_id, recipe_tag_map, category_id, tag_id)
+        if recipe_id is not None
+        and _recipe_has_tag(recipe_id, recipe_tag_map, category_id, tag_id)
     )
 
 
@@ -333,7 +433,9 @@ def _minimum_can_still_be_met(
     if tag_id is None:
         return False
 
-    current = _count_recipes_with_tag(assignment, recipe_tag_map, constraint["category_id"], tag_id)
+    current = _count_recipes_with_tag(
+        assignment, recipe_tag_map, constraint["category_id"], tag_id
+    )
     return current + remaining_day_count >= constraint["minimum_count"]
 
 
@@ -347,7 +449,9 @@ def _minimum_is_met(
     if tag_id is None:
         return False
     return (
-        _count_recipes_with_tag(assignment, recipe_tag_map, constraint["category_id"], tag_id)
+        _count_recipes_with_tag(
+            assignment, recipe_tag_map, constraint["category_id"], tag_id
+        )
         >= constraint["minimum_count"]
     )
 
@@ -367,7 +471,9 @@ def _candidate_is_valid(
 
     for constraint in constraints:
         mode = constraint["mode"]
-        if mode == TagConstraintMode.UNIFORM and not _uniform_allows(recipe_id, constraint, recipe_tag_map):
+        if mode == TagConstraintMode.UNIFORM and not _uniform_allows(
+            recipe_id, constraint, recipe_tag_map
+        ):
             return False
         if mode == TagConstraintMode.VARY and not _vary_allows(
             recipe_id, assignment, constraint, recipe_tag_map, day=day
@@ -377,7 +483,9 @@ def _candidate_is_valid(
             tag_id = constraint["tag_id"]
             if tag_id is None:
                 return False
-            current = _count_recipes_with_tag(hypothetical, recipe_tag_map, constraint["category_id"], tag_id)
+            current = _count_recipes_with_tag(
+                hypothetical, recipe_tag_map, constraint["category_id"], tag_id
+            )
             if current + slots_remaining_after_assign < constraint["minimum_count"]:
                 return False
     return True
@@ -404,7 +512,10 @@ def _ordered_candidates(
     rng: random.Random,
 ) -> list[int]:
     """Return recipe ids to try, preferring recipes used fewer times."""
-    usage_count = {recipe_id: sum(1 for value in assignment.values() if value == recipe_id) for recipe_id in recipe_ids}
+    usage_count = {
+        recipe_id: sum(1 for value in assignment.values() if value == recipe_id)
+        for recipe_id in recipe_ids
+    }
     candidates = list(recipe_ids)
     rng.shuffle(candidates)
     return sorted(candidates, key=lambda recipe_id: usage_count[recipe_id])
@@ -419,7 +530,9 @@ def _solve_random_assignment(
     rng: random.Random,
 ) -> dict[str, int | None] | None:
     """Find a random valid assignment for unpinned days using backtracking."""
-    assignment: dict[str, int | None] = {day: slot["recipe_id"] for day, slot in menu.items()}
+    assignment: dict[str, int | None] = {
+        day: slot["recipe_id"] for day, slot in menu.items()
+    }
     unpinned_days = [day for day in WEEK_DAYS if not menu[day]["pinned"]]
 
     def backtrack(index: int) -> bool:
@@ -474,7 +587,9 @@ def randomize_week_menu(
     randomizer = rng or random.Random()
 
     if not active_constraints:
-        return _randomize_without_constraints(menu, recipe_ids, rng=randomizer), warnings
+        return _randomize_without_constraints(
+            menu, recipe_ids, rng=randomizer
+        ), warnings
 
     for constraint in active_constraints:
         if (
@@ -485,7 +600,9 @@ def randomize_week_menu(
             }
             and constraint["tag_id"] is None
         ):
-            warnings.append("Select a tag for each active tag constraint before randomizing.")
+            warnings.append(
+                "Select a tag for each active tag constraint before randomizing."
+            )
             return menu, warnings
 
     for _attempt in range(30):
@@ -503,7 +620,9 @@ def randomize_week_menu(
                     menu[day]["recipe_id"] = solution[day]
             return menu, warnings
 
-    warnings.append("Could not build a week menu that satisfies the selected tag constraints.")
+    warnings.append(
+        "Could not build a week menu that satisfies the selected tag constraints."
+    )
     return menu, warnings
 
 
@@ -514,7 +633,11 @@ def _randomize_without_constraints(
     rng: random.Random,
 ) -> dict[str, DaySlot]:
     """Fill unpinned days with random enabled recipes, avoiding duplicates when possible."""
-    used_ids = {slot["recipe_id"] for day, slot in menu.items() if slot["pinned"] and slot["recipe_id"] is not None}
+    used_ids = {
+        slot["recipe_id"]
+        for day, slot in menu.items()
+        if slot["pinned"] and slot["recipe_id"] is not None
+    }
     unpinned_days = [day for day in WEEK_DAYS if not menu[day]["pinned"]]
     available_ids = [recipe_id for recipe_id in recipe_ids if recipe_id not in used_ids]
 
@@ -527,7 +650,9 @@ def _randomize_without_constraints(
         if len(available_ids) > 1:
             available_ids.remove(chosen_id)
         elif available_ids == [chosen_id] and len(recipe_ids) > 1:
-            available_ids = [rid for rid in recipe_ids if rid != chosen_id] or list(recipe_ids)
+            available_ids = [rid for rid in recipe_ids if rid != chosen_id] or list(
+                recipe_ids
+            )
 
     return menu
 
@@ -546,6 +671,48 @@ async def build_day_rows(
                 "label": DAY_LABELS[day],
                 "recipe": recipe,
                 "pinned": slot["pinned"],
+                "servings": slot["servings"],
             }
         )
     return rows
+
+
+def scale_ingredient_quantity(
+    quantity: float, day_servings: int, recipe_servings: int
+) -> float:
+    """Scale an ingredient quantity from the recipe's servings to the planned servings.
+
+    Args:
+        quantity: Ingredient quantity as written in the recipe.
+        day_servings: Servings the user planned for the day.
+        recipe_servings: Servings the recipe is written for.
+
+    Returns:
+        The quantity needed for ``day_servings``. When ``recipe_servings`` is not
+        positive the original quantity is returned unscaled.
+    """
+    if recipe_servings <= 0:
+        return float(quantity)
+    return float(quantity) * day_servings / recipe_servings
+
+
+def build_grocery_list(entries: list[GroceryItem]) -> list[GroceryItem]:
+    """Combine ingredient entries that share the same name and unit.
+
+    Args:
+        entries: Scaled ingredient entries collected from the week menu.
+
+    Returns:
+        Aggregated grocery items sorted alphabetically by name, with quantities
+        summed per (name, unit) pair and rounded to two decimals.
+    """
+    totals: dict[tuple[str, str], float] = {}
+    for entry in entries:
+        key = (entry["name"], entry["unit"])
+        totals[key] = totals.get(key, 0.0) + entry["quantity"]
+
+    items = [
+        GroceryItem(name=name, unit=unit, quantity=round(quantity, 2))
+        for (name, unit), quantity in totals.items()
+    ]
+    return sorted(items, key=lambda item: item["name"].lower())

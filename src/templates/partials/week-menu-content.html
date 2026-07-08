@@ -27,10 +27,13 @@
                 {% endfor %}
             </select>
         </form>
-        <button type="button" class="btn btn-primary" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
-            hx-swap="outerHTML">
-            🎲 Randomize week
-        </button>
+        <div class="week-menu-toolbar-actions">
+            <button type="button" class="btn btn-primary" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
+                hx-swap="outerHTML">
+                🎲 Randomize week
+            </button>
+            <a href="/week-menu/grocery-list" class="btn btn-secondary">🛒 Grocery list</a>
+        </div>
     </div>
 
     {% if tag_constraint_rows %}

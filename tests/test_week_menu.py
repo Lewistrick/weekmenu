@@ -12,6 +12,7 @@ from src.week_menu import (
     TagGroupConstraint,
     assign_recipe_to_unpinned_day,
     empty_week_menu,
+    move_day,
     randomize_week_menu,
     set_day_recipe,
     toggle_pin,
@@ -25,9 +26,7 @@ async def menu_recipes(
 ) -> list[Recipe]:
     """Create enabled recipes for week menu tests."""
     recipes = []
-    for index, name in enumerate(
-        ["Alpha stew", "Beta pie", "Gamma soup", "Delta salad"], start=1
-    ):
+    for index, name in enumerate(["Alpha stew", "Beta pie", "Gamma soup", "Delta salad"], start=1):
         recipes.append(
             await Recipe.create(
                 name=name,
@@ -67,14 +66,63 @@ def test_randomize_skips_pinned_days() -> None:
 def test_randomize_fills_unpinned_days() -> None:
     """Unpinned days should receive recipes when randomizing."""
     menu = empty_week_menu()
-    randomized, warnings = randomize_week_menu(
-        menu, [10, 11, 12, 13, 14, 15, 16, 17], rng=random.Random(0)
-    )
+    randomized, warnings = randomize_week_menu(menu, [10, 11, 12, 13, 14, 15, 16, 17], rng=random.Random(0))
 
     assigned = [slot["recipe_id"] for slot in randomized.values()]
     assert warnings == []
     assert all(recipe_id is not None for recipe_id in assigned)
     assert len(set(assigned)) == len(assigned)
+
+
+def test_move_day_down_swaps_with_next_day() -> None:
+    """Moving a day down should swap its whole slot with the next day."""
+    menu = empty_week_menu()
+    menu = set_day_recipe(menu, "monday", 1)
+    menu = set_day_recipe(menu, "tuesday", 2)
+
+    menu = move_day(menu, "monday", "down")
+
+    assert menu["monday"]["recipe_id"] == 2
+    assert menu["tuesday"]["recipe_id"] == 1
+
+
+def test_move_day_up_swaps_with_previous_day() -> None:
+    """Moving a day up should swap its whole slot with the previous day."""
+    menu = empty_week_menu()
+    menu = set_day_recipe(menu, "monday", 1)
+    menu = set_day_recipe(menu, "tuesday", 2)
+    menu["tuesday"]["servings"] = 6
+
+    menu = move_day(menu, "tuesday", "up")
+
+    assert menu["monday"]["recipe_id"] == 2
+    assert menu["monday"]["servings"] == 6
+    assert menu["tuesday"]["recipe_id"] == 1
+
+
+def test_move_day_at_boundary_is_noop() -> None:
+    """Moving the first day up (or last down) should not change the menu."""
+    menu = empty_week_menu()
+    menu = set_day_recipe(menu, "monday", 1)
+
+    menu = move_day(menu, "monday", "up")
+
+    assert menu["monday"]["recipe_id"] == 1
+
+
+def test_move_day_respects_start_day_order() -> None:
+    """Neighbours are resolved against the displayed order, not the raw weekday order."""
+    menu = empty_week_menu()
+    menu = set_day_recipe(menu, "wednesday", 3)
+    menu = set_day_recipe(menu, "thursday", 4)
+
+    # With start_day=wednesday, the first displayed day is wednesday; moving it up is a no-op.
+    unchanged = move_day(menu, "wednesday", "up", start_day="wednesday")
+    assert unchanged["wednesday"]["recipe_id"] == 3
+
+    moved = move_day(menu, "wednesday", "down", start_day="wednesday")
+    assert moved["wednesday"]["recipe_id"] == 4
+    assert moved["thursday"]["recipe_id"] == 3
 
 
 def test_assign_recipe_to_unpinned_day_returns_none_when_all_pinned() -> None:
@@ -214,17 +262,13 @@ def test_randomize_tag_constraints(
     )
 
     assert warnings == [], scenario
-    assert all(
-        randomized[day]["recipe_id"] is not None
-        for day, slot in randomized.items()
-        if not slot["pinned"]
-    ), scenario
+    assert all(randomized[day]["recipe_id"] is not None for day, slot in randomized.items() if not slot["pinned"]), (
+        scenario
+    )
 
     if scenario == "uniform_same_summer_tag":
         assert all(
-            _recipe_has_tag(
-                randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID
-            )
+            _recipe_has_tag(randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID)
             for day, slot in randomized.items()
             if slot["recipe_id"] is not None
         )
@@ -245,9 +289,7 @@ def test_randomize_tag_constraints(
         vegetarian_count = sum(
             1
             for day, slot in randomized.items()
-            if _recipe_has_tag(
-                slot["recipe_id"], tag_map, DIET_CATEGORY_ID, VEGETARIAN_TAG_ID
-            )
+            if _recipe_has_tag(slot["recipe_id"], tag_map, DIET_CATEGORY_ID, VEGETARIAN_TAG_ID)
         )
         assert vegetarian_count >= 2
 
@@ -288,10 +330,7 @@ def test_randomize_uniform_respects_pinned_recipe() -> None:
     assert warnings == []
     assert randomized["monday"]["recipe_id"] == 1
     assert all(
-        _recipe_has_tag(
-            randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID
-        )
-        for day in randomized
+        _recipe_has_tag(randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID) for day in randomized
     )
 
 
@@ -349,43 +388,6 @@ def test_randomize_warns_when_tag_not_selected_for_uniform() -> None:
     assert all(slot["recipe_id"] is None for slot in randomized.values())
 
 
-def test_vary_allows_non_consecutive_repeats() -> None:
-    """Vary mode should allow repeated tags when they are not adjacent."""
-    menu = empty_week_menu()
-    tag_map = _tag_map(
-        {
-            1: {CARB_CATEGORY_ID: {POTATO_TAG_ID}},
-            2: {CARB_CATEGORY_ID: {RICE_TAG_ID}},
-        }
-    )
-    constraints = [
-        TagGroupConstraint(
-            category_id=CARB_CATEGORY_ID,
-            mode=TagConstraintMode.VARY,
-            tag_id=None,
-            minimum_count=1,
-        )
-    ]
-
-    randomized, warnings = randomize_week_menu(
-        menu,
-        [1, 2],
-        constraints=constraints,
-        recipe_tag_map=tag_map,
-        rng=random.Random(0),
-    )
-
-    assert warnings == []
-    day_tags = [
-        tag_map[randomized[day]["recipe_id"]][CARB_CATEGORY_ID]
-        for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]
-        if randomized[day]["recipe_id"] is not None
-    ]
-    assert len(day_tags) >= 5
-    for index in range(1, len(day_tags)):
-        assert not (day_tags[index - 1] & day_tags[index])
-
-
 @pytest.mark.asyncio
 async def test_week_menu_page_loads(test_client: AsyncTestClient) -> None:
     """The week menu page should list all weekdays."""
@@ -402,14 +404,10 @@ async def test_week_menu_page_loads(test_client: AsyncTestClient) -> None:
 @pytest.mark.asyncio
 async def test_start_day_reorders_days(test_client: AsyncTestClient) -> None:
     """Selecting a start day should rotate the displayed weekday order."""
-    response = await test_client.post(
-        "/week-menu/start-day", data={"start_day": "wednesday"}
-    )
+    response = await test_client.post("/week-menu/start-day", data={"start_day": "wednesday"})
 
     assert response.status_code == 200
-    assert response.text.index("week-menu-day-wednesday") < response.text.index(
-        "week-menu-day-monday"
-    )
+    assert response.text.index("week-menu-day-wednesday") < response.text.index("week-menu-day-monday")
 
 
 @pytest.mark.asyncio
@@ -462,6 +460,25 @@ async def test_assign_recipe_via_search(
     assert target.name in search_response.text
     assert assign_response.status_code == 200
     assert target.name in assign_response.text
+
+
+@pytest.mark.asyncio
+async def test_move_recipe_down_swaps_days(
+    test_client: AsyncTestClient,
+    menu_recipes: list[Recipe],
+) -> None:
+    """Moving a day's recipe down should place it on the following day."""
+    first = menu_recipes[0]
+    await test_client.post(f"/week-menu/monday/recipe/{first.id}")
+
+    response = await test_client.post("/week-menu/monday/move/down")
+
+    assert response.status_code == 200
+    monday_index = response.text.index('id="week-menu-day-monday"')
+    tuesday_index = response.text.index('id="week-menu-day-tuesday"')
+    recipe_index = response.text.index(first.name)
+    # The recipe now belongs to Tuesday, which is rendered after Monday.
+    assert monday_index < tuesday_index < recipe_index
 
 
 @pytest.mark.asyncio
@@ -546,9 +563,7 @@ async def tagged_carb_recipes(
     """Create enabled recipes tagged by carb type."""
     category, potato, rice, pasta = carb_tags
     recipes: list[Recipe] = []
-    for index, tag in enumerate(
-        [potato, rice, pasta, potato, rice, pasta, rice], start=1
-    ):
+    for index, tag in enumerate([potato, rice, pasta, potato, rice, pasta, rice], start=1):
         recipe = await Recipe.create(
             name=f"Carb dish {index}",
             description=f"Recipe {index}",

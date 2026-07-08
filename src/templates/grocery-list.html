@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Grocery list{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Grocery list</h1>
+        <p class="page-lead">Ingredients for your week menu, scaled to each day's servings and combined.</p>
+    </header>
+
+    <div class="grocery-toolbar">
+        <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
+    </div>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Shopping list</h2>
+        {% if grocery_items %}
+        <ul class="grocery-list">
+            {% for item in grocery_items %}
+            <li class="grocery-item">
+                <span class="grocery-item-name">{{ item.name }}</span>
+                <span class="grocery-item-sep">-</span>
+                <span class="grocery-item-amount">{{ "%g" | format(item.quantity) }} {{ item.unit }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="search-placeholder">
+            No ingredients yet. Add recipes with ingredients to your week menu to build a grocery list.
+        </p>
+        {% endif %}
+    </section>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Days included</h2>
+        <table class="grocery-day-table">
+            <thead>
+                <tr>
+                    <th scope="col">Day</th>
+                    <th scope="col">Recipe</th>
+                    <th scope="col" class="grocery-day-table-servings">Servings</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in days %}
+                <tr>
+                    <td class="grocery-day-label">{{ row.label }}</td>
+                    <td>
+                        {% if row.recipe %}
+                        <a href="/recipes/view/{{ row.recipe.id }}" class="week-menu-recipe-link">{{ row.recipe.name }}</a>
+                        {% else %}
+                        <span class="search-placeholder">No recipe selected</span>
+                        {% endif %}
+                    </td>
+                    <td class="grocery-day-table-servings">{% if row.recipe %}{{ row.servings }}{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+{% endblock %}

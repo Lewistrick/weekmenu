@@ -52,6 +52,6 @@ async def test_week_menu_warnings_include_htmx_dismiss_controls(
     response = await test_client.post("/week-menu/randomize")
 
     assert response.status_code == 200
-    assert 'week-menu-warning-0' in response.text
+    assert "week-menu-warning-0" in response.text
     assert 'hx-trigger="load delay:5s"' in response.text
     assert "All days are pinned" in response.text

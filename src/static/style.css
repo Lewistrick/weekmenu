@@ -495,24 +495,61 @@ div.recipe-detail {
 }
 
 .week-menu-day {
-    padding: 0.45rem 0.6rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.3rem 0.55rem;
     border: 1px solid #555;
     border-radius: 8px;
     background-color: #3d3d3d;
 }
 
-.week-menu-day-header {
+.week-menu-move {
     display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 0 0 auto;
+}
+
+.week-menu-move-btn {
+    height: 1.15rem;
+    width: 1.6rem;
+    min-width: 1.6rem;
+    padding: 0;
+    font-size: 0.6rem;
+    line-height: 1;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.35rem;
+    justify-content: center;
+}
+
+.week-menu-move-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.week-menu-day-info {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.week-menu-day-info .week-menu-recipe-link,
+.week-menu-day-info .search-placeholder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
 }
 
 .week-menu-day-actions {
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    flex: 0 0 auto;
 }
 
 .week-menu-day-actions form {
@@ -531,13 +568,11 @@ div.recipe-detail {
 
 .week-menu-day-title {
     margin: 0;
-    font-size: 0.95rem;
+    flex: 0 0 auto;
+    min-width: 5.5rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #e8e8e8;
-}
-
-.week-menu-day-recipe {
-    margin-bottom: 0.4rem;
 }
 
 .week-menu-recipe-link {
@@ -551,12 +586,113 @@ div.recipe-detail {
     text-decoration: underline;
 }
 
+.week-menu-toolbar-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.week-menu-day-servings {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+}
+
+.week-menu-day-servings .field-label {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #b5b5b5;
+}
+
+.week-menu-servings-input {
+    width: 3.6rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.85rem;
+}
+
+.grocery-toolbar {
+    margin-bottom: 1rem;
+}
+
+.grocery-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.grocery-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #3d3d3d;
+}
+
+.grocery-item-name {
+    font-weight: 600;
+    color: #e8e8e8;
+}
+
+.grocery-item-sep {
+    color: #8f8f8f;
+}
+
+.grocery-item-amount {
+    color: #b8d9f0;
+}
+
+.grocery-day-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.grocery-day-table th,
+.grocery-day-table td {
+    padding: 0.5rem 0.65rem;
+    text-align: left;
+    border-bottom: 1px solid #4d4d4d;
+}
+
+.grocery-day-table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #b5b5b5;
+}
+
+.grocery-day-table .grocery-day-label {
+    font-weight: 600;
+    color: #e8e8e8;
+    white-space: nowrap;
+}
+
+.grocery-day-table .grocery-day-table-servings {
+    width: 6rem;
+    text-align: right;
+}
+
+.week-menu-search-toggle {
+    position: static;
+}
+
 .week-menu-day-search {
+    position: absolute;
+    right: 0.55rem;
+    top: calc(100% - 0.2rem);
+    z-index: 20;
+    width: min(22rem, calc(100% - 1.1rem));
     margin-top: 0.1rem;
     padding: 0.5rem;
     border: 1px solid #555;
     border-radius: 8px;
     background-color: #353535;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .week-menu-search-results {
