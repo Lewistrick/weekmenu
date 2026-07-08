@@ -306,11 +306,10 @@ def _vary_allows(
         return True
 
     day_index = WEEK_DAYS.index(day)
-    adjacent_days: list[str] = []
-    if day_index > 0:
-        adjacent_days.append(WEEK_DAYS[day_index - 1])
-    if day_index < len(WEEK_DAYS) - 1:
-        adjacent_days.append(WEEK_DAYS[day_index + 1])
+    adjacent_days: tuple[str, ...] = (
+        WEEK_DAYS[(day_index - 1) % len(WEEK_DAYS)],
+        WEEK_DAYS[(day_index + 1) % len(WEEK_DAYS)],
+    )
 
     for other_day in adjacent_days:
         assigned_id = assignment.get(other_day)
@@ -319,6 +318,7 @@ def _vary_allows(
         assigned_tags = _recipe_tags(assigned_id, recipe_tag_map, category_id)
         if candidate_tags & assigned_tags:
             return False
+
     return True
 
 
