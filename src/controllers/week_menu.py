@@ -12,15 +12,15 @@ from src.week_menu import (
     TagGroupConstraint,
     build_day_rows,
     is_valid_day,
+    load_start_day,
     load_tag_constraints,
     load_week_menu,
-    load_start_day,
     ordered_week_days,
     parse_tag_constraints_from_form,
     randomize_week_menu,
+    save_start_day,
     save_tag_constraints,
     save_week_menu,
-    save_start_day,
     set_day_recipe,
     toggle_pin,
 )
@@ -208,6 +208,7 @@ class WeekMenuController(Controller):
             constraints=constraints,
             recipe_tag_map=recipe_tag_map,
         )
+        logger.debug("Randomized week menu, saving...")
         save_week_menu(request, menu)
         return await self._render_page_with_feedback(request, warnings=warnings)
 
