@@ -122,6 +122,18 @@ a {
     padding: 5px;
 }
 
+.flash-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.flash-banner-text {
+    flex: 1;
+    min-width: 0;
+}
+
 .recipe-button {
     background-color: transparent;
     border: 1px solid #5a9fd4;

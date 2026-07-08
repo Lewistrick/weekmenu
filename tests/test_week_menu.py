@@ -229,12 +229,18 @@ def test_randomize_tag_constraints(
             if slot["recipe_id"] is not None
         )
     elif scenario == "vary_carb_types":
-        carb_tags: list[int] = []
-        for day in ["monday", "tuesday", "wednesday"]:
-            recipe_id = randomized[day]["recipe_id"]
-            assert recipe_id is not None
-            carb_tags.extend(tag_map[recipe_id][CARB_CATEGORY_ID])
-        assert len(carb_tags) == len(set(carb_tags))
+        monday_recipe = randomized["monday"]["recipe_id"]
+        tuesday_recipe = randomized["tuesday"]["recipe_id"]
+        wednesday_recipe = randomized["wednesday"]["recipe_id"]
+        assert monday_recipe is not None
+        assert tuesday_recipe is not None
+        assert wednesday_recipe is not None
+
+        monday_tags = tag_map[monday_recipe][CARB_CATEGORY_ID]
+        tuesday_tags = tag_map[tuesday_recipe][CARB_CATEGORY_ID]
+        wednesday_tags = tag_map[wednesday_recipe][CARB_CATEGORY_ID]
+        assert not (monday_tags & tuesday_tags)
+        assert not (tuesday_tags & wednesday_tags)
     elif scenario == "minimum_two_vegetarian":
         vegetarian_count = sum(
             1
@@ -341,6 +347,43 @@ def test_randomize_warns_when_tag_not_selected_for_uniform() -> None:
 
     assert warnings
     assert all(slot["recipe_id"] is None for slot in randomized.values())
+
+
+def test_vary_allows_non_consecutive_repeats() -> None:
+    """Vary mode should allow repeated tags when they are not adjacent."""
+    menu = empty_week_menu()
+    tag_map = _tag_map(
+        {
+            1: {CARB_CATEGORY_ID: {POTATO_TAG_ID}},
+            2: {CARB_CATEGORY_ID: {RICE_TAG_ID}},
+        }
+    )
+    constraints = [
+        TagGroupConstraint(
+            category_id=CARB_CATEGORY_ID,
+            mode=TagConstraintMode.VARY,
+            tag_id=None,
+            minimum_count=1,
+        )
+    ]
+
+    randomized, warnings = randomize_week_menu(
+        menu,
+        [1, 2],
+        constraints=constraints,
+        recipe_tag_map=tag_map,
+        rng=random.Random(0),
+    )
+
+    assert warnings == []
+    day_tags = [
+        tag_map[randomized[day]["recipe_id"]][CARB_CATEGORY_ID]
+        for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]
+        if randomized[day]["recipe_id"] is not None
+    ]
+    assert len(day_tags) >= 5
+    for index in range(1, len(day_tags)):
+        assert not (day_tags[index - 1] & day_tags[index])
 
 
 @pytest.mark.asyncio

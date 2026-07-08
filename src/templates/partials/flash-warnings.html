@@ -1,0 +1,19 @@
+{% if warnings %}
+<div class="messages">
+    {% for warning in warnings %}
+    {% set flash_id = warning_scope ~ "-warning-" ~ loop.index0 %}
+    <div id="{{ flash_id }}" class="flash-banner warning-message"
+        hx-get="/elements/empty/div/{{ flash_id }}"
+        hx-trigger="load delay:5s"
+        hx-target="this"
+        hx-swap="delete">
+        <span class="flash-banner-text">{{ warning }}</span>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-get="/elements/empty/div/{{ flash_id }}"
+            hx-target="#{{ flash_id }}"
+            hx-swap="delete"
+            title="Dismiss" aria-label="Dismiss">✕</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

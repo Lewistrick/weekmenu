@@ -35,17 +35,17 @@
     </nav>
 
     {% if messages %}
-    <div class="container messages">
-        {% for message in messages %}
-        <p class="single-message">{{ message }}</p>
-        {% endfor %}
+    <div class="container">
+        {% with message_scope="global" %}
+        {% include "partials/flash-messages.html" %}
+        {% endwith %}
     </div>
     {% endif %}
     {% if warnings %}
-    <div class="container messages">
-        {% for warning in warnings %}
-        <p class="warning-message">{{ warning }}</p>
-        {% endfor %}
+    <div class="container">
+        {% with warning_scope="global" %}
+        {% include "partials/flash-warnings.html" %}
+        {% endwith %}
     </div>
     {% endif %}
 

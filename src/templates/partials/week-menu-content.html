@@ -3,20 +3,12 @@
         <h1 class="page-title-main">Week menu</h1>
         <p class="page-lead">Plan dinners for the week. Pin days you like, randomize the rest, or search for recipes yourself.</p>
     </header>
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <p class="single-message">{{ message }}</p>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% if warnings %}
-    <div class="messages">
-        {% for warning in warnings %}
-        <p class="warning-message">{{ warning }}</p>
-        {% endfor %}
-    </div>
-    {% endif %}
+    {% with message_scope="week-menu" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% with warning_scope="week-menu" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
 
     <div class="week-menu-toolbar">
         <form class="week-menu-start-day">

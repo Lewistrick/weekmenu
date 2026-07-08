@@ -1,8 +1,4 @@
 {% include "partials/ingredient-row.html" %}
-{% if messages %}
-<div class="messages">
-    {% for message in messages %}
-    <p class="single-message">{{ message }}</p>
-    {% endfor %}
-</div>
-{% endif %}
+{% with message_scope="edited-ingredient" %}
+{% include "partials/flash-messages.html" %}
+{% endwith %}

@@ -3,10 +3,6 @@
     <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm">View recipe</a>
 </div>
 
-{% if messages %}
-<ul class="message-list">
-    {% for message in messages %}
-    <li class="single-message">{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+{% with message_scope="add-recipe" %}
+{% include "partials/flash-messages.html" %}
+{% endwith %}
