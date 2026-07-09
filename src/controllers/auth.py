@@ -13,8 +13,22 @@ from src.auth import (
 )
 from src.catalog import seed_default_units
 from src.models import Recipe, User
+from src.user_settings import (
+    UserSettings,
+    delete_user_settings,
+    load_user_settings,
+    save_user_settings,
+)
 
 MIN_PASSWORD_LENGTH = 6
+LANGUAGE_OPTIONS = (
+    "🇬🇧 English",
+    "🇳🇱 Nederlands",
+    "🇫🇷 Français",
+    "🇩🇪 Deutsch",
+    "🇪🇸 Español",
+    "🇮🇹 Italiano",
+)
 
 
 async def _backfill_first_account(user: User) -> None:
@@ -36,6 +50,14 @@ class AuthController(Controller):
     """Register, log in/out, and manage the current account."""
 
     tags = ["auth"]
+
+    @staticmethod
+    def _normalize_language(value: str) -> str:
+        """Return a valid language option or fall back to English."""
+        normalized = value.strip()
+        if normalized in LANGUAGE_OPTIONS:
+            return normalized
+        return "🇬🇧 English"
 
     @get(path="/login", summary="Login page")
     async def login_page(self, request: Request) -> Template:
@@ -139,6 +161,25 @@ class AuthController(Controller):
         await user.save()
         return await self._render_profile(request, messages=["Email updated."])
 
+    @post(path="/profile/settings", summary="Update account settings")
+    async def update_settings(self, request: Request) -> Template | Redirect:
+        """Update language and default week-menu servings settings."""
+        user = await get_current_user(request)
+        if user is None:
+            return Redirect(path="/login")
+
+        form_data = await request.form()
+        language = self._normalize_language(str(form_data.get("language", "")))
+        try:
+            servings = int(form_data.get("servings", 2))
+        except (TypeError, ValueError):
+            servings = 2
+        if servings < 1:
+            servings = 1
+
+        save_user_settings(user.id, UserSettings(language=language, servings=servings))
+        return await self._render_profile(request, messages=["Settings updated."])
+
     @post(path="/profile/password", summary="Change password")
     async def change_password(self, request: Request) -> Template | Redirect:
         """Change the current user's password after verifying the old one."""
@@ -174,6 +215,7 @@ class AuthController(Controller):
         user = await get_current_user(request)
         if user is not None:
             logger.info(f"Deleting account: {user.username}")
+            delete_user_settings(user.id)
             await user.delete()
         logout_user(request)
         return Redirect(path="/register")
@@ -186,11 +228,19 @@ class AuthController(Controller):
         warnings: list[str] | None = None,
     ) -> Template:
         """Render the profile page with the current user and optional feedback."""
+        user = await get_current_user(request)
+        settings = (
+            load_user_settings(user.id)
+            if user is not None
+            else UserSettings(language="🇬🇧 English", servings=2)
+        )
         return Template(
             template_name="user-profile.html",
             context={
                 "request": request,
-                "current_user": await get_current_user(request),
+                "current_user": user,
+                "settings": settings,
+                "language_options": LANGUAGE_OPTIONS,
                 "messages": messages or [],
                 "warnings": warnings or [],
             },

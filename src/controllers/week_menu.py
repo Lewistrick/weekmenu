@@ -10,6 +10,7 @@ from tortoise.expressions import Q
 
 from src.auth import get_current_user
 from src.models import Recipe, RecipeIngredient, RecipeTag, Tag, TagCategory
+from src.user_settings import load_user_settings
 from src.week_menu import (
     GroceryItem,
     TagGroupConstraint,
@@ -37,6 +38,12 @@ from src.week_menu import (
 
 
 class WeekMenuController(Controller):
+    @staticmethod
+    async def _default_servings(request: Request) -> int:
+        """Return the current user's preferred default servings."""
+        user_id = await WeekMenuController._viewer_id(request)
+        return load_user_settings(user_id)["servings"]
+
     """Plan dinners for each day of the week."""
 
     path = "/week-menu"
@@ -126,7 +133,8 @@ class WeekMenuController(Controller):
     ) -> dict:
         """Build template context shared by week menu renders."""
         user_id = await self._viewer_id(request)
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         start_day = load_start_day(request)
         tag_groups = await self._tag_groups(user_id)
         category_ids = [group["category"].id for group in tag_groups]
@@ -187,7 +195,8 @@ class WeekMenuController(Controller):
 
     async def _render_days(self, request: Request) -> Template:
         """Render the week menu day panel."""
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         start_day = load_start_day(request)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
@@ -234,7 +243,8 @@ class WeekMenuController(Controller):
     @post(path="/randomize", summary="Randomize unpinned week menu days")
     async def randomize(self, request: Request) -> Template:
         """Pick random enabled recipes for all unpinned days."""
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         if all(slot["pinned"] for slot in menu.values()):
             return await self._render_page_with_feedback(
                 request,
@@ -269,7 +279,8 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         menu = toggle_pin(menu, day)
         save_week_menu(request, menu)
         return await self._render_days(request)
@@ -289,7 +300,8 @@ class WeekMenuController(Controller):
         if recipe is None:
             raise NotFoundException()
 
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         menu = set_day_recipe(menu, day, recipe_id)
         save_week_menu(request, menu)
         return await self._render_days(request)
@@ -304,7 +316,8 @@ class WeekMenuController(Controller):
         if not is_valid_day(day) or direction not in {"up", "down"}:
             raise NotFoundException()
 
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         start_day = load_start_day(request)
         menu = move_day(menu, day, direction, start_day=start_day)
         save_week_menu(request, menu)
@@ -316,17 +329,21 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
+        default_servings = await self._default_servings(request)
         form_data = await request.form()
-        servings = normalize_servings(form_data.get("servings"))
-        menu = load_week_menu(request)
-        menu = set_day_servings(menu, day, servings)
+        servings = normalize_servings(
+            form_data.get("servings"), default_servings=default_servings
+        )
+        menu = load_week_menu(request, default_servings=default_servings)
+        menu = set_day_servings(menu, day, servings, default_servings=default_servings)
         save_week_menu(request, menu)
         return await self._render_days(request)
 
     @get(path="/grocery-list", summary="Generate grocery list for the week menu")
     async def grocery_list(self, request: Request) -> Template:
         """Build an aggregated grocery list scaled to each day's servings."""
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         start_day = load_start_day(request)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
@@ -377,7 +394,8 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
-        menu = load_week_menu(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
         menu = set_day_recipe(menu, day, None)
         save_week_menu(request, menu)
         return await self._render_days(request)

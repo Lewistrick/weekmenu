@@ -6,10 +6,12 @@ import pytest
 from litestar.testing import AsyncTestClient
 from tortoise import Tortoise
 from tortoise.exceptions import ConfigurationError
+from pathlib import Path
 
 import src.db_config as db_config_module
 from src.app import app
 from src.models import User
+import src.user_settings as user_settings_module
 
 TEST_DB_CONFIG = {
     "connections": {"default": "sqlite://:memory:"},
@@ -46,6 +48,16 @@ def _use_in_memory_database(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(db_config_module, "TORTOISE_CONFIG", TEST_DB_CONFIG)
     monkeypatch.setattr(app, "on_startup", [init_test_db])
     monkeypatch.setattr(app, "on_shutdown", [close_test_db])
+
+
+@pytest.fixture(autouse=True)
+def _use_temp_user_settings_dir(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Write per-user settings files to a pytest temp directory."""
+    monkeypatch.setattr(
+        user_settings_module, "USER_SETTINGS_DIR", tmp_path / "user_settings"
+    )
 
 
 DEFAULT_USERNAME = "testuser"
