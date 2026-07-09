@@ -1,7 +1,7 @@
 <li class="grocery-item{% if item.ingredient_id in already_have_ids %} grocery-item--muted{% endif %}">
     <div class="grocery-item-row">
         <span class="grocery-item-name">{{ item.name }}</span>
-        <div id="grocery-amount-{{ item.ingredient_id }}" class="grocery-item-amount-wrap">
+        <div id="grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}" class="grocery-item-amount-wrap">
             {% include "partials/grocery-amount-display.html" %}
         </div>
     </div>

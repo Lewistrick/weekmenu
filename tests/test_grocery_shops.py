@@ -16,6 +16,7 @@ from src.week_menu import (
     mark_already_have,
     save_grocery_list,
     unmark_already_have,
+    update_grocery_line,
 )
 
 
@@ -341,7 +342,7 @@ async def test_grocery_list_can_edit_amount(
     await test_client.get("/week-menu/grocery-list")
 
     response = await test_client.post(
-        f"/week-menu/grocery-list/item/{sugar.id}",
+        f"/week-menu/grocery-list/item/{sugar.id}/g",
         data={"quantity": "75", "unit": "g"},
     )
 
@@ -427,6 +428,192 @@ async def test_home_page_links_to_grocery_list(test_client: AsyncTestClient) -> 
     assert response.status_code == 200
     assert "/week-menu/grocery-list" in response.text
     assert "Grocery list" in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_page_has_two_copy_sections(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Grocery and week menu copy areas should appear in separate sections."""
+    recipe = await Recipe.create(
+        name="Copy stew",
+        description="copy sections",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    herbs = await Ingredient.create(owner=default_user, name="herbs")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=herbs, quantity=10, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+
+    response = await test_client.get("/week-menu/grocery-list")
+
+    assert response.status_code == 200
+    assert response.text.count("Copy for messaging") == 2
+    assert "grocery-copy-text" in response.text
+    assert "week-menu-copy-text" in response.text
+    assert "Copy stew" in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_mark_all_shop_already_have(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """A shop should be able to mark all of its ingredients as already owned."""
+    shop = await Shop.create(owner=default_user, name="Bulk shop")
+    recipe = await Recipe.create(
+        name="Bulk stew",
+        description="bulk already-have",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    pepper = await Ingredient.create(owner=default_user, name="pepper")
+    await set_ingredient_shop(default_user.id, pepper.id, shop.id)
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=pepper, quantity=5, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.post(
+        f"/week-menu/grocery-list/shop/{shop.id}/already-have"
+    )
+
+    assert response.status_code == 200
+    assert "Already have" in response.text
+    assert ">pepper</span>" in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_can_clear_already_have(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """The already-have list can be emptied in one action."""
+    recipe = await Recipe.create(
+        name="Clear stew",
+        description="clear already-have",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    salt = await Ingredient.create(owner=default_user, name="salt")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=salt, quantity=5, unit=grams
+    )
+    await test_client.post(f"/week-menu/tuesday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": salt.id},
+    )
+
+    response = await test_client.post("/week-menu/grocery-list/already-have/clear")
+
+    assert response.status_code == 200
+    assert "To sort" in response.text
+    assert ">salt</span>" in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_merges_duplicate_unit_lines(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Changing a line's unit should merge with an existing same-unit line."""
+    recipe_a = await Recipe.create(
+        name="Merge stew A",
+        description="merge test a",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    recipe_b = await Recipe.create(
+        name="Merge stew B",
+        description="merge test b",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    kg = await Unit.filter(owner_id=default_user.id, abbrev="kg").first()
+    assert grams is not None
+    assert kg is not None
+    flour = await Ingredient.create(owner=default_user, name="flour")
+    await RecipeIngredient.create(
+        recipe=recipe_a, ingredient=flour, quantity=500, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_b, ingredient=flour, quantity=1, unit=kg
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe_a.id}")
+    await test_client.post(f"/week-menu/tuesday/recipe/{recipe_b.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.post(
+        f"/week-menu/grocery-list/item/{flour.id}/g",
+        data={"quantity": "100", "unit": "kg"},
+    )
+
+    assert response.status_code == 200
+    assert "Combined with existing flour (kg)." in response.text
+    assert "101 kg" in response.text
+
+
+def test_update_grocery_line_merges_matching_unit() -> None:
+    """Unit changes should combine quantities for the same ingredient-unit pair."""
+
+    class Session(dict):
+        pass
+
+    class RequestStub:
+        def __init__(self) -> None:
+            self.session = Session({"user_id": 1})
+
+    request = RequestStub()
+    save_grocery_list(
+        request,  # type: ignore[arg-type]
+        [
+            GroceryItem(ingredient_id=4, name="flour", unit="g", quantity=500.0),
+            GroceryItem(ingredient_id=4, name="flour", unit="kg", quantity=1.0),
+        ],
+    )
+
+    success, message = update_grocery_line(
+        request,  # type: ignore[arg-type]
+        4,
+        "g",
+        quantity=100.0,
+        unit="kg",
+    )
+
+    assert success is True
+    assert message == "Combined with existing flour (kg)."
+    loaded = load_grocery_list(request)  # type: ignore[arg-type]
+    assert len(loaded) == 1
+    assert loaded[0]["unit"] == "kg"
+    assert loaded[0]["quantity"] == 101.0
 
 
 def test_save_and_load_grocery_list_round_trip() -> None:

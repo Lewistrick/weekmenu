@@ -1,8 +1,9 @@
 <form class="grocery-amount-form" method="post"
-    action="/week-menu/grocery-list/item/{{ item.ingredient_id }}"
-    hx-post="/week-menu/grocery-list/item/{{ item.ingredient_id }}"
-    hx-target="#grocery-amount-{{ item.ingredient_id }}"
+    action="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}"
+    hx-post="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}"
+    hx-target="#grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}"
     hx-swap="innerHTML">
+    <input type="hidden" name="old_unit" value="{{ item.unit }}">
     <input class="form-control grocery-amount-input" type="number" name="quantity"
         min="0.01" step="any" value="{{ item.quantity }}" required
         aria-label="Quantity for {{ item.name }}">
@@ -20,8 +21,8 @@
     </select>
     <button type="submit" class="btn btn-sm btn-primary" title="Save amount" aria-label="Save amount">✓</button>
     <button type="button" class="btn btn-sm icon-btn"
-        hx-get="/week-menu/grocery-list/item/{{ item.ingredient_id }}/display"
-        hx-target="#grocery-amount-{{ item.ingredient_id }}"
+        hx-get="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}/display"
+        hx-target="#grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}"
         hx-swap="innerHTML"
         title="Cancel edit" aria-label="Cancel edit">
         ✕

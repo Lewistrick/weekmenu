@@ -420,24 +420,112 @@ def is_grocery_list_empty(request: Request) -> bool:
     return len(load_grocery_list(request)) == 0
 
 
-def update_grocery_item(
-    request: Request, ingredient_id: int, *, quantity: float, unit: str
-) -> bool:
-    """Update quantity and unit for one grocery line in the session list."""
+def grocery_line_key(ingredient_id: int, unit: str) -> str:
+    """Return a stable DOM key for one ingredient-unit grocery line."""
+    return f"{ingredient_id}-{unit.strip()}"
+
+
+def find_grocery_line(
+    items: list[GroceryItem], ingredient_id: int, unit: str
+) -> GroceryItem | None:
+    """Return the grocery line matching an ingredient id and unit."""
     normalized_unit = unit.strip()
-    if not normalized_unit:
-        return False
-    items = load_grocery_list(request)
-    updated = False
     for item in items:
-        if item["ingredient_id"] == ingredient_id:
-            item["quantity"] = round(quantity, 2)
-            item["unit"] = normalized_unit
-            updated = True
-            break
-    if updated:
+        if item["ingredient_id"] == ingredient_id and item["unit"] == normalized_unit:
+            return item
+    return None
+
+
+def ingredient_in_grocery_list(items: list[GroceryItem], ingredient_id: int) -> bool:
+    """Return whether an ingredient appears on the grocery list."""
+    return any(item["ingredient_id"] == ingredient_id for item in items)
+
+
+def update_grocery_line(
+    request: Request,
+    ingredient_id: int,
+    old_unit: str,
+    *,
+    quantity: float,
+    unit: str,
+) -> tuple[bool, str | None]:
+    """Update one grocery line, merging when the target unit already exists.
+
+    Args:
+        request: The incoming request carrying session state.
+        ingredient_id: Ingredient id for the line being edited.
+        old_unit: Current unit abbrev for the line being edited.
+        quantity: New quantity for the line.
+        unit: New unit abbrev for the line.
+
+    Returns:
+        A success flag and an optional merge notice for the user.
+    """
+    normalized_unit = unit.strip()
+    old_unit_normalized = old_unit.strip()
+    if not normalized_unit:
+        return False, None
+
+    items = load_grocery_list(request)
+    current = find_grocery_line(items, ingredient_id, old_unit_normalized)
+    if current is None:
+        return False, None
+
+    merge_message: str | None = None
+    if normalized_unit == old_unit_normalized:
+        current["quantity"] = round(quantity, 2)
         save_grocery_list(request, items)
-    return updated
+        return True, None
+
+    duplicate = find_grocery_line(items, ingredient_id, normalized_unit)
+    remaining = [
+        item
+        for item in items
+        if not (
+            item["ingredient_id"] == ingredient_id
+            and item["unit"] == old_unit_normalized
+        )
+    ]
+    if duplicate is not None:
+        for item in remaining:
+            if (
+                item["ingredient_id"] == ingredient_id
+                and item["unit"] == normalized_unit
+            ):
+                item["quantity"] = round(item["quantity"] + quantity, 2)
+                merge_message = (
+                    f"Combined with existing {item['name']} ({normalized_unit})."
+                )
+                break
+    else:
+        remaining.append(
+            GroceryItem(
+                ingredient_id=ingredient_id,
+                name=current["name"],
+                unit=normalized_unit,
+                quantity=round(quantity, 2),
+            )
+        )
+
+    save_grocery_list(request, remaining)
+    return True, merge_message
+
+
+def mark_shop_already_have(
+    request: Request,
+    shop_id: int,
+    items: list[GroceryItem],
+    ingredient_shop_ids: dict[int, int | None],
+) -> None:
+    """Mark every ingredient assigned to one shop as already available."""
+    for item in items:
+        if ingredient_shop_ids.get(item["ingredient_id"]) == shop_id:
+            mark_already_have(request, item["ingredient_id"])
+
+
+def clear_already_have(request: Request) -> None:
+    """Remove every ingredient from the already-have list."""
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
 
 
 def parse_grocery_quantity(value: Any) -> float | None:

@@ -39,7 +39,9 @@
 - The grocery list is generated once from your week menu and then preserved in your session until it is empty again. Revisiting the page shows a notice instead of regenerating over your sorting work.
 - The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked as already owned appear below the unsorted list and can be restored with the ✓ chip.
 - Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
-- Copy grouped plaintext for messaging under **Days included** on the grocery list page (`{ingredient} - {amount} {unit}` per line, with a shop name header per section). Unassigned items are exported under **Unassigned**.
+- Copy grouped plaintext for messaging in two places on the grocery list page: under the grocery columns (ingredients by shop) and under **Days included** (week menu days and recipes).
+- Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
+- Each shop section has a **Mark all ✓** button. The already-have list has an **Empty list** button with a confirmation step.
 - Export the week menu as plaintext via `GET /week-menu/export` (`{day} - {recipe}` per line, empty days omitted).
 
 ### Per-user catalog (ingredients, units, tags, shops)

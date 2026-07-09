@@ -682,6 +682,50 @@ div.recipe-detail {
     color: #d8ebfa;
 }
 
+.grocery-notice--action {
+    border-color: #22c55e;
+    background-color: rgba(34, 197, 94, 0.12);
+    color: #d1fae5;
+}
+
+.grocery-subsection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.grocery-subsection-header .grocery-subsection-title {
+    margin: 0;
+}
+
+.grocery-bulk-form {
+    margin: 0;
+}
+
+.grocery-shop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.grocery-shop-header .grocery-shop-title {
+    margin: 0;
+}
+
+.grocery-shop-mark-all {
+    color: var(--shop-fg, #ffffff);
+    border-color: color-mix(in srgb, var(--shop-fg, #ffffff) 45%, transparent);
+}
+
+.grocery-shop-mark-all:hover {
+    background-color: rgba(0, 0, 0, 0.15);
+    color: var(--shop-fg, #ffffff);
+}
+
 .grocery-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -714,13 +758,17 @@ div.recipe-detail {
 }
 
 .grocery-shop-group .grocery-item {
-    background-color: rgba(0, 0, 0, 0.18);
-    border-color: rgba(255, 255, 255, 0.2);
+    background-color: #353535;
+    border-color: #555;
+    color: #e8e8e8;
 }
 
-.grocery-shop-group .grocery-item-name,
+.grocery-shop-group .grocery-item-name {
+    color: #e8e8e8;
+}
+
 .grocery-shop-group .grocery-item-amount {
-    color: inherit;
+    color: #b8d9f0;
 }
 
 .grocery-shop-title {

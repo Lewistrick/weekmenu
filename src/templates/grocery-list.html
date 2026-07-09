@@ -12,6 +12,9 @@
     {% if grocery_message %}
     <div class="grocery-notice" role="status">{{ grocery_message }}</div>
     {% endif %}
+    {% if grocery_action_message %}
+    <div class="grocery-notice grocery-notice--action" role="status">{{ grocery_action_message }}</div>
+    {% endif %}
 
     <div class="grocery-toolbar">
         <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
@@ -32,7 +35,16 @@
             <p class="search-placeholder">Everything is sorted or already at home.</p>
             {% endif %}
 
-            <h3 class="grocery-subsection-title">Already have</h3>
+            <div class="grocery-subsection-header">
+                <h3 class="grocery-subsection-title">Already have</h3>
+                {% if already_have_items %}
+                <form method="post" action="/week-menu/grocery-list/already-have/clear"
+                    class="grocery-bulk-form"
+                    onsubmit="return confirm('Remove all items from the already-have list?')">
+                    <button type="submit" class="btn btn-sm btn-ghost">Empty list</button>
+                </form>
+                {% endif %}
+            </div>
             {% if already_have_items %}
             <ul class="grocery-list grocery-list--muted">
                 {% for item in already_have_items %}
@@ -50,13 +62,21 @@
             {% for group in grocery_groups %}
             <div class="grocery-shop-group"
                 style="--shop-bg: {{ group.background_color }}; --shop-fg: {{ group.foreground_color }};">
-                <h3 class="grocery-shop-title">
-                    <span class="shop-chip-btn shop-chip-btn--title"
-                        style="color: {{ group.foreground_color }}; background-color: {{ group.background_color }};">
-                        {{ group.letter }}
-                    </span>
-                    {{ group.shop_name }}
-                </h3>
+                <div class="grocery-shop-header">
+                    <h3 class="grocery-shop-title">
+                        <span class="shop-chip-btn shop-chip-btn--title"
+                            style="color: {{ group.foreground_color }}; background-color: {{ group.background_color }};">
+                            {{ group.letter }}
+                        </span>
+                        {{ group.shop_name }}
+                    </h3>
+                    <form method="post" action="/week-menu/grocery-list/shop/{{ group.shop_id }}/already-have"
+                        class="grocery-bulk-form">
+                        <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all">
+                            Mark all ✓
+                        </button>
+                    </form>
+                </div>
                 <ul class="grocery-list">
                     {% for item in group.entries %}
                     {% include "partials/grocery-item-row.html" %}
@@ -69,6 +89,10 @@
             {% endif %}
         </section>
     </div>
+
+    {% with copy_title="Copy for messaging", copy_text=grocery_export_text, textarea_id="grocery-copy-text" %}
+    {% include "partials/grocery-copy-section.html" %}
+    {% endwith %}
     {% else %}
     <section class="recipe-section">
         <p class="search-placeholder">
@@ -104,23 +128,14 @@
             </tbody>
         </table>
 
-        {% if grocery_export_text %}
-        <div class="grocery-copy-section">
-            <div class="grocery-copy-header">
-                <h3 class="grocery-subsection-title">Copy for messaging</h3>
-                <button type="button" class="btn btn-secondary btn-sm grocery-copy-btn"
-                    onclick="copyGroceryExport()">
-                    Copy
-                </button>
-            </div>
-            <textarea id="grocery-copy-text" class="plaintext-export" readonly rows="8">{{ grocery_export_text }}</textarea>
-        </div>
-        {% endif %}
+        {% with copy_title="Copy for messaging", copy_text=week_menu_export_text, textarea_id="week-menu-copy-text" %}
+        {% include "partials/grocery-copy-section.html" %}
+        {% endwith %}
     </section>
 </div>
 <script>
-    function copyGroceryExport() {
-        const textarea = document.getElementById("grocery-copy-text");
+    function copyPlaintext(textareaId) {
+        const textarea = document.getElementById(textareaId);
         if (!textarea) {
             return;
         }
