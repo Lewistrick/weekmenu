@@ -33,9 +33,7 @@ async def test_registration_seeds_default_units(
     abbrevs = await Unit.filter(owner_id=default_user.id).values_list(
         "abbrev", flat=True
     )
-    assert sorted(abbrevs) == sorted(
-        ["g", "kg", "ml", "l", "dl", "el", "tl", "st", "pcs"]
-    )
+    assert sorted(abbrevs) == sorted(["g", "kg", "ml", "l", "el", "tl", "st"])
 
 
 @pytest.mark.asyncio

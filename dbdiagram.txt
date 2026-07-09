@@ -86,6 +86,8 @@ Table shops {
   id int [pk, increment]
   name varchar(255) [not null]
   owner_id int [not null]
+  foreground_color varchar(7) [not null, default: '#ffffff']
+  background_color varchar(7) [not null, default: '#2563eb']
 
   indexes {
     (owner_id, name) [unique]

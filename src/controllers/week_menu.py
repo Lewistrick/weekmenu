@@ -4,12 +4,18 @@ from collections import defaultdict
 
 from litestar import Controller, Request, get, post
 from litestar.exceptions import NotFoundException
-from litestar.response import Template
+from litestar.response import Response, Template
 from loguru import logger
 from tortoise.expressions import Q
 
 from src.auth import get_current_user
-from src.models import Recipe, RecipeIngredient, RecipeTag, Tag, TagCategory
+from src.grocery import (
+    format_grocery_export,
+    format_week_menu_export,
+    split_grocery_lists,
+)
+from src.models import Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag, TagCategory
+from src.shops import load_ingredient_shop_ids, load_shops, set_ingredient_shop
 from src.user_settings import load_user_settings
 from src.week_menu import (
     GroceryItem,
@@ -26,6 +32,8 @@ from src.week_menu import (
     parse_tag_constraints_from_form,
     randomize_week_menu,
     load_include_public,
+    load_already_have_ids,
+    mark_already_have,
     save_start_day,
     save_tag_constraints,
     save_include_public,
@@ -38,16 +46,16 @@ from src.week_menu import (
 
 
 class WeekMenuController(Controller):
+    """Plan dinners for each day of the week."""
+
+    path = "/week-menu"
+    tags = ["week-menu"]
+
     @staticmethod
     async def _default_servings(request: Request) -> int:
         """Return the current user's preferred default servings."""
         user_id = await WeekMenuController._viewer_id(request)
         return load_user_settings(user_id)["servings"]
-
-    """Plan dinners for each day of the week."""
-
-    path = "/week-menu"
-    tags = ["week-menu"]
 
     @staticmethod
     async def _viewer_id(request: Request) -> int:
@@ -210,6 +218,69 @@ class WeekMenuController(Controller):
             },
         )
 
+    async def _build_grocery_context(self, request: Request) -> dict:
+        """Build shared grocery-list context for HTML and plaintext export."""
+        user_id = await self._viewer_id(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
+        start_day = load_start_day(request)
+        recipe_ids = [
+            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
+        ]
+        recipes_by_id = await self._recipes_by_id(recipe_ids)
+
+        ingredients_by_recipe: dict[int, list[RecipeIngredient]] = defaultdict(list)
+        if recipe_ids:
+            recipe_ingredients = await RecipeIngredient.filter(
+                recipe_id__in=recipe_ids
+            ).select_related("recipe", "ingredient", "unit")
+            for recipe_ingredient in recipe_ingredients:
+                ingredients_by_recipe[recipe_ingredient.recipe.id].append(
+                    recipe_ingredient
+                )
+
+        entries: list[GroceryItem] = []
+        for slot in menu.values():
+            recipe = recipes_by_id.get(slot["recipe_id"]) if slot["recipe_id"] else None
+            if recipe is None:
+                continue
+            recipe_servings = normalize_servings(recipe.servings)
+            for recipe_ingredient in ingredients_by_recipe.get(recipe.id, []):
+                entries.append(
+                    GroceryItem(
+                        ingredient_id=recipe_ingredient.ingredient.id,
+                        name=recipe_ingredient.ingredient.name,
+                        unit=recipe_ingredient.unit.abbrev,
+                        quantity=scale_ingredient_quantity(
+                            recipe_ingredient.quantity,
+                            slot["servings"],
+                            recipe_servings,
+                        ),
+                    )
+                )
+
+        grocery_items = build_grocery_list(entries)
+        ingredient_shop_ids = await load_ingredient_shop_ids(user_id)
+        shops = await load_shops(user_id)
+        already_have_ids = load_already_have_ids(request)
+        unassigned_items, already_have_items, grocery_groups = split_grocery_lists(
+            grocery_items, ingredient_shop_ids, shops, already_have_ids
+        )
+        days = await build_day_rows(menu, recipes_by_id, start_day)
+        return {
+            "request": request,
+            "days": days,
+            "unassigned_items": unassigned_items,
+            "already_have_items": already_have_items,
+            "grocery_groups": grocery_groups,
+            "grocery_export_text": format_grocery_export(
+                unassigned_items, grocery_groups
+            ),
+            "week_menu_export_text": format_week_menu_export(days),
+            "shops": shops,
+            "ingredient_shop_ids": ingredient_shop_ids,
+        }
+
     @get(summary="Week menu planner page")
     async def week_menu_page(self, request: Request) -> Template:
         """Show the week menu planner."""
@@ -342,50 +413,68 @@ class WeekMenuController(Controller):
     @get(path="/grocery-list", summary="Generate grocery list for the week menu")
     async def grocery_list(self, request: Request) -> Template:
         """Build an aggregated grocery list scaled to each day's servings."""
-        default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
-        start_day = load_start_day(request)
-        recipe_ids = [
-            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
-        ]
-        recipes_by_id = await self._recipes_by_id(recipe_ids)
-
-        ingredients_by_recipe: dict[int, list[RecipeIngredient]] = defaultdict(list)
-        if recipe_ids:
-            recipe_ingredients = await RecipeIngredient.filter(
-                recipe_id__in=recipe_ids
-            ).select_related("recipe", "ingredient", "unit")
-            for recipe_ingredient in recipe_ingredients:
-                ingredients_by_recipe[recipe_ingredient.recipe.id].append(
-                    recipe_ingredient
-                )
-
-        entries: list[GroceryItem] = []
-        for slot in menu.values():
-            recipe = recipes_by_id.get(slot["recipe_id"]) if slot["recipe_id"] else None
-            if recipe is None:
-                continue
-            recipe_servings = normalize_servings(recipe.servings)
-            for recipe_ingredient in ingredients_by_recipe.get(recipe.id, []):
-                entries.append(
-                    GroceryItem(
-                        name=recipe_ingredient.ingredient.name,
-                        unit=recipe_ingredient.unit.abbrev,
-                        quantity=scale_ingredient_quantity(
-                            recipe_ingredient.quantity,
-                            slot["servings"],
-                            recipe_servings,
-                        ),
-                    )
-                )
-
         return Template(
             template_name="grocery-list.html",
-            context={
-                "request": request,
-                "days": await build_day_rows(menu, recipes_by_id, start_day),
-                "grocery_items": build_grocery_list(entries),
-            },
+            context=await self._build_grocery_context(request),
+        )
+
+    @get(path="/grocery-list/export", summary="Export grocery list as plaintext")
+    async def grocery_list_export(self, request: Request) -> Response[str]:
+        """Return the grocery list grouped by shop as plain text."""
+        context = await self._build_grocery_context(request)
+        return Response(
+            content=context["grocery_export_text"],
+            media_type="text/plain; charset=utf-8",
+        )
+
+    @post(path="/grocery-list/assign", summary="Assign grocery ingredient to shop")
+    async def assign_grocery_ingredient(self, request: Request) -> Template:
+        """Assign a shop to an ingredient that is not assigned yet."""
+        user_id = await self._viewer_id(request)
+        form_data = await request.form()
+        ingredient_id = int(form_data.get("ingredient_id", 0))
+        shop_value = str(form_data.get("shop_id", "")).strip()
+        if await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id) is None:
+            raise NotFoundException()
+        if not shop_value:
+            raise NotFoundException()
+        shop_id = int(shop_value)
+        shops = await load_shops(user_id)
+        if shop_id not in {shop["id"] for shop in shops}:
+            raise NotFoundException()
+        existing_shop_id = (await load_ingredient_shop_ids(user_id)).get(ingredient_id)
+        if existing_shop_id is not None:
+            return Template(
+                template_name="grocery-list.html",
+                context=await self._build_grocery_context(request),
+            )
+        await set_ingredient_shop(user_id, ingredient_id, shop_id)
+        return Template(
+            template_name="grocery-list.html",
+            context=await self._build_grocery_context(request),
+        )
+
+    @post(path="/grocery-list/already-have", summary="Mark ingredient as already owned")
+    async def mark_grocery_already_have(self, request: Request) -> Template:
+        """Move an ingredient to the already-have list for this grocery plan."""
+        user_id = await self._viewer_id(request)
+        form_data = await request.form()
+        ingredient_id = int(form_data.get("ingredient_id", 0))
+        if await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id) is None:
+            raise NotFoundException()
+        mark_already_have(request, ingredient_id)
+        return Template(
+            template_name="grocery-list.html",
+            context=await self._build_grocery_context(request),
+        )
+
+    @get(path="/export", summary="Export week menu as plaintext")
+    async def week_menu_export(self, request: Request) -> Response[str]:
+        """Return the week menu as plain text lines."""
+        context = await self._build_grocery_context(request)
+        return Response(
+            content=context["week_menu_export_text"],
+            media_type="text/plain; charset=utf-8",
         )
 
     @post(path="/{day:str}/clear", summary="Clear recipe for day")

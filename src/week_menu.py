@@ -35,6 +35,7 @@ SESSION_KEY = "week_menu"
 START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
+GROCERY_ALREADY_HAVE_KEY = "grocery_already_have"
 
 DEFAULT_SERVINGS = 2
 
@@ -91,6 +92,7 @@ class DaySlot(TypedDict):
 class GroceryItem(TypedDict):
     """A single aggregated line on the grocery list."""
 
+    ingredient_id: int
     name: str
     unit: str
     quantity: float
@@ -347,6 +349,27 @@ def load_include_public(request: Request) -> bool:
 def save_include_public(request: Request, include_public: bool) -> None:
     """Persist whether week-menu actions should include public recipes."""
     request.session[_scoped_key(request, INCLUDE_PUBLIC_SESSION_KEY)] = include_public
+
+
+def load_already_have_ids(request: Request) -> set[int]:
+    """Load ingredient ids the user already has for this grocery list."""
+    stored = request.session.get(_scoped_key(request, GROCERY_ALREADY_HAVE_KEY), [])
+    if not isinstance(stored, list):
+        return set()
+    ids: set[int] = set()
+    for value in stored:
+        if isinstance(value, int):
+            ids.add(value)
+        elif isinstance(value, str) and value.isdigit():
+            ids.add(int(value))
+    return ids
+
+
+def mark_already_have(request: Request, ingredient_id: int) -> None:
+    """Mark one ingredient as already available at home."""
+    ids = load_already_have_ids(request)
+    ids.add(ingredient_id)
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
 
 
 def parse_tag_constraints_from_form(
@@ -753,13 +776,18 @@ def build_grocery_list(entries: list[GroceryItem]) -> list[GroceryItem]:
         Aggregated grocery items sorted alphabetically by name, with quantities
         summed per (name, unit) pair and rounded to two decimals.
     """
-    totals: dict[tuple[str, str], float] = {}
+    totals: dict[tuple[int, str, str], float] = {}
     for entry in entries:
-        key = (entry["name"], entry["unit"])
+        key = (entry["ingredient_id"], entry["name"], entry["unit"])
         totals[key] = totals.get(key, 0.0) + entry["quantity"]
 
     items = [
-        GroceryItem(name=name, unit=unit, quantity=round(quantity, 2))
-        for (name, unit), quantity in totals.items()
+        GroceryItem(
+            ingredient_id=ingredient_id,
+            name=name,
+            unit=unit,
+            quantity=round(quantity, 2),
+        )
+        for (ingredient_id, name, unit), quantity in totals.items()
     ]
     return sorted(items, key=lambda item: item["name"].lower())

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Manage shops{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Manage shops</h1>
+        <p class="page-lead">Create shops, set their colors, and reassign ingredients between stores.</p>
+    </header>
+
+    {% with message_scope="shops" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% with warning_scope="shops" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
+
+    <section class="form-panel recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Add shop</h2>
+        </div>
+        <form method="post" action="/shops" class="manage-shop-create-form">
+            <input id="shop_name" name="shop_name" class="form-control" placeholder="e.g. Albert Heijn" required>
+            <label class="manage-shop-color-label" for="shop-fg-new">Text</label>
+            <input id="shop-fg-new" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="#ffffff">
+            <label class="manage-shop-color-label" for="shop-bg-new">Background</label>
+            <input id="shop-bg-new" name="background_color" class="form-control manage-shop-color-input" type="color" value="#2563eb">
+            <button type="submit" class="btn btn-sm icon-btn" title="Add shop" aria-label="Add shop">➕</button>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Existing shops</h2>
+        </div>
+        {% if shops %}
+        {% for shop in shops %}
+        <form method="post" action="/shops/{{ shop.id }}" class="manage-shop-edit-form">
+            <span class="shop-chip-btn shop-chip-btn--preview"
+                style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};">
+                {{ shop.letter }}
+            </span>
+            <input id="shop-name-{{ shop.id }}" name="shop_name" class="form-control" value="{{ shop.name }}" required>
+            <label class="visually-hidden" for="shop-fg-{{ shop.id }}">Text color</label>
+            <input id="shop-fg-{{ shop.id }}" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="{{ shop.foreground_color }}">
+            <label class="visually-hidden" for="shop-bg-{{ shop.id }}">Background color</label>
+            <input id="shop-bg-{{ shop.id }}" name="background_color" class="form-control manage-shop-color-input" type="color" value="{{ shop.background_color }}">
+            <button type="submit" class="btn btn-sm icon-btn" title="Save shop" aria-label="Save shop">✏️</button>
+            <button type="button" class="btn btn-sm icon-btn" hx-delete="/shops/{{ shop.id }}"
+                hx-target="body" hx-swap="innerHTML" title="Delete shop" aria-label="Delete shop">
+                🗑️
+            </button>
+        </form>
+        {% endfor %}
+        {% else %}
+        <p class="search-placeholder">No shops yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Ingredient assignments</h2>
+            <p class="section-hint">Reassign ingredients here. The grocery list only assigns a shop when none is set yet.</p>
+        </div>
+        {% if assignments %}
+        {% for row in assignments %}
+        <div class="manage-shop-assignment-row">
+            <span class="manage-shop-ingredient">{{ row.ingredient.name }}</span>
+            <div class="shop-chip-row" role="group" aria-label="Shop for {{ row.ingredient.name }}">
+                <form method="post" action="/shops/assignments" class="shop-chip-form">
+                    <input type="hidden" name="ingredient_id" value="{{ row.ingredient.id }}">
+                    <input type="hidden" name="shop_id" value="">
+                    <button type="submit" class="shop-chip-btn shop-chip-btn--clear" title="Unassigned" aria-label="Unassigned">—</button>
+                </form>
+                {% for shop in shops %}
+                <form method="post" action="/shops/assignments" class="shop-chip-form">
+                    <input type="hidden" name="ingredient_id" value="{{ row.ingredient.id }}">
+                    <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                    <button type="submit" class="shop-chip-btn{% if row.shop_id == shop.id %} shop-chip-btn--active{% endif %}"
+                        style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};"
+                        title="{{ shop.name }}" aria-label="{{ shop.name }}">
+                        {{ shop.letter }}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="search-placeholder">No ingredients yet. Add recipes with ingredients first.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

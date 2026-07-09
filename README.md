@@ -33,9 +33,17 @@
   - `servings` as the default servings value used when week-menu day slots are empty
 - Settings are editable from `/profile` under the **Settings** section.
 
+### Grocery lists by shop and plaintext export
+- Manage shops at `/shops/manage` (⚙️ Settings → 🏪 Shops). Each shop has a name plus foreground and background colors used on the grocery list.
+- Assign or reassign ingredients to shops from the manage-shops page. The grocery list only assigns a shop when an ingredient has none yet.
+- The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons and **I already have this**) on the left, and colored shop lists on the right. Items marked as already owned appear below the unsorted list.
+- Shop selection uses colored chip buttons showing the first letter of the shop name.
+- From the grocery list page you can copy or download plaintext grouped by shop (`{ingredient} - {amount} {unit}` per line, with a shop name header per section). Unassigned items are exported under **Unassigned**.
+- Export the week menu as plaintext from the bottom of the week menu page (`{day} - {recipe}` per line, empty days omitted) via **Export week menu** or `GET /week-menu/export`.
+
 ### Per-user catalog (ingredients, units, tags, shops)
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
-- Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `dl`, `el`, `tl`, `st`, `pcs` (with singular/plural labels where applicable).
+- Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Unit abbreviations are unique per user (`owner` + `abbrev`), not globally.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
 - Legacy single-user data is assigned to the first registered account on startup; duplicate unit abbreviations for that account are merged during the one-time backfill.
@@ -49,7 +57,7 @@
     - Enter the number of servings for each day; amounts are scaled from each recipe's own serving count
 - Generate a grocery list from the week menu
     - Ingredient quantities are scaled to each day's servings, then ingredients sharing the same name and unit are added together
-    - Open it from the "🛒 Grocery list" button on the week menu page (`/week-menu/grocery-list`)
+    - Open it from the **Grocery list** button at the bottom of the week menu page (`/week-menu/grocery-list`)
 - Search recipes by name, description, ingredients, and optional tag filters
 
 ### To see the API docs

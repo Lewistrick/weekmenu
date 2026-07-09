@@ -18,6 +18,7 @@ from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
+from src.controllers.shops import ShopController
 from src.controllers.tags import TagController
 from src.controllers.week_menu import WeekMenuController
 import src.db_config as db_config
@@ -163,6 +164,35 @@ async def _ensure_catalog_owners(conn) -> None:
         else:
             canonical_by_abbrev[unit.abbrev] = unit.id
 
+    await _ensure_shop_colors(conn)
+
+
+async def _ensure_shop_colors(conn) -> None:
+    """Add shop color columns and backfill defaults for older databases."""
+    table_exists = await conn.execute_query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", ["shop"]
+    )
+    if not table_exists[1]:
+        return
+    table_info = await conn.execute_query("PRAGMA table_info(shop)")
+    columns = {row[1] for row in table_info[1]}
+    if "foreground_color" not in columns:
+        await conn.execute_query(
+            "ALTER TABLE shop ADD COLUMN foreground_color TEXT DEFAULT '#ffffff'"
+        )
+    if "background_color" not in columns:
+        await conn.execute_query(
+            "ALTER TABLE shop ADD COLUMN background_color TEXT DEFAULT '#2563eb'"
+        )
+    await conn.execute_query(
+        "UPDATE shop SET foreground_color = '#ffffff' "
+        "WHERE foreground_color IS NULL OR foreground_color = ''"
+    )
+    await conn.execute_query(
+        "UPDATE shop SET background_color = '#2563eb' "
+        "WHERE background_color IS NULL OR background_color = ''"
+    )
+
 
 async def _ensure_not_using_production_db_in_tests() -> None:
     """Block accidental production database use while pytest is running."""
@@ -220,6 +250,7 @@ app = Litestar(
         RecipeController,
         IngredientController,
         TagController,
+        ShopController,
         WeekMenuController,
         ElementController,
         static_files_router,

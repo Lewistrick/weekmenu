@@ -36,7 +36,6 @@
                 hx-swap="outerHTML" hx-include="#week-menu-search-include-public">
                 <button type="submit" class="btn btn-primary">🎲 Randomize week</button>
             </form>
-            <a href="/week-menu/grocery-list" class="btn btn-secondary">🛒 Grocery list</a>
         </div>
     </div>
 
@@ -102,5 +101,16 @@
 
     <div id="week-menu-panel" class="week-menu-panel">
         {% include "partials/week-menu-days.html" %}
+    </div>
+
+    <div class="week-menu-footer-actions">
+        <a href="/week-menu/grocery-list" class="btn btn-action btn-action--grocery">
+            <span class="btn-action-icon" aria-hidden="true">🛒</span>
+            <span>Grocery list</span>
+        </a>
+        <a href="/week-menu/export" class="btn btn-action btn-action--export" download="week-menu.txt">
+            <span class="btn-action-icon" aria-hidden="true">📋</span>
+            <span>Export week menu</span>
+        </a>
     </div>
 </div>
