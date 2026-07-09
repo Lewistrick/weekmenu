@@ -1,0 +1,29 @@
+<section id="shop-assignments" class="recipe-section">
+    <div class="section-heading">
+        <h2 class="section-title">Ingredient assignments</h2>
+        <p class="section-hint">Reassign ingredients here. The grocery list only assigns a shop when none is set yet.</p>
+    </div>
+    {% if assignment_groups %}
+    {% for group in assignment_groups %}
+    <div class="manage-shop-assignment-group">
+        <h3 class="manage-shop-assignment-group-title">
+            {% if group.shop %}
+            <span class="shop-chip-btn shop-chip-btn--preview"
+                style="color: {{ group.shop.foreground_color }}; background-color: {{ group.shop.background_color }};">
+                {{ group.shop.letter }}
+            </span>
+            <span>{{ group.shop.name }}</span>
+            {% else %}
+            <span class="shop-chip-btn shop-chip-btn--clear shop-chip-btn--preview">—</span>
+            <span>Unassigned</span>
+            {% endif %}
+        </h3>
+        {% for row in group.rows %}
+        {% include "partials/manage-shop-assignment-row.html" %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="search-placeholder">No ingredients yet. Add recipes with ingredients first.</p>
+    {% endif %}
+</section>

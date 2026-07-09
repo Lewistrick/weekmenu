@@ -126,3 +126,30 @@ async def ingredient_assignment_rows(owner_id: int) -> list[dict[str, object]]:
             }
         )
     return rows
+
+
+class AssignmentGroup(TypedDict):
+    """One shop bucket on the manage-shops assignments panel."""
+
+    label: str
+    shop: ShopInfo | None
+    rows: list[dict[str, object]]
+
+
+async def ingredient_assignment_groups(
+    owner_id: int, shops: list[ShopInfo]
+) -> list[AssignmentGroup]:
+    """Return ingredient assignments grouped by shop, unassigned first."""
+    rows = await ingredient_assignment_rows(owner_id)
+    groups: list[AssignmentGroup] = []
+
+    unassigned = [row for row in rows if row["shop_id"] is None]
+    if unassigned:
+        groups.append({"label": "Unassigned", "shop": None, "rows": unassigned})
+
+    for shop in shops:
+        assigned = [row for row in rows if row["shop_id"] == shop["id"]]
+        if assigned:
+            groups.append({"label": shop["name"], "shop": shop, "rows": assigned})
+
+    return groups

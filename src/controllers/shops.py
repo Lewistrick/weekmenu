@@ -9,7 +9,7 @@ from src.auth import get_current_user
 from src.models import Ingredient, Shop
 from src.shops import (
     get_or_create_shop,
-    ingredient_assignment_rows,
+    ingredient_assignment_groups,
     load_shops,
     set_ingredient_shop,
 )
@@ -55,6 +55,24 @@ class ShopController(Controller):
             raise NotFoundException()
         return ingredient
 
+    async def _build_manage_context(
+        self,
+        request: Request,
+        *,
+        messages: list[str] | None = None,
+        warnings: list[str] | None = None,
+    ) -> dict[str, object]:
+        """Build template context for the shop management page."""
+        owner_id = await self._owner_id(request)
+        shops = await load_shops(owner_id)
+        return {
+            "request": request,
+            "shops": shops,
+            "assignment_groups": await ingredient_assignment_groups(owner_id, shops),
+            "messages": messages or [],
+            "warnings": warnings or [],
+        }
+
     async def _render_manage_page(
         self,
         request: Request,
@@ -63,16 +81,25 @@ class ShopController(Controller):
         warnings: list[str] | None = None,
     ) -> Template:
         """Render the shop management page."""
+        return Template(
+            template_name="manage-shops.html",
+            context=await self._build_manage_context(
+                request, messages=messages, warnings=warnings
+            ),
+        )
+
+    async def _render_assignments_partial(self, request: Request) -> Template:
+        """Render only the ingredient assignments section for HTMX swaps."""
         owner_id = await self._owner_id(request)
         shops = await load_shops(owner_id)
         return Template(
-            template_name="manage-shops.html",
+            template_name="partials/manage-shop-assignments.html",
             context={
                 "request": request,
                 "shops": shops,
-                "assignments": await ingredient_assignment_rows(owner_id),
-                "messages": messages or [],
-                "warnings": warnings or [],
+                "assignment_groups": await ingredient_assignment_groups(
+                    owner_id, shops
+                ),
             },
         )
 
@@ -163,4 +190,6 @@ class ShopController(Controller):
                 raise NotFoundException()
 
         await set_ingredient_shop(owner_id, ingredient.id, shop_id)
+        if request.headers.get("HX-Request"):
+            return await self._render_assignments_partial(request)
         return await self._render_manage_page(request, messages=["Assignment saved."])

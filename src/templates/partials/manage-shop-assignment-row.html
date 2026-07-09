@@ -1,0 +1,24 @@
+<div class="manage-shop-assignment-row" id="manage-shop-assignment-{{ row.ingredient.id }}">
+    <span class="manage-shop-ingredient">{{ row.ingredient.name }}</span>
+    <div class="shop-chip-row" role="group" aria-label="Shop for {{ row.ingredient.name }}">
+        <form hx-post="/shops/assignments" hx-target="#shop-assignments" hx-swap="outerHTML"
+            class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ row.ingredient.id }}">
+            <input type="hidden" name="shop_id" value="">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--clear{% if row.shop_id is none %} shop-chip-btn--active{% endif %}"
+                title="Unassigned" aria-label="Unassigned">—</button>
+        </form>
+        {% for shop in shops %}
+        <form hx-post="/shops/assignments" hx-target="#shop-assignments" hx-swap="outerHTML"
+            class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ row.ingredient.id }}">
+            <input type="hidden" name="shop_id" value="{{ shop.id }}">
+            <button type="submit" class="shop-chip-btn{% if row.shop_id == shop.id %} shop-chip-btn--active{% endif %}"
+                style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};"
+                title="{{ shop.name }}" aria-label="{{ shop.name }}">
+                {{ shop.letter }}
+            </button>
+        </form>
+        {% endfor %}
+    </div>
+</div>
