@@ -423,6 +423,77 @@ async def test_week_menu_page_has_generate_grocery_action(
 
 
 @pytest.mark.asyncio
+async def test_generate_grocery_list_keeps_user_logged_in(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Generating a grocery list should keep the session and land on the list page."""
+    recipe = await Recipe.create(
+        name="Session stew",
+        description="session test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    salt = await Ingredient.create(owner=default_user, name="salt")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=salt, quantity=5, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/generate",
+        data={"mode": "replace"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "Log in to plan your week" not in response.text
+    assert ">salt</span>" in response.text
+    week_menu = await test_client.get("/week-menu")
+    assert week_menu.status_code == 200
+    assert "Log in to plan your week" not in week_menu.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_session_stores_compact_items(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Persisted grocery items should omit names and hydrate them when rendering."""
+    recipe = await Recipe.create(
+        name="Compact stew",
+        description="compact session test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    pepper = await Ingredient.create(owner=default_user, name="pepper")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=pepper, quantity=3, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.post(
+        "/week-menu/grocery-list/generate",
+        data={"mode": "replace"},
+        follow_redirects=True,
+    )
+
+    response = await test_client.get("/week-menu/grocery-list")
+
+    assert response.status_code == 200
+    assert ">pepper</span>" in response.text
+
+
+@pytest.mark.asyncio
 async def test_generate_grocery_list_from_empty_week_menu(
     test_client: AsyncTestClient,
     default_user: User,
@@ -777,7 +848,9 @@ async def test_grocery_list_assign_from_already_have_moves_to_shop(
 
     assert response.status_code == 200
     assert "Corner store" in response.text
-    already_have_section = response.text.split("Already have", 1)[1].split("By shop", 1)[0]
+    already_have_section = response.text.split("Already have", 1)[1].split(
+        "By shop", 1
+    )[0]
     assert ">butter</span>" not in already_have_section
 
 
@@ -941,6 +1014,10 @@ def test_update_grocery_line_merges_matching_unit() -> None:
         "g",
         quantity=100.0,
         unit="kg",
+        items=[
+            GroceryItem(ingredient_id=4, name="flour", unit="g", quantity=500.0),
+            GroceryItem(ingredient_id=4, name="flour", unit="kg", quantity=1.0),
+        ],
     )
 
     assert success is True
@@ -974,9 +1051,7 @@ def test_empty_already_have_list_removes_items() -> None:
     empty_already_have_list(request)  # type: ignore[arg-type]
 
     loaded = load_grocery_list(request)  # type: ignore[arg-type]
-    assert loaded == [
-        GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0)
-    ]
+    assert loaded == [GroceryItem(ingredient_id=2, name="", unit="g", quantity=200.0)]
 
 
 def test_save_and_load_grocery_list_round_trip() -> None:
@@ -993,6 +1068,6 @@ def test_save_and_load_grocery_list_round_trip() -> None:
     items = [GroceryItem(ingredient_id=3, name="flour", unit="g", quantity=250.0)]
     save_grocery_list(request, items)  # type: ignore[arg-type]
     loaded = load_grocery_list(request)  # type: ignore[arg-type]
-    assert loaded == items
+    assert loaded == [GroceryItem(ingredient_id=3, name="", unit="g", quantity=250.0)]
     mark_already_have(request, 3)  # type: ignore[arg-type]
     unmark_already_have(request, 3)  # type: ignore[arg-type]

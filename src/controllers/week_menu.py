@@ -5,6 +5,7 @@ from collections import defaultdict
 from litestar import Controller, Request, get, post
 from litestar.exceptions import NotFoundException
 from litestar.response import Redirect, Response, Template
+from litestar.status_codes import HTTP_303_SEE_OTHER
 from loguru import logger
 from tortoise.expressions import Q
 
@@ -46,6 +47,7 @@ from src.week_menu import (
     find_grocery_line,
     has_grocery_list_items,
     is_grocery_list_initialized,
+    hydrate_grocery_item_names,
     load_grocery_list,
     mark_already_have,
     mark_shop_already_have,
@@ -306,7 +308,9 @@ class WeekMenuController(Controller):
 
         grocery_message: str | None = None
         if preserve_existing and is_grocery_list_initialized(request):
-            grocery_items = load_grocery_list(request)
+            grocery_items = await hydrate_grocery_item_names(
+                user_id, load_grocery_list(request)
+            )
             if grocery_items and not pop_grocery_suppress_preserve(request):
                 grocery_message = (
                     "Your grocery list is preserved and was not regenerated "
@@ -353,9 +357,7 @@ class WeekMenuController(Controller):
         if request.headers.get("HX-Request"):
             if action_message:
                 set_grocery_action_flash(request, action_message)
-            return Response(
-                content="", status_code=200, headers={"HX-Refresh": "true"}
-            )
+            return Response(content="", status_code=200, headers={"HX-Refresh": "true"})
         return await self._render_grocery_list(request, action_message=action_message)
 
     async def _render_grocery_list(
@@ -383,8 +385,10 @@ class WeekMenuController(Controller):
         self, request: Request, ingredient_id: int, unit: str
     ) -> GroceryItem:
         """Return one grocery line owned by the current user."""
+        user_id = await self._viewer_id(request)
         await self._require_grocery_ingredient(request, ingredient_id)
-        item = find_grocery_line(load_grocery_list(request), ingredient_id, unit)
+        items = await hydrate_grocery_item_names(user_id, load_grocery_list(request))
+        item = find_grocery_line(items, ingredient_id, unit)
         if item is None:
             raise NotFoundException()
         return item
@@ -536,13 +540,11 @@ class WeekMenuController(Controller):
         elif mode == "merge":
             existing = load_grocery_list(request)
             new_items = await self._grocery_items_from_week_menu(request)
-            save_grocery_list(
-                request, merge_grocery_items(existing, new_items)
-            )
+            save_grocery_list(request, merge_grocery_items(existing, new_items))
             set_grocery_suppress_preserve(request)
         else:
             raise NotFoundException()
-        return Redirect(path="/week-menu/grocery-list")
+        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")
     async def grocery_list_export(self, request: Request) -> Response[str]:
@@ -662,12 +664,17 @@ class WeekMenuController(Controller):
         new_unit = str(form_data.get("unit", "")).strip()
         if quantity is None or not new_unit:
             raise NotFoundException()
+        user_id = await self._viewer_id(request)
+        hydrated_items = await hydrate_grocery_item_names(
+            user_id, load_grocery_list(request)
+        )
         success, merge_message = update_grocery_line(
             request,
             ingredient_id,
             unit,
             quantity=quantity,
             unit=new_unit,
+            items=hydrated_items,
         )
         if not success:
             raise NotFoundException()

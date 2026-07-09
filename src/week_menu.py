@@ -396,7 +396,7 @@ def load_grocery_list(request: Request) -> list[GroceryItem]:
             items.append(
                 GroceryItem(
                     ingredient_id=int(entry["ingredient_id"]),
-                    name=str(entry["name"]),
+                    name=str(entry.get("name", "")),
                     unit=str(entry["unit"]),
                     quantity=float(entry["quantity"]),
                 )
@@ -406,9 +406,50 @@ def load_grocery_list(request: Request) -> list[GroceryItem]:
     return items
 
 
+async def hydrate_grocery_item_names(
+    owner_id: int, items: list[GroceryItem]
+) -> list[GroceryItem]:
+    """Fill missing grocery line names from the ingredient catalog."""
+    if not items:
+        return items
+    missing_ids = {item["ingredient_id"] for item in items if not item["name"].strip()}
+    if not missing_ids:
+        return items
+
+    from src.models import Ingredient
+
+    names = {
+        row["id"]: row["name"]
+        for row in await Ingredient.filter(
+            id__in=missing_ids, owner_id=owner_id
+        ).values("id", "name")
+    }
+    hydrated: list[GroceryItem] = []
+    for item in items:
+        name = item["name"].strip() or names.get(
+            item["ingredient_id"], f"#{item['ingredient_id']}"
+        )
+        hydrated.append(
+            GroceryItem(
+                ingredient_id=item["ingredient_id"],
+                name=name,
+                unit=item["unit"],
+                quantity=item["quantity"],
+            )
+        )
+    return hydrated
+
+
 def save_grocery_list(request: Request, items: list[GroceryItem]) -> None:
     """Persist the grocery list for the current user."""
-    request.session[_scoped_key(request, GROCERY_LIST_KEY)] = items
+    request.session[_scoped_key(request, GROCERY_LIST_KEY)] = [
+        {
+            "ingredient_id": item["ingredient_id"],
+            "unit": item["unit"],
+            "quantity": item["quantity"],
+        }
+        for item in items
+    ]
     request.session[_scoped_key(request, GROCERY_LIST_INITIALIZED_KEY)] = True
 
 
@@ -460,6 +501,7 @@ def update_grocery_line(
     *,
     quantity: float,
     unit: str,
+    items: list[GroceryItem] | None = None,
 ) -> tuple[bool, str | None]:
     """Update one grocery line, merging when the target unit already exists.
 
@@ -469,6 +511,7 @@ def update_grocery_line(
         old_unit: Current unit abbrev for the line being edited.
         quantity: New quantity for the line.
         unit: New unit abbrev for the line.
+        items: Optional preloaded grocery lines, for example after hydrating names.
 
     Returns:
         A success flag and an optional merge notice for the user.
@@ -478,21 +521,21 @@ def update_grocery_line(
     if not normalized_unit:
         return False, None
 
-    items = load_grocery_list(request)
-    current = find_grocery_line(items, ingredient_id, old_unit_normalized)
+    working_items = list(items if items is not None else load_grocery_list(request))
+    current = find_grocery_line(working_items, ingredient_id, old_unit_normalized)
     if current is None:
         return False, None
 
     merge_message: str | None = None
     if normalized_unit == old_unit_normalized:
         current["quantity"] = round(quantity, 2)
-        save_grocery_list(request, items)
+        save_grocery_list(request, working_items)
         return True, None
 
-    duplicate = find_grocery_line(items, ingredient_id, normalized_unit)
+    duplicate = find_grocery_line(working_items, ingredient_id, normalized_unit)
     remaining = [
         item
-        for item in items
+        for item in working_items
         if not (
             item["ingredient_id"] == ingredient_id
             and item["unit"] == old_unit_normalized
@@ -505,9 +548,8 @@ def update_grocery_line(
                 and item["unit"] == normalized_unit
             ):
                 item["quantity"] = round(item["quantity"] + quantity, 2)
-                merge_message = (
-                    f"Combined with existing {item['name']} ({normalized_unit})."
-                )
+                label = item["name"].strip() or f"ingredient {ingredient_id}"
+                merge_message = f"Combined with existing {label} ({normalized_unit})."
                 break
     else:
         remaining.append(

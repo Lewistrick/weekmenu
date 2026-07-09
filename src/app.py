@@ -13,7 +13,7 @@ from litestar.template import TemplateConfig
 from litestar.types.internal_types import TemplateConfigType
 from tortoise import Tortoise
 
-from src.auth import SESSION_USER_KEY
+from src.auth import SESSION_USER_KEY, get_current_user
 from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
 from src.controllers.ingredients import IngredientController
@@ -51,8 +51,9 @@ async def require_authentication(request: Request) -> Response | None:
     """
     if _is_public_path(request.url.path):
         return None
-    if request.session.get(SESSION_USER_KEY) is not None:
+    if await get_current_user(request) is not None:
         return None
+    request.session.pop(SESSION_USER_KEY, None)
     if request.headers.get("HX-Request"):
         return Response(content=b"", status_code=200, headers={"HX-Redirect": "/login"})
     return Redirect(path="/login")

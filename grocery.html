@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery list</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">Weekmenu</a>
+        <div class="navbar-links">
+            <a href="/week-menu" class="nav-link">🗓️ Week menu</a>
+            <a href="/week-menu/grocery-list" class="nav-link">🛒 Grocery list</a>
+            <details class="nav-group">
+                <summary class="nav-link">🍽️ Recipes</summary>
+                <div class="nav-group-menu">
+                    <a href="/recipes/search" class="nav-link">🔎 Find recipe</a>
+                    <a href="/recipes/add" class="nav-link">➕ Add recipe</a>
+                    <a href="/recipes/random" class="nav-link">🎲 Random private recipe</a>
+                    <a href="/recipes/random-public" class="nav-link">🌍 Random public recipe</a>
+                    <a href="/recipes/missing-tags" class="nav-link">🏷️ Missing tags</a>
+                </div>
+            </details>
+            <details class="nav-group nav-group--right">
+                <summary class="nav-link nav-link--muted">⚙️ Settings</summary>
+                <div class="nav-group-menu">
+                    <a href="/tags/manage" class="nav-link">🏷️ Tag groups</a>
+                    <a href="/shops/manage" class="nav-link">🏪 Shops</a>
+                    <a href="/profile" class="nav-link">👤 Account</a>
+                    <form class="nav-logout-form" method="post" action="/logout">
+                        <button type="submit" class="nav-link nav-logout-btn">🚪 Log out</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+    </nav>
+
+    
+    
+
+    <div class="container">
+        
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Grocery list</h1>
+        <p class="page-lead">Sort ingredients into shops on the left, then review your lists on the right.</p>
+    </header>
+
+    
+    
+
+    <div class="grocery-toolbar">
+        <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
+        <a href="/shops/manage" class="btn btn-secondary">🏪 Manage shops</a>
+    </div>
+
+    
+    <section class="recipe-section">
+        <p class="search-placeholder">
+            No ingredients yet. Add recipes with ingredients to your week menu to build a grocery list.
+        </p>
+    </section>
+    
+
+    <section class="recipe-section">
+        <h2 class="section-title">Days included</h2>
+        <table class="grocery-day-table">
+            <thead>
+                <tr>
+                    <th scope="col">Day</th>
+                    <th scope="col">Recipe</th>
+                    <th scope="col" class="grocery-day-table-servings">Servings</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td class="grocery-day-label">Monday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+                <tr>
+                    <td class="grocery-day-label">Tuesday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+                <tr>
+                    <td class="grocery-day-label">Wednesday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+                <tr>
+                    <td class="grocery-day-label">Thursday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+                <tr>
+                    <td class="grocery-day-label">Friday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+                <tr>
+                    <td class="grocery-day-label">Saturday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+                <tr>
+                    <td class="grocery-day-label">Sunday</td>
+                    <td>
+                        
+                        <span class="search-placeholder">No recipe selected</span>
+                        
+                    </td>
+                    <td class="grocery-day-table-servings">—</td>
+                </tr>
+                
+            </tbody>
+        </table>
+
+        
+        
+        
+    </section>
+</div>
+<script>
+    function copyPlaintext(textareaId) {
+        const textarea = document.getElementById(textareaId);
+        if (!textarea) {
+            return;
+        }
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        navigator.clipboard.writeText(textarea.value);
+    }
+
+    document.querySelectorAll(".grocery-inline-confirm-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const confirmId = trigger.dataset.confirmId;
+            const confirm = document.getElementById(confirmId);
+            if (!confirm) {
+                return;
+            }
+            trigger.hidden = true;
+            confirm.hidden = false;
+        });
+    });
+
+    document.querySelectorAll(".grocery-inline-confirm-cancel").forEach((button) => {
+        button.addEventListener("click", () => {
+            const confirm = document.getElementById(button.dataset.confirmId);
+            const trigger = document.getElementById(button.dataset.triggerId);
+            if (confirm) {
+                confirm.hidden = true;
+            }
+            if (trigger) {
+                trigger.hidden = false;
+            }
+        });
+    });
+</script>
+
+    </div>
+</body>
+
+</html>

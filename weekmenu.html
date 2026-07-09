@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week menu</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">Weekmenu</a>
+        <div class="navbar-links">
+            <a href="/week-menu" class="nav-link">🗓️ Week menu</a>
+            <a href="/week-menu/grocery-list" class="nav-link">🛒 Grocery list</a>
+            <details class="nav-group">
+                <summary class="nav-link">🍽️ Recipes</summary>
+                <div class="nav-group-menu">
+                    <a href="/recipes/search" class="nav-link">🔎 Find recipe</a>
+                    <a href="/recipes/add" class="nav-link">➕ Add recipe</a>
+                    <a href="/recipes/random" class="nav-link">🎲 Random private recipe</a>
+                    <a href="/recipes/random-public" class="nav-link">🌍 Random public recipe</a>
+                    <a href="/recipes/missing-tags" class="nav-link">🏷️ Missing tags</a>
+                </div>
+            </details>
+            <details class="nav-group nav-group--right">
+                <summary class="nav-link nav-link--muted">⚙️ Settings</summary>
+                <div class="nav-group-menu">
+                    <a href="/tags/manage" class="nav-link">🏷️ Tag groups</a>
+                    <a href="/shops/manage" class="nav-link">🏪 Shops</a>
+                    <a href="/profile" class="nav-link">👤 Account</a>
+                    <form class="nav-logout-form" method="post" action="/logout">
+                        <button type="submit" class="nav-link nav-logout-btn">🚪 Log out</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+    </nav>
+
+    
+    
+
+    <div class="container">
+        
+<div class="content-page" id="week-menu-root">
+    <header class="page-header">
+        <h1 class="page-title-main">Week menu</h1>
+        <p class="page-lead">Plan dinners for the week. Pin days you like, randomize the rest, or search for recipes yourself.</p>
+    </header>
+    
+    
+    
+    
+    
+    
+
+    <div class="week-menu-toolbar">
+        <form class="week-menu-start-day">
+            <label class="field-label" for="week-start-day">Start week on</label>
+            <select
+                id="week-start-day"
+                name="start_day"
+                class="form-control"
+                hx-post="/week-menu/start-day"
+                hx-trigger="change"
+                hx-target="#week-menu-root"
+                hx-swap="outerHTML"
+            >
+                
+                <option value="monday" selected>Monday</option>
+                
+                <option value="tuesday" >Tuesday</option>
+                
+                <option value="wednesday" >Wednesday</option>
+                
+                <option value="thursday" >Thursday</option>
+                
+                <option value="friday" >Friday</option>
+                
+                <option value="saturday" >Saturday</option>
+                
+                <option value="sunday" >Sunday</option>
+                
+            </select>
+        </form>
+        <div class="week-menu-toolbar-actions">
+            <label class="week-menu-include-public" for="week-menu-search-include-public">
+                <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on" >
+                Include public recipes
+            </label>
+            <form class="week-menu-randomize-form" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
+                hx-swap="outerHTML" hx-include="#week-menu-search-include-public">
+                <button type="submit" class="btn btn-primary">🎲 Randomize week</button>
+            </form>
+        </div>
+    </div>
+
+    
+
+    <div id="week-menu-panel" class="week-menu-panel">
+        
+<article class="week-menu-day" id="week-menu-day-monday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/monday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Monday up" disabled>
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/monday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Monday down" >
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Monday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-monday">Servings</label>
+        <input id="servings-monday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/monday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Monday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/monday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/monday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-monday">Search recipe</label>
+                <input id="search-monday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/monday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-monday" hx-swap="innerHTML">
+                <div id="search-results-monday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+<article class="week-menu-day" id="week-menu-day-tuesday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/tuesday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Tuesday up" >
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/tuesday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Tuesday down" >
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Tuesday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-tuesday">Servings</label>
+        <input id="servings-tuesday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/tuesday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Tuesday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/tuesday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/tuesday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-tuesday">Search recipe</label>
+                <input id="search-tuesday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/tuesday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-tuesday" hx-swap="innerHTML">
+                <div id="search-results-tuesday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+<article class="week-menu-day" id="week-menu-day-wednesday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/wednesday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Wednesday up" >
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/wednesday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Wednesday down" >
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Wednesday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-wednesday">Servings</label>
+        <input id="servings-wednesday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/wednesday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Wednesday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/wednesday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/wednesday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-wednesday">Search recipe</label>
+                <input id="search-wednesday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/wednesday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-wednesday" hx-swap="innerHTML">
+                <div id="search-results-wednesday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+<article class="week-menu-day" id="week-menu-day-thursday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/thursday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Thursday up" >
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/thursday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Thursday down" >
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Thursday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-thursday">Servings</label>
+        <input id="servings-thursday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/thursday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Thursday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/thursday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/thursday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-thursday">Search recipe</label>
+                <input id="search-thursday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/thursday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-thursday" hx-swap="innerHTML">
+                <div id="search-results-thursday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+<article class="week-menu-day" id="week-menu-day-friday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/friday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Friday up" >
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/friday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Friday down" >
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Friday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-friday">Servings</label>
+        <input id="servings-friday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/friday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Friday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/friday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/friday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-friday">Search recipe</label>
+                <input id="search-friday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/friday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-friday" hx-swap="innerHTML">
+                <div id="search-results-friday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+<article class="week-menu-day" id="week-menu-day-saturday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/saturday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Saturday up" >
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/saturday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Saturday down" >
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Saturday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-saturday">Servings</label>
+        <input id="servings-saturday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/saturday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Saturday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/saturday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/saturday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-saturday">Search recipe</label>
+                <input id="search-saturday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/saturday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-saturday" hx-swap="innerHTML">
+                <div id="search-results-saturday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+<article class="week-menu-day" id="week-menu-day-sunday">
+    <div class="week-menu-move">
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/sunday/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move up" aria-label="Move Sunday up" >
+            ▲
+        </button>
+        <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
+            hx-post="/week-menu/sunday/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Move down" aria-label="Move Sunday down" disabled>
+            ▼
+        </button>
+    </div>
+
+    <div class="week-menu-day-info">
+        <span class="week-menu-day-title">Sunday</span>
+        
+        <span class="search-placeholder">No recipe selected</span>
+        
+    </div>
+
+    <div class="week-menu-day-servings">
+        <label class="field-label" for="servings-sunday">Servings</label>
+        <input id="servings-sunday" class="form-control week-menu-servings-input" type="number" min="1"
+            name="servings" value="2" hx-post="/week-menu/sunday/servings"
+            hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            aria-label="Servings for Sunday">
+    </div>
+
+    <div class="week-menu-day-actions">
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/sunday/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Pin day"
+            aria-label="Pin day">
+            📌
+        </button>
+        <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+            hx-post="/week-menu/sunday/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+            title="Clear day recipe" aria-label="Clear day recipe">
+            🗑️
+        </button>
+        <details class="week-menu-search-toggle">
+            <summary class="btn btn-sm icon-btn icon-action-btn" title="Search recipe" aria-label="Search recipe">🔎</summary>
+            <div class="week-menu-day-search">
+                <label class="field-label" for="search-sunday">Search recipe</label>
+                <input id="search-sunday" class="form-control" type="search" name="search"
+                    placeholder="Name, description, or ingredient…" hx-get="/week-menu/sunday/search"
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-sunday" hx-swap="innerHTML">
+                <div id="search-results-sunday" class="week-menu-search-results"></div>
+            </div>
+        </details>
+    </div>
+</article>
+
+    </div>
+
+    <div class="week-menu-footer-actions">
+        <div class="grocery-generate-wrap">
+    
+    <form method="post" action="/week-menu/grocery-list/generate" class="grocery-generate-form">
+        <input type="hidden" name="mode" value="replace">
+        <button type="submit" class="btn btn-action btn-action--grocery"
+            title="Generate grocery list" aria-label="Generate grocery list">
+            <span class="btn-action-icon" aria-hidden="true">🛒</span>
+            <span>Generate grocery list</span>
+        </button>
+    </form>
+    
+</div>
+    </div>
+</div>
+<script>
+    document.querySelectorAll(".grocery-generate-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const confirm = document.getElementById(trigger.dataset.confirmId);
+            if (!confirm) {
+                return;
+            }
+            trigger.hidden = true;
+            confirm.hidden = false;
+        });
+    });
+
+    document.querySelectorAll(".grocery-generate-cancel").forEach((button) => {
+        button.addEventListener("click", () => {
+            const confirm = document.getElementById(button.dataset.confirmId);
+            const trigger = document.getElementById(button.dataset.triggerId);
+            if (confirm) {
+                confirm.hidden = true;
+            }
+            if (trigger) {
+                trigger.hidden = false;
+            }
+        });
+    });
+</script>
+
+    </div>
+</body>
+
+</html>
