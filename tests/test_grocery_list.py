@@ -31,24 +31,24 @@ def test_scale_ingredient_quantity_returns_original_when_recipe_servings_invalid
 def test_build_grocery_list_sums_matching_name_and_unit() -> None:
     """Entries with the same name and unit should be added together."""
     entries = [
-        GroceryItem(name="potatoes", unit="g", quantity=200.0),
-        GroceryItem(name="potatoes", unit="g", quantity=300.0),
-        GroceryItem(name="onion", unit="pcs", quantity=1.0),
+        GroceryItem(ingredient_id=1, name="potatoes", unit="g", quantity=200.0),
+        GroceryItem(ingredient_id=1, name="potatoes", unit="g", quantity=300.0),
+        GroceryItem(ingredient_id=2, name="onion", unit="st", quantity=1.0),
     ]
 
     result = build_grocery_list(entries)
 
     assert result == [
-        GroceryItem(name="onion", unit="pcs", quantity=1.0),
-        GroceryItem(name="potatoes", unit="g", quantity=500.0),
+        GroceryItem(ingredient_id=2, name="onion", unit="st", quantity=1.0),
+        GroceryItem(ingredient_id=1, name="potatoes", unit="g", quantity=500.0),
     ]
 
 
 def test_build_grocery_list_keeps_different_units_separate() -> None:
     """The same ingredient in different units should not be merged."""
     entries = [
-        GroceryItem(name="milk", unit="l", quantity=1.0),
-        GroceryItem(name="milk", unit="ml", quantity=200.0),
+        GroceryItem(ingredient_id=1, name="milk", unit="l", quantity=1.0),
+        GroceryItem(ingredient_id=1, name="milk", unit="ml", quantity=200.0),
     ]
 
     result = build_grocery_list(entries)
@@ -87,7 +87,7 @@ async def scaled_recipe(test_client: AsyncTestClient, default_user: User) -> Rec
         enabled=True,
     )
     grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
-    pieces = await Unit.filter(owner_id=default_user.id, abbrev="pcs").first()
+    pieces = await Unit.filter(owner_id=default_user.id, abbrev="st").first()
     assert grams is not None and pieces is not None
     potatoes = await Ingredient.create(owner=default_user, name="potatoes")
     onion = await Ingredient.create(owner=default_user, name="onion")
@@ -131,10 +131,10 @@ async def test_grocery_list_scales_and_aggregates(
 
     assert response.status_code == 200
     # potatoes: 200 * 4/2 + 200 * 2/2 = 400 + 200 = 600 g
-    assert ">600 g</span>" in response.text
+    assert "600 g" in response.text
     assert ">potatoes</span>" in response.text
-    # onion: 1 * 4/2 + 1 * 2/2 = 2 + 1 = 3 pcs
-    assert ">3 pcs</span>" in response.text
+    # onion: 1 * 4/2 + 1 * 2/2 = 2 + 1 = 3 st
+    assert "3 st" in response.text
     assert ">onion</span>" in response.text
 
 

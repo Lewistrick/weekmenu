@@ -36,7 +36,6 @@
                 hx-swap="outerHTML" hx-include="#week-menu-search-include-public">
                 <button type="submit" class="btn btn-primary">🎲 Randomize week</button>
             </form>
-            <a href="/week-menu/grocery-list" class="btn btn-secondary">🛒 Grocery list</a>
         </div>
     </div>
 
@@ -103,4 +102,33 @@
     <div id="week-menu-panel" class="week-menu-panel">
         {% include "partials/week-menu-days.html" %}
     </div>
+
+    <div class="week-menu-footer-actions">
+        {% include "partials/grocery-generate-actions.html" %}
+    </div>
 </div>
+<script>
+    document.querySelectorAll(".grocery-generate-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const confirm = document.getElementById(trigger.dataset.confirmId);
+            if (!confirm) {
+                return;
+            }
+            trigger.hidden = true;
+            confirm.hidden = false;
+        });
+    });
+
+    document.querySelectorAll(".grocery-generate-cancel").forEach((button) => {
+        button.addEventListener("click", () => {
+            const confirm = document.getElementById(button.dataset.confirmId);
+            const trigger = document.getElementById(button.dataset.triggerId);
+            if (confirm) {
+                confirm.hidden = true;
+            }
+            if (trigger) {
+                trigger.hidden = false;
+            }
+        });
+    });
+</script>

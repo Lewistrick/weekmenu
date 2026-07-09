@@ -6,31 +6,101 @@
 <div class="content-page">
     <header class="page-header">
         <h1 class="page-title-main">Grocery list</h1>
-        <p class="page-lead">Ingredients for your week menu, scaled to each day's servings and combined.</p>
+        <p class="page-lead">Sort ingredients into shops on the left, then review your lists on the right.</p>
     </header>
+
+    {% if grocery_message %}
+    <div class="grocery-notice" role="status">{{ grocery_message }}</div>
+    {% endif %}
+    {% if grocery_action_message %}
+    {% with messages=[grocery_action_message], message_scope="grocery-action" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% endif %}
 
     <div class="grocery-toolbar">
         <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
+        <a href="/shops/manage" class="btn btn-secondary">🏪 Manage shops</a>
     </div>
 
-    <section class="recipe-section">
-        <h2 class="section-title">Shopping list</h2>
-        {% if grocery_items %}
-        <ul class="grocery-list">
-            {% for item in grocery_items %}
-            <li class="grocery-item">
-                <span class="grocery-item-name">{{ item.name }}</span>
-                <span class="grocery-item-sep">-</span>
-                <span class="grocery-item-amount">{{ "%g" | format(item.quantity) }} {{ item.unit }}</span>
-            </li>
+    {% if unassigned_items or already_have_items or grocery_groups %}
+    <div class="grocery-layout">
+        <section class="grocery-column grocery-column--left recipe-section">
+            <h2 class="section-title">To sort</h2>
+            {% if unassigned_items %}
+            <ul class="grocery-list">
+                {% for item in unassigned_items %}
+                {% include "partials/grocery-item-row.html" %}
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="search-placeholder">Everything is sorted or already at home.</p>
+            {% endif %}
+
+            <div class="grocery-subsection-header">
+                <h3 class="grocery-subsection-title">Already have</h3>
+                {% if already_have_items %}
+                {% with confirm_id="empty-already-have-confirm", trigger_id="empty-already-have-trigger", confirm_label="Empty list?", confirm_action="/week-menu/grocery-list/already-have/clear", trigger_label="Empty list" %}
+                {% include "partials/grocery-inline-confirm.html" %}
+                {% endwith %}
+                {% endif %}
+            </div>
+            {% if already_have_items %}
+            <ul class="grocery-list grocery-list--muted">
+                {% for item in already_have_items %}
+                {% include "partials/grocery-item-row.html" %}
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="search-placeholder">Nothing marked as already at home yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="grocery-column grocery-column--right recipe-section">
+            <h2 class="section-title">By shop</h2>
+            {% if grocery_groups %}
+            {% for group in grocery_groups %}
+            <div class="grocery-shop-group"
+                style="--shop-bg: {{ group.background_color }}; --shop-fg: {{ group.foreground_color }};">
+                <div class="grocery-shop-header">
+                    <h3 class="grocery-shop-title">
+                        <span class="shop-chip-btn shop-chip-btn--title"
+                            style="color: {{ group.foreground_color }}; background-color: {{ group.background_color }};">
+                            {{ group.letter }}
+                        </span>
+                        {{ group.shop_name }}
+                    </h3>
+                    <form method="post" action="/week-menu/grocery-list/shop/{{ group.shop_id }}/already-have"
+                        class="grocery-bulk-form">
+                        <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all"
+                            style="color: {{ group.foreground_color }}; border-color: {{ group.foreground_color }};">
+                            Mark all ✓
+                        </button>
+                    </form>
+                </div>
+                <ul class="grocery-list">
+                    {% for item in group.entries %}
+                    {% include "partials/grocery-item-row.html" %}
+                    {% endfor %}
+                </ul>
+            </div>
             {% endfor %}
-        </ul>
-        {% else %}
+            {% else %}
+            <p class="search-placeholder">Assign ingredients to a shop to build your lists here.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    {% with copy_title="Copy for messaging", copy_text=grocery_export_text, textarea_id="grocery-copy-text" %}
+    {% include "partials/grocery-copy-section.html" %}
+    {% endwith %}
+    {% else %}
+    <section class="recipe-section">
         <p class="search-placeholder">
             No ingredients yet. Add recipes with ingredients to your week menu to build a grocery list.
         </p>
-        {% endif %}
     </section>
+    {% endif %}
 
     <section class="recipe-section">
         <h2 class="section-title">Days included</h2>
@@ -58,6 +128,46 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        {% with copy_title="Copy for messaging", copy_text=week_menu_export_text, textarea_id="week-menu-copy-text" %}
+        {% include "partials/grocery-copy-section.html" %}
+        {% endwith %}
     </section>
 </div>
+<script>
+    function copyPlaintext(textareaId) {
+        const textarea = document.getElementById(textareaId);
+        if (!textarea) {
+            return;
+        }
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        navigator.clipboard.writeText(textarea.value);
+    }
+
+    document.querySelectorAll(".grocery-inline-confirm-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const confirmId = trigger.dataset.confirmId;
+            const confirm = document.getElementById(confirmId);
+            if (!confirm) {
+                return;
+            }
+            trigger.hidden = true;
+            confirm.hidden = false;
+        });
+    });
+
+    document.querySelectorAll(".grocery-inline-confirm-cancel").forEach((button) => {
+        button.addEventListener("click", () => {
+            const confirm = document.getElementById(button.dataset.confirmId);
+            const trigger = document.getElementById(button.dataset.triggerId);
+            if (confirm) {
+                confirm.hidden = true;
+            }
+            if (trigger) {
+                trigger.hidden = false;
+            }
+        });
+    });
+</script>
 {% endblock %}

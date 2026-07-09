@@ -33,9 +33,20 @@
   - `servings` as the default servings value used when week-menu day slots are empty
 - Settings are editable from `/profile` under the **Settings** section.
 
+### Grocery lists by shop and plaintext export
+- Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.
+- Manage shops at `/shops/manage` (⚙️ Settings → 🏪 Shops). Each shop has a name plus foreground and background colors used on the grocery list.
+- Generating from the week menu creates a new list when empty, or lets you **Replace** the current list, **Add** week-menu groceries to it, or cancel. Visiting the grocery list page directly preserves a non-empty list and shows a notice instead of regenerating over your sorting work.
+- The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked as already owned appear below the unsorted list and can be restored with the ✓ chip.
+- Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
+- Copy grouped plaintext for messaging in two places on the grocery list page: under the grocery columns (ingredients by shop) and under **Days included** (week menu days and recipes).
+- Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
+- Each shop section has a **Mark all ✓** button. The already-have list has an **Empty list** button with a confirmation step.
+- Export the week menu as plaintext via `GET /week-menu/export` (`{day} - {recipe}` per line, empty days omitted).
+
 ### Per-user catalog (ingredients, units, tags, shops)
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
-- Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `dl`, `el`, `tl`, `st`, `pcs` (with singular/plural labels where applicable).
+- Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Unit abbreviations are unique per user (`owner` + `abbrev`), not globally.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
 - Legacy single-user data is assigned to the first registered account on startup; duplicate unit abbreviations for that account are merged during the one-time backfill.
@@ -49,7 +60,7 @@
     - Enter the number of servings for each day; amounts are scaled from each recipe's own serving count
 - Generate a grocery list from the week menu
     - Ingredient quantities are scaled to each day's servings, then ingredients sharing the same name and unit are added together
-    - Open it from the "🛒 Grocery list" button on the week menu page (`/week-menu/grocery-list`)
+- Generate a grocery list from the week menu via **Generate grocery list** at the bottom of the week menu page
 - Search recipes by name, description, ingredients, and optional tag filters
 
 ### To see the API docs

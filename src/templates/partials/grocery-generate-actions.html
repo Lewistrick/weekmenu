@@ -1,0 +1,41 @@
+<div class="grocery-generate-wrap">
+    {% if grocery_list_has_items %}
+    <button type="button" class="btn btn-action btn-action--grocery grocery-generate-trigger"
+        id="grocery-generate-trigger" data-confirm-id="grocery-generate-choices"
+        title="Generate grocery list" aria-label="Generate grocery list">
+        <span class="btn-action-icon" aria-hidden="true">🛒</span>
+        <span>Generate grocery list</span>
+    </button>
+    <div class="grocery-generate-choices" id="grocery-generate-choices" hidden>
+        <span class="grocery-inline-confirm-label">Update grocery list?</span>
+        <form method="post" action="/week-menu/grocery-list/generate" class="grocery-bulk-form">
+            <input type="hidden" name="mode" value="replace">
+            <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"
+                title="Replace list with week menu groceries" aria-label="Replace list">
+                🔄 Replace
+            </button>
+        </form>
+        <form method="post" action="/week-menu/grocery-list/generate" class="grocery-bulk-form">
+            <input type="hidden" name="mode" value="merge">
+            <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"
+                title="Add week menu groceries to current list" aria-label="Add to list">
+                ➕ Add
+            </button>
+        </form>
+        <button type="button" class="shop-chip-btn shop-chip-btn--clear grocery-generate-cancel"
+            data-confirm-id="grocery-generate-choices" data-trigger-id="grocery-generate-trigger"
+            title="Cancel" aria-label="Cancel">
+            ✕
+        </button>
+    </div>
+    {% else %}
+    <form method="post" action="/week-menu/grocery-list/generate" class="grocery-generate-form">
+        <input type="hidden" name="mode" value="replace">
+        <button type="submit" class="btn btn-action btn-action--grocery"
+            title="Generate grocery list" aria-label="Generate grocery list">
+            <span class="btn-action-icon" aria-hidden="true">🛒</span>
+            <span>Generate grocery list</span>
+        </button>
+    </form>
+    {% endif %}
+</div>

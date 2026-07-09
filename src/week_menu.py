@@ -35,6 +35,11 @@ SESSION_KEY = "week_menu"
 START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
+GROCERY_ALREADY_HAVE_KEY = "grocery_already_have"
+GROCERY_LIST_KEY = "grocery_list"
+GROCERY_ACTION_FLASH_KEY = "grocery_action_flash"
+GROCERY_LIST_INITIALIZED_KEY = "grocery_list_initialized"
+GROCERY_SUPPRESS_PRESERVE_KEY = "grocery_suppress_preserve"
 
 DEFAULT_SERVINGS = 2
 
@@ -91,6 +96,7 @@ class DaySlot(TypedDict):
 class GroceryItem(TypedDict):
     """A single aggregated line on the grocery list."""
 
+    ingredient_id: int
     name: str
     unit: str
     quantity: float
@@ -347,6 +353,244 @@ def load_include_public(request: Request) -> bool:
 def save_include_public(request: Request, include_public: bool) -> None:
     """Persist whether week-menu actions should include public recipes."""
     request.session[_scoped_key(request, INCLUDE_PUBLIC_SESSION_KEY)] = include_public
+
+
+def load_already_have_ids(request: Request) -> set[int]:
+    """Load ingredient ids the user already has for this grocery list."""
+    stored = request.session.get(_scoped_key(request, GROCERY_ALREADY_HAVE_KEY), [])
+    if not isinstance(stored, list):
+        return set()
+    ids: set[int] = set()
+    for value in stored:
+        if isinstance(value, int):
+            ids.add(value)
+        elif isinstance(value, str) and value.isdigit():
+            ids.add(int(value))
+    return ids
+
+
+def mark_already_have(request: Request, ingredient_id: int) -> None:
+    """Mark one ingredient as already available at home."""
+    ids = load_already_have_ids(request)
+    ids.add(ingredient_id)
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+
+
+def unmark_already_have(request: Request, ingredient_id: int) -> None:
+    """Remove one ingredient from the already-have list."""
+    ids = load_already_have_ids(request)
+    ids.discard(ingredient_id)
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+
+
+def load_grocery_list(request: Request) -> list[GroceryItem]:
+    """Load the persisted grocery list for the current user."""
+    stored = request.session.get(_scoped_key(request, GROCERY_LIST_KEY), [])
+    if not isinstance(stored, list):
+        return []
+    items: list[GroceryItem] = []
+    for entry in stored:
+        if not isinstance(entry, dict):
+            continue
+        try:
+            items.append(
+                GroceryItem(
+                    ingredient_id=int(entry["ingredient_id"]),
+                    name=str(entry["name"]),
+                    unit=str(entry["unit"]),
+                    quantity=float(entry["quantity"]),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return items
+
+
+def save_grocery_list(request: Request, items: list[GroceryItem]) -> None:
+    """Persist the grocery list for the current user."""
+    request.session[_scoped_key(request, GROCERY_LIST_KEY)] = items
+    request.session[_scoped_key(request, GROCERY_LIST_INITIALIZED_KEY)] = True
+
+
+def is_grocery_list_initialized(request: Request) -> bool:
+    """Return whether a grocery list has been generated for this user."""
+    return bool(
+        request.session.get(_scoped_key(request, GROCERY_LIST_INITIALIZED_KEY), False)
+    )
+
+
+def clear_grocery_list(request: Request) -> None:
+    """Remove the persisted grocery list for the current user."""
+    for base in (GROCERY_LIST_KEY, GROCERY_LIST_INITIALIZED_KEY):
+        key = _scoped_key(request, base)
+        if key in request.session:
+            del request.session[key]
+
+
+def is_grocery_list_empty(request: Request) -> bool:
+    """Return whether the user has no persisted grocery list yet."""
+    return len(load_grocery_list(request)) == 0
+
+
+def grocery_line_key(ingredient_id: int, unit: str) -> str:
+    """Return a stable DOM key for one ingredient-unit grocery line."""
+    return f"{ingredient_id}-{unit.strip()}"
+
+
+def find_grocery_line(
+    items: list[GroceryItem], ingredient_id: int, unit: str
+) -> GroceryItem | None:
+    """Return the grocery line matching an ingredient id and unit."""
+    normalized_unit = unit.strip()
+    for item in items:
+        if item["ingredient_id"] == ingredient_id and item["unit"] == normalized_unit:
+            return item
+    return None
+
+
+def ingredient_in_grocery_list(items: list[GroceryItem], ingredient_id: int) -> bool:
+    """Return whether an ingredient appears on the grocery list."""
+    return any(item["ingredient_id"] == ingredient_id for item in items)
+
+
+def update_grocery_line(
+    request: Request,
+    ingredient_id: int,
+    old_unit: str,
+    *,
+    quantity: float,
+    unit: str,
+) -> tuple[bool, str | None]:
+    """Update one grocery line, merging when the target unit already exists.
+
+    Args:
+        request: The incoming request carrying session state.
+        ingredient_id: Ingredient id for the line being edited.
+        old_unit: Current unit abbrev for the line being edited.
+        quantity: New quantity for the line.
+        unit: New unit abbrev for the line.
+
+    Returns:
+        A success flag and an optional merge notice for the user.
+    """
+    normalized_unit = unit.strip()
+    old_unit_normalized = old_unit.strip()
+    if not normalized_unit:
+        return False, None
+
+    items = load_grocery_list(request)
+    current = find_grocery_line(items, ingredient_id, old_unit_normalized)
+    if current is None:
+        return False, None
+
+    merge_message: str | None = None
+    if normalized_unit == old_unit_normalized:
+        current["quantity"] = round(quantity, 2)
+        save_grocery_list(request, items)
+        return True, None
+
+    duplicate = find_grocery_line(items, ingredient_id, normalized_unit)
+    remaining = [
+        item
+        for item in items
+        if not (
+            item["ingredient_id"] == ingredient_id
+            and item["unit"] == old_unit_normalized
+        )
+    ]
+    if duplicate is not None:
+        for item in remaining:
+            if (
+                item["ingredient_id"] == ingredient_id
+                and item["unit"] == normalized_unit
+            ):
+                item["quantity"] = round(item["quantity"] + quantity, 2)
+                merge_message = (
+                    f"Combined with existing {item['name']} ({normalized_unit})."
+                )
+                break
+    else:
+        remaining.append(
+            GroceryItem(
+                ingredient_id=ingredient_id,
+                name=current["name"],
+                unit=normalized_unit,
+                quantity=round(quantity, 2),
+            )
+        )
+
+    save_grocery_list(request, remaining)
+    return True, merge_message
+
+
+def mark_shop_already_have(
+    request: Request,
+    shop_id: int,
+    items: list[GroceryItem],
+    ingredient_shop_ids: dict[int, int | None],
+) -> None:
+    """Mark every ingredient assigned to one shop as already available."""
+    ids = load_already_have_ids(request)
+    for item in items:
+        if ingredient_shop_ids.get(item["ingredient_id"]) == shop_id:
+            ids.add(item["ingredient_id"])
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+
+
+def clear_already_have(request: Request) -> None:
+    """Remove every ingredient from the already-have list."""
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
+
+
+def set_grocery_action_flash(request: Request, message: str) -> None:
+    """Store a one-time grocery list action message for the next page load."""
+    request.session[_scoped_key(request, GROCERY_ACTION_FLASH_KEY)] = message
+
+
+def pop_grocery_action_flash(request: Request) -> str | None:
+    """Return and clear a one-time grocery list action message."""
+    key = _scoped_key(request, GROCERY_ACTION_FLASH_KEY)
+    message = request.session.pop(key, None)
+    return str(message) if message else None
+
+
+def set_grocery_suppress_preserve(request: Request) -> None:
+    """Skip the preserved-list notice on the next grocery list page load."""
+    request.session[_scoped_key(request, GROCERY_SUPPRESS_PRESERVE_KEY)] = True
+
+
+def pop_grocery_suppress_preserve(request: Request) -> bool:
+    """Return and clear the preserved-list notice suppression flag."""
+    key = _scoped_key(request, GROCERY_SUPPRESS_PRESERVE_KEY)
+    return bool(request.session.pop(key, False))
+
+
+def empty_already_have_list(request: Request) -> None:
+    """Remove already-have groceries from the plan entirely."""
+    already_have = load_already_have_ids(request)
+    if not already_have:
+        return
+    remaining = [
+        item
+        for item in load_grocery_list(request)
+        if item["ingredient_id"] not in already_have
+    ]
+    save_grocery_list(request, remaining)
+    clear_already_have(request)
+
+
+def parse_grocery_quantity(value: Any) -> float | None:
+    """Parse a positive grocery quantity from form input."""
+    try:
+        quantity = float(value)
+    except (TypeError, ValueError):
+        return None
+    return quantity if quantity > 0 else None
+
+
+def reset_grocery_plan(request: Request) -> None:
+    """Clear already-have marks for a freshly generated grocery list."""
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
 
 
 def parse_tag_constraints_from_form(
@@ -743,6 +987,18 @@ def scale_ingredient_quantity(
     return float(quantity) * day_servings / recipe_servings
 
 
+def merge_grocery_items(
+    existing: list[GroceryItem], new_items: list[GroceryItem]
+) -> list[GroceryItem]:
+    """Combine two grocery lists, summing quantities for matching lines."""
+    return build_grocery_list(existing + new_items)
+
+
+def has_grocery_list_items(request: Request) -> bool:
+    """Return whether the user has a non-empty persisted grocery list."""
+    return is_grocery_list_initialized(request) and not is_grocery_list_empty(request)
+
+
 def build_grocery_list(entries: list[GroceryItem]) -> list[GroceryItem]:
     """Combine ingredient entries that share the same name and unit.
 
@@ -753,13 +1009,18 @@ def build_grocery_list(entries: list[GroceryItem]) -> list[GroceryItem]:
         Aggregated grocery items sorted alphabetically by name, with quantities
         summed per (name, unit) pair and rounded to two decimals.
     """
-    totals: dict[tuple[str, str], float] = {}
+    totals: dict[tuple[int, str, str], float] = {}
     for entry in entries:
-        key = (entry["name"], entry["unit"])
+        key = (entry["ingredient_id"], entry["name"], entry["unit"])
         totals[key] = totals.get(key, 0.0) + entry["quantity"]
 
     items = [
-        GroceryItem(name=name, unit=unit, quantity=round(quantity, 2))
-        for (name, unit), quantity in totals.items()
+        GroceryItem(
+            ingredient_id=ingredient_id,
+            name=name,
+            unit=unit,
+            quantity=round(quantity, 2),
+        )
+        for (ingredient_id, name, unit), quantity in totals.items()
     ]
     return sorted(items, key=lambda item: item["name"].lower())

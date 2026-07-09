@@ -169,6 +169,8 @@ class User(Model):
 class Shop(Model):
     id = IntField(primary_key=True)
     name = TextField(required=True)
+    foreground_color = TextField(default="#ffffff")
+    background_color = TextField(default="#2563eb")
     owner = ForeignKeyField("models.User", related_name="shops")
 
 
