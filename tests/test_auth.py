@@ -5,6 +5,7 @@ from litestar.testing import AsyncTestClient
 
 from src.auth import hash_password, verify_password
 from src.models import Recipe, User
+from src.user_settings import load_user_settings
 from tests.conftest import DEFAULT_PASSWORD, DEFAULT_USERNAME, register_user
 
 
@@ -196,3 +197,23 @@ async def test_delete_account(test_client: AsyncTestClient) -> None:
     assert response.status_code == 302
     assert response.headers["location"] == "/register"
     assert await User.get_by_username(DEFAULT_USERNAME) is None
+
+
+@pytest.mark.asyncio
+async def test_profile_settings_can_be_updated(test_client: AsyncTestClient) -> None:
+    """Language and default servings should be saved from profile settings."""
+    response = await test_client.post(
+        "/profile/settings",
+        data={"language": "🇳🇱 Nederlands", "servings": "5"},
+    )
+    assert response.status_code == 200
+    assert "Settings updated." in response.text
+    assert "🇳🇱 Nederlands" in response.text
+    assert 'id="servings" name="servings" type="number" min="1"' in response.text
+    assert 'value="5"' in response.text
+
+    user = await User.get_by_username(DEFAULT_USERNAME)
+    assert user is not None
+    settings = load_user_settings(user.id)
+    assert settings["language"] == "🇳🇱 Nederlands"
+    assert settings["servings"] == 5

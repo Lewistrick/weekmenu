@@ -9,7 +9,7 @@
 - The app requires an account. Visiting any page while logged out redirects to the login page.
 - Create an account at `/register` with a username, a password (min. 6 characters), and an optional email address. Registering logs you in automatically.
 - Log in at `/login` and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
-- Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, change your password, or delete your account (which removes the account and its recipes).
+- Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, language, default week-menu servings, change your password, or delete your account (which removes the account and its recipes).
 - Passwords are hashed with bcrypt and the logged-in user is tracked in a signed cookie session.
 - The first account to register inherits any pre-existing recipes from an older single-user database (existing data is not lost).
 
@@ -24,6 +24,14 @@
 ### Per-user week menu
 - Your week menu, start day, tag constraints, and grocery list are stored per user in the session, so logging out and into another account on the same browser shows that account's own plan rather than the previous user's.
 - Week menu randomization and per-day recipe search use your own recipes by default; enable **Include public recipes** in the week menu toolbar to widen the pool.
+- New empty week-menu slots use your profile setting for default servings.
+
+### Per-user settings files
+- Account settings are stored as JSON files in `user_settings/{user_id}.json` in the project root.
+- Each file stores:
+  - `language` as a full language label prefixed with a flag (for example: `🇳🇱 Nederlands`)
+  - `servings` as the default servings value used when week-menu day slots are empty
+- Settings are editable from `/profile` under the **Settings** section.
 
 ### Per-user catalog (ingredients, units, tags, shops)
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.

@@ -20,6 +20,24 @@
     </section>
 
     <section class="recipe-section">
+        <h2 class="section-title">Settings</h2>
+        <form class="profile-form" method="post" action="/profile/settings">
+            <label class="field-label" for="language">Language</label>
+            <select class="form-control" id="language" name="language">
+                {% for option in language_options %}
+                <option value="{{ option }}" {% if settings.language == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+
+            <label class="field-label" for="servings">Default week-menu servings</label>
+            <input class="form-control" id="servings" name="servings" type="number" min="1"
+                value="{{ settings.servings }}" required>
+
+            <button class="btn btn-secondary" type="submit">Save settings</button>
+        </form>
+    </section>
+
+    <section class="recipe-section">
         <h2 class="section-title">Change password</h2>
         <form class="profile-form" method="post" action="/profile/password">
             <label class="field-label" for="current_password">Current password</label>

@@ -96,20 +96,20 @@ class GroceryItem(TypedDict):
     quantity: float
 
 
-def normalize_servings(value: Any) -> int:
+def normalize_servings(value: Any, default_servings: int = DEFAULT_SERVINGS) -> int:
     """Coerce a servings value into a positive integer.
 
     Args:
         value: Raw servings value from a form or the session.
 
     Returns:
-        A positive integer, falling back to ``DEFAULT_SERVINGS`` when invalid.
+        A positive integer, falling back to ``default_servings`` when invalid.
     """
     try:
         servings = int(value)
     except (TypeError, ValueError):
-        return DEFAULT_SERVINGS
-    return servings if servings >= 1 else DEFAULT_SERVINGS
+        return default_servings
+    return servings if servings >= 1 else default_servings
 
 
 def is_valid_day(day: str) -> bool:
@@ -142,18 +142,20 @@ def ordered_week_days(start_day: str) -> list[str]:
     return list(WEEK_DAYS[index:]) + list(WEEK_DAYS[:index])
 
 
-def empty_week_menu() -> dict[str, DaySlot]:
+def empty_week_menu(default_servings: int = DEFAULT_SERVINGS) -> dict[str, DaySlot]:
     """Return a week menu with empty unpinned slots."""
     return {
-        day: DaySlot(recipe_id=None, pinned=False, servings=DEFAULT_SERVINGS)
+        day: DaySlot(recipe_id=None, pinned=False, servings=default_servings)
         for day in WEEK_DAYS
     }
 
 
-def load_week_menu(request: Request) -> dict[str, DaySlot]:
+def load_week_menu(
+    request: Request, default_servings: int = DEFAULT_SERVINGS
+) -> dict[str, DaySlot]:
     """Load week menu state from the session, filling missing days."""
     logger.debug("Loading current week menu")
-    menu = empty_week_menu()
+    menu = empty_week_menu(default_servings=default_servings)
     stored = request.session.get(_scoped_key(request, SESSION_KEY), {})
     if not isinstance(stored, dict):
         return menu
@@ -167,7 +169,10 @@ def load_week_menu(request: Request) -> dict[str, DaySlot]:
         menu[day] = DaySlot(
             recipe_id=int(recipe_id) if recipe_id is not None else None,
             pinned=pinned,
-            servings=normalize_servings(day_data.get("servings", DEFAULT_SERVINGS)),
+            servings=normalize_servings(
+                day_data.get("servings", default_servings),
+                default_servings=default_servings,
+            ),
         )
 
     return menu
@@ -200,13 +205,18 @@ def set_day_recipe(
 
 
 def set_day_servings(
-    menu: dict[str, DaySlot], day: str, servings: int
+    menu: dict[str, DaySlot],
+    day: str,
+    servings: int,
+    default_servings: int = DEFAULT_SERVINGS,
 ) -> dict[str, DaySlot]:
     """Set the number of servings planned for a day."""
     if not is_valid_day(day):
         msg = f"Unknown day: {day}"
         raise ValueError(msg)
-    menu[day]["servings"] = normalize_servings(servings)
+    menu[day]["servings"] = normalize_servings(
+        servings, default_servings=default_servings
+    )
     return menu
 
 

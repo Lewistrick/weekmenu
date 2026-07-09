@@ -7,6 +7,7 @@ import pytest
 from litestar.testing import AsyncTestClient
 
 from src.models import Recipe, RecipeTag, Tag, TagCategory, User
+from src.user_settings import UserSettings, save_user_settings
 from src.week_menu import (
     TagConstraintMode,
     TagGroupConstraint,
@@ -559,6 +560,21 @@ async def test_randomize_warns_when_all_days_pinned(
 
     assert response.status_code == 200
     assert "All days are pinned" in response.text
+
+
+@pytest.mark.asyncio
+async def test_week_menu_uses_default_servings_from_user_settings(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Week menu should prefill day servings from user settings."""
+    save_user_settings(default_user.id, UserSettings(language="🇬🇧 English", servings=4))
+
+    response = await test_client.get("/week-menu")
+
+    assert response.status_code == 200
+    assert 'id="servings-monday"' in response.text
+    assert 'name="servings" value="4"' in response.text
 
 
 @pytest.mark.asyncio
