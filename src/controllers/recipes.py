@@ -12,6 +12,7 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise.expressions import Q
 
 from src.auth import get_current_user
+from src.catalog import copy_recipe_catalog, get_or_create_ingredient
 from src.models import (
     Ingredient,
     Recipe,
@@ -102,12 +103,14 @@ class RecipeController(Controller):
         return str(value).lower() in {"on", "1", "true", "yes"}
 
     @staticmethod
-    async def _tag_groups() -> list[dict[str, Any]]:
-        """Return tag categories with their tag values."""
+    async def _tag_groups(owner_id: int) -> list[dict[str, Any]]:
+        """Return tag categories with their tag values for one user."""
         groups: list[dict[str, Any]] = []
-        categories = await TagCategory.all().order_by("name")
+        categories = await TagCategory.filter(owner_id=owner_id).order_by("name")
         for category in categories:
-            tags = await Tag.filter(category=category.id).order_by("name")
+            tags = await Tag.filter(owner_id=owner_id, category=category.id).order_by(
+                "name"
+            )
             groups.append({"category": category, "tags": tags})
         return groups
 
@@ -147,7 +150,7 @@ class RecipeController(Controller):
         Returns:
             Rows pairing each recipe with the tag groups it is missing.
         """
-        categories = await TagCategory.all().order_by("name")
+        categories = await TagCategory.filter(owner_id=owner_id).order_by("name")
         if not categories:
             return []
 
@@ -189,11 +192,12 @@ class RecipeController(Controller):
     @get(path="/add", summary="Get the page to add a new recipe")
     async def add_recipe_page(self, request: Request) -> Template:
         """Show the page for adding a new recipe."""
+        owner_id = await self._current_user_id(request)
         return Template(
             template_name="add-recipe.html",
             context={
                 "request": request,
-                "tag_groups": await self._tag_groups(),
+                "tag_groups": await self._tag_groups(owner_id),
             },
         )
 
@@ -220,6 +224,37 @@ class RecipeController(Controller):
                 "can_edit": await self._user_owns(random_recipe.id, user_id),
                 "can_import": False,
                 "already_imported": False,
+                "recipe_tag_groups": await self._recipe_tags_by_category(
+                    random_recipe.id
+                ),
+            },
+        )
+
+    @get(path="/random-public", summary="View a random public recipe")
+    async def random_public_recipe_page(self, request: Request) -> Template:
+        """Show a random public recipe from other users."""
+        user_id = await self._current_user_id(request)
+        recipes = await Recipe.filter(private=False).exclude(owner_id=user_id)
+        if not recipes:
+            raise NotFoundException()
+        random_recipe = random.choice(recipes)
+        logger.debug(f"Random public recipe: {random_recipe.name}")
+        ingredients = await RecipeIngredient.filter(
+            recipe=random_recipe.id
+        ).select_related("ingredient", "unit")
+        await random_recipe.fetch_related("owner", "creator")
+
+        return Template(
+            template_name="view-recipe.html",
+            context={
+                "request": request,
+                "recipe": random_recipe,
+                "ingredients": ingredients,
+                "can_edit": False,
+                "can_import": True,
+                "already_imported": await self._already_imported(
+                    user_id, random_recipe.id
+                ),
                 "recipe_tag_groups": await self._recipe_tags_by_category(
                     random_recipe.id
                 ),
@@ -307,23 +342,7 @@ class RecipeController(Controller):
             private=True,
             enabled=source.enabled,
         )
-
-        source_ingredients = await RecipeIngredient.filter(
-            recipe_id=source.id
-        ).select_related("ingredient", "unit")
-        for recipe_ingredient in source_ingredients:
-            await RecipeIngredient.create(
-                recipe=copy,
-                ingredient=recipe_ingredient.ingredient,
-                quantity=recipe_ingredient.quantity,
-                unit=recipe_ingredient.unit,
-            )
-
-        tag_ids = await RecipeTag.filter(recipe_id=source.id).values_list(
-            "tag_id", flat=True
-        )
-        for tag_id in tag_ids:
-            await RecipeTag.create(recipe=copy, tag_id=tag_id)
+        await copy_recipe_catalog(source, user_id, copy)
 
         logger.info(f"User {user_id} imported recipe {recipe_id} as {copy.id}")
         return Redirect(path=f"/recipes/view/{copy.id}")
@@ -398,6 +417,7 @@ class RecipeController(Controller):
 
     @get(path="/edit/{recipe_id:int}", summary="Get the page to edit a recipe")
     async def edit_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        user_id = await self._current_user_id(request)
         recipe = await self._get_owned_recipe(request, recipe_id)
 
         await recipe.fetch_related("owner")
@@ -409,7 +429,7 @@ class RecipeController(Controller):
             context={
                 "recipe": recipe,
                 "ingredients": ingredients,
-                "tag_groups": await self._tag_groups(),
+                "tag_groups": await self._tag_groups(user_id),
                 "selected_tag_ids": await self._recipe_tag_ids(recipe.id),
             },
         )
@@ -589,6 +609,7 @@ class RecipeController(Controller):
         ],
     ) -> Template:
         """Save the edited ingredient quantity, unit, and name."""
+        user_id = await self._current_user_id(request)
         await self._get_owned_recipe(request, recipe_id)
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
@@ -613,7 +634,7 @@ class RecipeController(Controller):
             valid = False
 
         if unit_abbrev is not None:
-            unit = await Unit.find(unit_abbrev)
+            unit = await Unit.find(unit_abbrev, owner_id=user_id)
             if unit:
                 recipe_ingredient.unit = unit
             else:
@@ -624,8 +645,8 @@ class RecipeController(Controller):
             valid = False
 
         if ingredient_name is not None and str(ingredient_name).strip():
-            ingredient, _ = await Ingredient.get_or_create(
-                name=str(ingredient_name).strip()
+            ingredient, _ = await get_or_create_ingredient(
+                user_id, str(ingredient_name).strip()
             )
             duplicate = (
                 await RecipeIngredient.filter(
@@ -709,6 +730,7 @@ class RecipeController(Controller):
         ],
     ) -> Template:
         """Add a new ingredient to a recipe."""
+        user_id = await self._current_user_id(request)
         recipe = await self._get_owned_recipe(request, recipe_id)
 
         quantity = data.get("quantity")
@@ -723,12 +745,14 @@ class RecipeController(Controller):
         elif not unit_abbrev:
             messages.append("No unit selected.")
         else:
-            unit = await Unit.find(unit_abbrev)
+            unit = await Unit.find(unit_abbrev, owner_id=user_id)
             if not unit:
                 messages.append(f"Could not find unit: {unit_abbrev}")
             else:
                 try:
-                    ingredient, _ = await Ingredient.get_or_create(name=ingredient_name)
+                    ingredient, _ = await get_or_create_ingredient(
+                        user_id, str(ingredient_name)
+                    )
                     existing = await RecipeIngredient.filter(
                         recipe=recipe_id, ingredient=ingredient.id
                     ).first()
@@ -764,6 +788,7 @@ class RecipeController(Controller):
     @post(path="/{recipe_id:int}/tags", summary="Update selected tags for recipe")
     async def update_recipe_tags(self, recipe_id: int, request: Request) -> Template:
         """Replace a recipe's selected tags with submitted values."""
+        user_id = await self._current_user_id(request)
         recipe = await self._get_owned_recipe(request, recipe_id)
 
         form_data = await request.form()
@@ -774,7 +799,9 @@ class RecipeController(Controller):
         )
 
         valid_tag_ids = set(
-            await Tag.filter(id__in=submitted_tag_ids).values_list("id", flat=True)
+            await Tag.filter(id__in=submitted_tag_ids, owner_id=user_id).values_list(
+                "id", flat=True
+            )
         )
 
         await RecipeTag.filter(recipe_id=recipe_id).delete()
@@ -791,7 +818,7 @@ class RecipeController(Controller):
                 "request": request,
                 "recipe": recipe,
                 "ingredients": ingredients,
-                "tag_groups": await self._tag_groups(),
+                "tag_groups": await self._tag_groups(user_id),
                 "selected_tag_ids": await self._recipe_tag_ids(recipe.id),
                 "messages": ["Recipe tags updated"],
             },
@@ -822,10 +849,13 @@ class RecipeController(Controller):
     @get(path="/search", summary="Search recipe page")
     async def search_page(self, request: Request) -> Template:
         """Show the page for searching a recipe."""
-
+        owner_id = await self._current_user_id(request)
         return Template(
             template_name="search-recipes.html",
-            context={"request": request, "tag_groups": await self._tag_groups()},
+            context={
+                "request": request,
+                "tag_groups": await self._tag_groups(owner_id),
+            },
         )
 
     @get(path="/search-recipe", summary="Search for recipes")
@@ -969,6 +999,7 @@ class RecipeController(Controller):
         ]
 
         logger.debug(f"Adding recipe: {name}")
+        owner_id = await self._current_user_id(request)
         owner = await get_current_user(request)
         recipe = await Recipe.create(
             name=name,
@@ -983,15 +1014,17 @@ class RecipeController(Controller):
         )
         logger.debug(f"Added - {recipe.id=}")
 
-        valid_tag_ids = await Tag.filter(id__in=tag_ids).values_list("id", flat=True)
+        valid_tag_ids = await Tag.filter(id__in=tag_ids, owner_id=owner_id).values_list(
+            "id", flat=True
+        )
         for tag_id in set(valid_tag_ids):
             await RecipeTag.create(recipe=recipe, tag_id=tag_id)
 
         messages = []
         for ing_dict in ingredients:
             logger.debug(f"Adding ingredient: {ing_dict['name']}")
-            ingredient, ing_created = await Ingredient.get_or_create(
-                name=ing_dict["name"]
+            ingredient, ing_created = await get_or_create_ingredient(
+                owner_id, ing_dict["name"]
             )
             if ing_created:
                 messages.append(f"Hey, I didn't know {ingredient.name} yet!")
@@ -999,7 +1032,7 @@ class RecipeController(Controller):
             logger.debug(
                 f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}"
             )
-            unit = await Unit.find(ing_dict["unit"])
+            unit = await Unit.find(ing_dict["unit"], owner_id=owner_id)
             if unit is None:
                 messages.append(
                     f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})"

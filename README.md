@@ -16,13 +16,21 @@
 ### Recipe sharing and privacy
 - Every recipe has an **owner** (who controls it), a **creator** (who originally wrote it), and a private/public flag (toggle on the edit page). New recipes start private with you as both owner and creator.
 - You always see and manage your own recipes. You can also open other users' **public** recipes (read-only) via direct links or search when you opt in.
-- By default, recipe search, the random recipe picker, listings, and week-menu tools only use **your own** recipes. Check **Include public recipes** on the search or week menu page to also show other users' public recipes in those tools.
+- By default, recipe search, the random **private** recipe picker, listings, and week-menu tools only use **your own** recipes. Check **Include public recipes** on the search or week menu page to also show other users' public recipes in those tools.
+- Use **Random public recipe** to jump straight to a random public recipe owned by another user.
 - Import a public recipe you do not own with **Import to my recipes** on its view page. This creates a private copy in your collection, keeps the original creator credited, and blocks importing the same public recipe twice.
 - Trying to edit or delete a recipe you do not own returns a 404.
 
 ### Per-user week menu
 - Your week menu, start day, tag constraints, and grocery list are stored per user in the session, so logging out and into another account on the same browser shows that account's own plan rather than the previous user's.
 - Week menu randomization and per-day recipe search use your own recipes by default; enable **Include public recipes** in the week menu toolbar to widen the pool.
+
+### Per-user catalog (ingredients, units, tags, shops)
+- Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
+- Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `dl`, `el`, `tl`, `st`, `pcs` (with singular/plural labels where applicable).
+- Unit abbreviations are unique per user (`owner` + `abbrev`), not globally.
+- When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
+- Legacy single-user data is assigned to the first registered account on startup; duplicate unit abbreviations for that account are merged during the one-time backfill.
 
 ### What will it be able to do
 - Compose your own cookbook

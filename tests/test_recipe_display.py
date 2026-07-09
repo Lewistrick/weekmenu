@@ -12,11 +12,11 @@ async def test_view_recipe_groups_tags_by_category(
     default_user: User,
 ) -> None:
     """Recipe view should group tags under their tag group label."""
-    season = await TagCategory.create(name="season")
-    summer = await Tag.create(name="summer", category=season)
-    winter = await Tag.create(name="winter", category=season)
-    diet = await TagCategory.create(name="diet")
-    vegan = await Tag.create(name="vegan", category=diet)
+    season = await TagCategory.create(owner=default_user, name="season")
+    summer = await Tag.create(owner=default_user, name="summer", category=season)
+    winter = await Tag.create(owner=default_user, name="winter", category=season)
+    diet = await TagCategory.create(owner=default_user, name="diet")
+    vegan = await Tag.create(owner=default_user, name="vegan", category=diet)
     recipe = await Recipe.create(
         name="Grouped tags stew",
         description="A tagged recipe",

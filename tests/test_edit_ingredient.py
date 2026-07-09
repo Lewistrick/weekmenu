@@ -39,9 +39,10 @@ async def recipe_with_ingredient(
         servings=4,
         owner=default_user,
     )
-    await Ingredient.create(name="placeholder")
-    ingredient = await Ingredient.create(name="potatoes")
-    unit = await Unit.create(abbrev="g", single="gram", plural="grams")
+    await Ingredient.create(owner=default_user, name="placeholder")
+    ingredient = await Ingredient.create(owner=default_user, name="potatoes")
+    unit = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert unit is not None
     recipe_ingredient = await RecipeIngredient.create(
         recipe=recipe,
         ingredient=ingredient,
@@ -74,7 +75,6 @@ async def test_edit_ingredient_updates_quantity_and_unit(
 ) -> None:
     """Saving the edit form should persist quantity and unit changes."""
     recipe, recipe_ingredient = recipe_with_ingredient
-    await Unit.create(abbrev="ml", single="milliliter", plural="milliliters")
 
     response = await test_client.put(
         f"/recipes/{recipe.id}/ingredients/{recipe_ingredient.id}/edit",
@@ -117,10 +117,11 @@ async def test_edit_ingredient_updates_ingredient_name(
 async def test_edit_ingredient_rejects_duplicate_ingredient_name(
     test_client: AsyncTestClient,
     recipe_with_ingredient: tuple[Recipe, RecipeIngredient],
+    default_user: User,
 ) -> None:
     """Renaming a line to an ingredient already on the recipe should fail."""
     recipe, recipe_ingredient = recipe_with_ingredient
-    carrots = await Ingredient.create(name="carrots")
+    carrots = await Ingredient.create(owner=default_user, name="carrots")
     unit = await recipe_ingredient.unit
     await RecipeIngredient.create(
         recipe=recipe,
@@ -207,8 +208,6 @@ async def test_add_ingredient_creates_recipe_ingredient(
     recipe: Recipe,
 ) -> None:
     """Submitting the add form should append a new ingredient line to the recipe."""
-    await Unit.create(abbrev="g", single="gram", plural="grams")
-
     response = await test_client.post(
         f"/recipes/{recipe.id}/ingredients/add",
         data={"quantity": "100", "unit": "g", "ingredient": "carrots"},
@@ -235,8 +234,6 @@ async def test_add_ingredient_finds_unit_by_name(
     recipe: Recipe,
 ) -> None:
     """Unit lookup should accept abbreviations, singular, and plural forms."""
-    await Unit.create(abbrev="g", single="gram", plural="grams")
-
     response = await test_client.post(
         f"/recipes/{recipe.id}/ingredients/add",
         data={"quantity": "50", "unit": "grams", "ingredient": "onions"},

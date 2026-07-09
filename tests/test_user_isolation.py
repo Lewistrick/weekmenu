@@ -203,3 +203,37 @@ async def test_week_menu_is_not_shared_between_users(
     theirs = await test_client.get("/week-menu")
     assert theirs.status_code == 200
     assert "Erick Dinner" not in theirs.text
+
+
+@pytest.mark.asyncio
+async def test_random_private_recipe_only_picks_owned_recipes(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Private random picker should only choose from the current user's recipes."""
+    other = await _make_user("bob")
+    await _make_recipe(default_user, "My Dish", private=True)
+    await _make_recipe(other, "Shared Dish", private=False)
+
+    response = await test_client.get("/recipes/random")
+
+    assert response.status_code == 200
+    assert "My Dish" in response.text
+    assert "Shared Dish" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_random_public_recipe_only_picks_other_users_public_recipes(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Public random picker should choose public recipes not owned by the viewer."""
+    other = await _make_user("bob")
+    await _make_recipe(default_user, "My Dish", private=False)
+    await _make_recipe(other, "Shared Dish", private=False)
+
+    response = await test_client.get("/recipes/random-public")
+
+    assert response.status_code == 200
+    assert "Shared Dish" in response.text
+    assert "My Dish" not in response.text

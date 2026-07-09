@@ -561,13 +561,44 @@ async def test_randomize_warns_when_all_days_pinned(
     assert "All days are pinned" in response.text
 
 
+@pytest.mark.asyncio
+async def test_randomize_persists_include_public_toggle(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Randomize should keep the include-public checkbox checked."""
+    await Recipe.create(
+        name="Own Dish",
+        description="mine",
+        prep_time_minutes=5,
+        cook_time_minutes=5,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+
+    response = await test_client.post(
+        "/week-menu/randomize",
+        data={"include_public": "on"},
+    )
+
+    assert response.status_code == 200
+    assert 'id="week-menu-search-include-public"' in response.text
+    assert (
+        'id="week-menu-search-include-public" type="checkbox" name="include_public" value="on" checked'
+        in response.text
+    )
+
+
 @pytest.fixture
-async def carb_tags(test_client: AsyncTestClient) -> tuple[TagCategory, Tag, Tag, Tag]:
+async def carb_tags(
+    test_client: AsyncTestClient, default_user: User
+) -> tuple[TagCategory, Tag, Tag, Tag]:
     """Create a carb type group with three tag values."""
-    category = await TagCategory.create(name="carb_type")
-    potato = await Tag.create(name="potato", category=category)
-    rice = await Tag.create(name="rice", category=category)
-    pasta = await Tag.create(name="pasta", category=category)
+    category = await TagCategory.create(owner=default_user, name="carb_type")
+    potato = await Tag.create(owner=default_user, name="potato", category=category)
+    rice = await Tag.create(owner=default_user, name="rice", category=category)
+    pasta = await Tag.create(owner=default_user, name="pasta", category=category)
     return category, potato, rice, pasta
 
 

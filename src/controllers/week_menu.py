@@ -24,8 +24,10 @@ from src.week_menu import (
     ordered_week_days,
     parse_tag_constraints_from_form,
     randomize_week_menu,
+    load_include_public,
     save_start_day,
     save_tag_constraints,
+    save_include_public,
     save_week_menu,
     scale_ingredient_quantity,
     set_day_recipe,
@@ -68,19 +70,23 @@ class WeekMenuController(Controller):
         return str(value).lower() in {"on", "1", "true", "yes"}
 
     @staticmethod
-    async def _tag_groups() -> list[dict]:
+    async def _tag_groups(owner_id: int) -> list[dict]:
         """Load tag groups with values for the options panel."""
-        categories = await TagCategory.all().order_by("name")
+        categories = await TagCategory.filter(owner_id=owner_id).order_by("name")
         groups: list[dict] = []
         for category in categories:
-            tags = await Tag.filter(category_id=category.id).order_by("name")
+            tags = await Tag.filter(
+                owner_id=owner_id, category_id=category.id
+            ).order_by("name")
             groups.append({"category": category, "tags": tags})
         return groups
 
     @staticmethod
-    async def _category_ids() -> list[int]:
-        """Return all tag group ids in display order."""
-        categories = await TagCategory.all().order_by("name").only("id")
+    async def _category_ids(owner_id: int) -> list[int]:
+        """Return all tag group ids in display order for one user."""
+        categories = (
+            await TagCategory.filter(owner_id=owner_id).order_by("name").only("id")
+        )
         return [category.id for category in categories]
 
     @staticmethod
@@ -119,9 +125,10 @@ class WeekMenuController(Controller):
         warnings: list[str] | None = None,
     ) -> dict:
         """Build template context shared by week menu renders."""
+        user_id = await self._viewer_id(request)
         menu = load_week_menu(request)
         start_day = load_start_day(request)
-        tag_groups = await self._tag_groups()
+        tag_groups = await self._tag_groups(user_id)
         category_ids = [group["category"].id for group in tag_groups]
         constraints = load_tag_constraints(request, category_ids)
         recipe_ids = [
@@ -145,6 +152,7 @@ class WeekMenuController(Controller):
             "days": await build_day_rows(menu, recipes_by_id, start_day),
             "start_day": start_day,
             "day_options": ordered_week_days("monday"),
+            "include_public": load_include_public(request),
             "tag_constraint_rows": constraint_rows,
             "messages": messages or [],
             "warnings": warnings or [],
@@ -204,8 +212,9 @@ class WeekMenuController(Controller):
     @post(path="/constraints", summary="Save week menu tag constraints")
     async def save_constraints(self, request: Request) -> Template:
         """Persist tag constraint options and re-render the week menu."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
-        category_ids = await self._category_ids()
+        category_ids = await self._category_ids(user_id)
         constraints = parse_tag_constraints_from_form(dict(form_data), category_ids)
         save_tag_constraints(request, constraints)
         logger.info("Week menu tag constraints updated")
@@ -233,9 +242,10 @@ class WeekMenuController(Controller):
             )
         form_data = await request.form()
         include_public = self._form_wants_public(dict(form_data))
-        category_ids = await self._category_ids()
-        constraints = load_tag_constraints(request, category_ids)
+        save_include_public(request, include_public)
         user_id = await self._viewer_id(request)
+        category_ids = await self._category_ids(user_id)
+        constraints = load_tag_constraints(request, category_ids)
         recipe_query = Recipe.filter(enabled=True)
         if include_public:
             recipe_query = recipe_query.filter(self._visible_filter(user_id))
@@ -381,7 +391,13 @@ class WeekMenuController(Controller):
             raise NotFoundException()
 
         user_id = await self._viewer_id(request)
-        include_public = self._wants_public(request)
+        query_preference = self._wants_public(request)
+        include_public = (
+            query_preference
+            if "include_public" in request.query_params
+            else load_include_public(request)
+        )
+        save_include_public(request, include_public)
         recipes: list[Recipe] = []
         if search:
             recipes = await Recipe.search(

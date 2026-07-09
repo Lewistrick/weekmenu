@@ -11,6 +11,7 @@ from src.auth import (
     logout_user,
     verify_password,
 )
+from src.catalog import seed_default_units
 from src.models import Recipe, User
 
 MIN_PASSWORD_LENGTH = 6
@@ -110,6 +111,7 @@ class AuthController(Controller):
         )
         if is_first_account:
             await _backfill_first_account(user)
+        await seed_default_units(user)
 
         login_user(request, user)
         logger.info(f"User registered: {user.username}")

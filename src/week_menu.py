@@ -34,6 +34,7 @@ DAY_LABELS: dict[str, str] = {
 SESSION_KEY = "week_menu"
 START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
+INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
 
 DEFAULT_SERVINGS = 2
 
@@ -321,6 +322,21 @@ def save_tag_constraints(
 ) -> None:
     """Persist tag constraints to the session."""
     request.session[_scoped_key(request, TAG_CONSTRAINTS_SESSION_KEY)] = constraints
+
+
+def load_include_public(request: Request) -> bool:
+    """Load whether week-menu actions should include public recipes."""
+    value = request.session.get(_scoped_key(request, INCLUDE_PUBLIC_SESSION_KEY), False)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in {"on", "1", "true", "yes"}
+    return bool(value)
+
+
+def save_include_public(request: Request, include_public: bool) -> None:
+    """Persist whether week-menu actions should include public recipes."""
+    request.session[_scoped_key(request, INCLUDE_PUBLIC_SESSION_KEY)] = include_public
 
 
 def parse_tag_constraints_from_form(

@@ -12,9 +12,9 @@ async def test_missing_tags_page_lists_missing_groups(
     default_user: User,
 ) -> None:
     """Recipes missing tag groups should be listed with missing group names."""
-    season = await TagCategory.create(name="season")
-    diet = await TagCategory.create(name="diet")
-    summer = await Tag.create(name="summer", category=season)
+    season = await TagCategory.create(owner=default_user, name="season")
+    diet = await TagCategory.create(owner=default_user, name="diet")
+    summer = await Tag.create(owner=default_user, name="summer", category=season)
 
     recipe = await Recipe.create(
         name="Needs diet tag",

@@ -21,7 +21,7 @@ from src.controllers.recipes import RecipeController
 from src.controllers.tags import TagController
 from src.controllers.week_menu import WeekMenuController
 import src.db_config as db_config
-from src.models import User
+from src.models import Unit, User
 from src.template_utils import render_markdown
 
 DEBUG = True
@@ -127,6 +127,43 @@ async def _ensure_recipe_attribution(conn) -> None:
     )
 
 
+async def _ensure_catalog_owners(conn) -> None:
+    """Add owner_id to catalog tables, assign legacy rows, dedupe units."""
+    first_user = await User.all().order_by("id").first()
+    if first_user is None:
+        return
+    default_user_id = first_user.id
+
+    catalog_tables = ("ingredient", "unit", "tagcategory", "tag", "shop")
+    for table in catalog_tables:
+        table_exists = await conn.execute_query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?", [table]
+        )
+        if not table_exists[1]:
+            continue
+        table_info = await conn.execute_query(f"PRAGMA table_info({table})")
+        columns = {row[1] for row in table_info[1]}
+        if "owner_id" not in columns:
+            await conn.execute_query(f"ALTER TABLE {table} ADD COLUMN owner_id INT")
+        await conn.execute_query(
+            f"UPDATE {table} SET owner_id = {default_user_id} WHERE owner_id IS NULL"
+        )
+
+    units = await Unit.filter(owner_id=default_user_id).order_by("id")
+    canonical_by_abbrev: dict[str, int] = {}
+    for unit in units:
+        if unit.abbrev in canonical_by_abbrev:
+            duplicate_id = unit.id
+            keep_id = canonical_by_abbrev[unit.abbrev]
+            await conn.execute_query(
+                "UPDATE recipeingredient SET unit_id = ? WHERE unit_id = ?",
+                [keep_id, duplicate_id],
+            )
+            await Unit.filter(id=duplicate_id).delete()
+        else:
+            canonical_by_abbrev[unit.abbrev] = unit.id
+
+
 async def _ensure_not_using_production_db_in_tests() -> None:
     """Block accidental production database use while pytest is running."""
     if not os.environ.get("PYTEST_CURRENT_TEST"):
@@ -158,6 +195,7 @@ async def init_db() -> None:
         await _ensure_user_auth_columns(conn)
         await _ensure_recipe_owners(conn)
         await _ensure_recipe_attribution(conn)
+        await _ensure_catalog_owners(conn)
     except Exception:
         pass
 
