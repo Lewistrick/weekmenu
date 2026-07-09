@@ -34,9 +34,9 @@
 - Settings are editable from `/profile` under the **Settings** section.
 
 ### Grocery lists by shop and plaintext export
-- Open the grocery list from the navbar, home page, or week menu footer (`/week-menu/grocery-list`).
+- Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.
 - Manage shops at `/shops/manage` (⚙️ Settings → 🏪 Shops). Each shop has a name plus foreground and background colors used on the grocery list.
-- The grocery list is generated once from your week menu and then preserved in your session until it is empty again. Revisiting the page shows a notice instead of regenerating over your sorting work.
+- Generating from the week menu creates a new list when empty, or lets you **Replace** the current list, **Add** week-menu groceries to it, or cancel. Visiting the grocery list page directly preserves a non-empty list and shows a notice instead of regenerating over your sorting work.
 - The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked as already owned appear below the unsorted list and can be restored with the ✓ chip.
 - Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
 - Copy grouped plaintext for messaging in two places on the grocery list page: under the grocery columns (ingredients by shop) and under **Days included** (week menu days and recipes).
@@ -60,7 +60,7 @@
     - Enter the number of servings for each day; amounts are scaled from each recipe's own serving count
 - Generate a grocery list from the week menu
     - Ingredient quantities are scaled to each day's servings, then ingredients sharing the same name and unit are added together
-    - Open it from the **Grocery list** button at the bottom of the week menu page (`/week-menu/grocery-list`)
+- Generate a grocery list from the week menu via **Generate grocery list** at the bottom of the week menu page
 - Search recipes by name, description, ingredients, and optional tag filters
 
 ### To see the API docs

@@ -409,16 +409,220 @@ async def test_week_menu_export_returns_plaintext(
 
 
 @pytest.mark.asyncio
-async def test_week_menu_page_has_footer_grocery_action(
+async def test_week_menu_page_has_generate_grocery_action(
     test_client: AsyncTestClient,
 ) -> None:
-    """Week menu should link to the grocery list from the footer."""
+    """Week menu should offer grocery list generation from the footer."""
     response = await test_client.get("/week-menu")
 
     assert response.status_code == 200
     assert "week-menu-footer-actions" in response.text
     assert "btn-action--grocery" in response.text
-    assert "btn-action--export" not in response.text
+    assert "Generate grocery list" in response.text
+    assert "grocery-generate-form" in response.text
+
+
+@pytest.mark.asyncio
+async def test_generate_grocery_list_from_empty_week_menu(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """An empty grocery list should be created from the week menu in one step."""
+    recipe = await Recipe.create(
+        name="Generate stew",
+        description="generate from week menu",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    lentils = await Ingredient.create(owner=default_user, name="lentils")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=lentils, quantity=300, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/generate",
+        data={"mode": "replace"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303, 307}
+    assert response.headers["location"].endswith("/week-menu/grocery-list")
+
+    page = await test_client.get("/week-menu/grocery-list")
+    assert page.status_code == 200
+    assert ">lentils</span>" in page.text
+    assert "Your grocery list is preserved" not in page.text
+
+
+@pytest.mark.asyncio
+async def test_generate_grocery_list_replace_existing(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Replacing should rebuild the grocery list from the current week menu."""
+    recipe = await Recipe.create(
+        name="Replace stew",
+        description="replace groceries",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    onion = await Ingredient.create(owner=default_user, name="onion")
+    garlic = await Ingredient.create(owner=default_user, name="garlic")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=onion, quantity=100, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=garlic, quantity=50, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": onion.id},
+    )
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/generate",
+        data={"mode": "replace"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303, 307}
+    page = await test_client.get("/week-menu/grocery-list")
+    assert page.status_code == 200
+    assert ">onion</span>" in page.text
+    assert ">garlic</span>" in page.text
+
+
+@pytest.mark.asyncio
+async def test_generate_grocery_list_merge_existing(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Merging should add new week menu groceries to the current list."""
+    recipe_a = await Recipe.create(
+        name="Merge generate A",
+        description="merge generate a",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    recipe_b = await Recipe.create(
+        name="Merge generate B",
+        description="merge generate b",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    rice = await Ingredient.create(owner=default_user, name="rice")
+    beans = await Ingredient.create(owner=default_user, name="beans")
+    await RecipeIngredient.create(
+        recipe=recipe_a, ingredient=rice, quantity=200, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_b, ingredient=beans, quantity=150, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe_a.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(f"/week-menu/tuesday/recipe/{recipe_b.id}")
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/generate",
+        data={"mode": "merge"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303, 307}
+    page = await test_client.get("/week-menu/grocery-list")
+    assert page.status_code == 200
+    assert ">rice</span>" in page.text
+    assert ">beans</span>" in page.text
+
+
+@pytest.mark.asyncio
+async def test_empty_initialized_grocery_list_regenerates_on_visit(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """An initialized but empty grocery list should rebuild without a preserve notice."""
+    recipe = await Recipe.create(
+        name="Empty revisit stew",
+        description="empty revisit",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    thyme = await Ingredient.create(owner=default_user, name="thyme")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=thyme, quantity=5, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": thyme.id},
+    )
+    await test_client.post("/week-menu/grocery-list/already-have/clear")
+
+    response = await test_client.get("/week-menu/grocery-list")
+
+    assert response.status_code == 200
+    assert ">thyme</span>" not in response.text
+    assert "Your grocery list is preserved" not in response.text
+    assert "No ingredients yet" in response.text
+
+
+@pytest.mark.asyncio
+async def test_week_menu_shows_generate_choices_when_list_exists(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """A non-empty grocery list should show inline update choices on the week menu."""
+    recipe = await Recipe.create(
+        name="Choices stew",
+        description="choices ui",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    oats = await Ingredient.create(owner=default_user, name="oats")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=oats, quantity=80, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.get("/week-menu")
+
+    assert response.status_code == 200
+    assert "grocery-generate-choices" in response.text
+    assert "Update grocery list?" in response.text
+    assert "grocery-generate-form" not in response.text
 
 
 @pytest.mark.asyncio

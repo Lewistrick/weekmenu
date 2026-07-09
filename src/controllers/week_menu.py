@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from litestar import Controller, Request, get, post
 from litestar.exceptions import NotFoundException
-from litestar.response import Response, Template
+from litestar.response import Redirect, Response, Template
 from loguru import logger
 from tortoise.expressions import Q
 
@@ -44,17 +44,21 @@ from src.week_menu import (
     empty_already_have_list,
     ingredient_in_grocery_list,
     find_grocery_line,
+    has_grocery_list_items,
+    is_grocery_list_initialized,
     load_grocery_list,
     mark_already_have,
     mark_shop_already_have,
+    merge_grocery_items,
     parse_grocery_quantity,
     pop_grocery_action_flash,
+    pop_grocery_suppress_preserve,
     reset_grocery_plan,
     save_grocery_list,
     set_grocery_action_flash,
+    set_grocery_suppress_preserve,
     unmark_already_have,
     update_grocery_line,
-    is_grocery_list_initialized,
     save_start_day,
     save_tag_constraints,
     save_include_public,
@@ -193,6 +197,7 @@ class WeekMenuController(Controller):
             "tag_constraint_rows": constraint_rows,
             "messages": messages or [],
             "warnings": warnings or [],
+            "grocery_list_has_items": has_grocery_list_items(request),
         }
 
     @staticmethod
@@ -302,10 +307,11 @@ class WeekMenuController(Controller):
         grocery_message: str | None = None
         if preserve_existing and is_grocery_list_initialized(request):
             grocery_items = load_grocery_list(request)
-            grocery_message = (
-                "Your grocery list is preserved and was not regenerated "
-                "from the week menu."
-            )
+            if grocery_items and not pop_grocery_suppress_preserve(request):
+                grocery_message = (
+                    "Your grocery list is preserved and was not regenerated "
+                    "from the week menu."
+                )
         else:
             grocery_items = await self._grocery_items_from_week_menu(request)
             reset_grocery_plan(request)
@@ -516,6 +522,27 @@ class WeekMenuController(Controller):
     async def grocery_list(self, request: Request) -> Template:
         """Build an aggregated grocery list scaled to each day's servings."""
         return await self._render_grocery_list(request)
+
+    @post(path="/grocery-list/generate", summary="Generate grocery list from week menu")
+    async def generate_grocery_list(self, request: Request) -> Redirect:
+        """Create or update the grocery list from the current week menu."""
+        form_data = await request.form()
+        mode = str(form_data.get("mode", "")).strip()
+        if mode == "replace":
+            items = await self._grocery_items_from_week_menu(request)
+            reset_grocery_plan(request)
+            save_grocery_list(request, items)
+            set_grocery_suppress_preserve(request)
+        elif mode == "merge":
+            existing = load_grocery_list(request)
+            new_items = await self._grocery_items_from_week_menu(request)
+            save_grocery_list(
+                request, merge_grocery_items(existing, new_items)
+            )
+            set_grocery_suppress_preserve(request)
+        else:
+            raise NotFoundException()
+        return Redirect(path="/week-menu/grocery-list")
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")
     async def grocery_list_export(self, request: Request) -> Response[str]:

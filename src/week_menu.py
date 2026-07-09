@@ -39,6 +39,7 @@ GROCERY_ALREADY_HAVE_KEY = "grocery_already_have"
 GROCERY_LIST_KEY = "grocery_list"
 GROCERY_ACTION_FLASH_KEY = "grocery_action_flash"
 GROCERY_LIST_INITIALIZED_KEY = "grocery_list_initialized"
+GROCERY_SUPPRESS_PRESERVE_KEY = "grocery_suppress_preserve"
 
 DEFAULT_SERVINGS = 2
 
@@ -553,6 +554,17 @@ def pop_grocery_action_flash(request: Request) -> str | None:
     return str(message) if message else None
 
 
+def set_grocery_suppress_preserve(request: Request) -> None:
+    """Skip the preserved-list notice on the next grocery list page load."""
+    request.session[_scoped_key(request, GROCERY_SUPPRESS_PRESERVE_KEY)] = True
+
+
+def pop_grocery_suppress_preserve(request: Request) -> bool:
+    """Return and clear the preserved-list notice suppression flag."""
+    key = _scoped_key(request, GROCERY_SUPPRESS_PRESERVE_KEY)
+    return bool(request.session.pop(key, False))
+
+
 def empty_already_have_list(request: Request) -> None:
     """Remove already-have groceries from the plan entirely."""
     already_have = load_already_have_ids(request)
@@ -973,6 +985,18 @@ def scale_ingredient_quantity(
     if recipe_servings <= 0:
         return float(quantity)
     return float(quantity) * day_servings / recipe_servings
+
+
+def merge_grocery_items(
+    existing: list[GroceryItem], new_items: list[GroceryItem]
+) -> list[GroceryItem]:
+    """Combine two grocery lists, summing quantities for matching lines."""
+    return build_grocery_list(existing + new_items)
+
+
+def has_grocery_list_items(request: Request) -> bool:
+    """Return whether the user has a non-empty persisted grocery list."""
+    return is_grocery_list_initialized(request) and not is_grocery_list_empty(request)
 
 
 def build_grocery_list(entries: list[GroceryItem]) -> list[GroceryItem]:

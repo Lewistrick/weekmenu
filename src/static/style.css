@@ -704,6 +704,32 @@ div.recipe-detail {
     margin: 0;
 }
 
+.grocery-generate-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.grocery-generate-form {
+    margin: 0;
+}
+
+.grocery-generate-choices[hidden],
+.grocery-generate-trigger[hidden] {
+    display: none !important;
+}
+
+.grocery-generate-choices {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.grocery-generate-choice {
+    white-space: nowrap;
+}
+
 .grocery-inline-confirm-wrap {
     display: flex;
     align-items: center;
