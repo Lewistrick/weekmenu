@@ -36,8 +36,9 @@ async def searchable_recipes(
         servings=2,
         owner=default_user,
     )
-    unit = await Unit.create(abbrev="g", single="gram", plural="grams")
-    mozzarella = await Ingredient.create(name="mozzarella")
+    unit = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert unit is not None
+    mozzarella = await Ingredient.create(owner=default_user, name="mozzarella")
     await RecipeIngredient.create(
         recipe=by_ingredient,
         ingredient=mozzarella,

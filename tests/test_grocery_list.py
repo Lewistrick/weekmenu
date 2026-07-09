@@ -86,10 +86,11 @@ async def scaled_recipe(test_client: AsyncTestClient, default_user: User) -> Rec
         owner=default_user,
         enabled=True,
     )
-    grams = await Unit.create(abbrev="g", single="gram", plural="grams")
-    pieces = await Unit.create(abbrev="pcs", single="piece", plural="pieces")
-    potatoes = await Ingredient.create(name="potatoes")
-    onion = await Ingredient.create(name="onion")
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    pieces = await Unit.filter(owner_id=default_user.id, abbrev="pcs").first()
+    assert grams is not None and pieces is not None
+    potatoes = await Ingredient.create(owner=default_user, name="potatoes")
+    onion = await Ingredient.create(owner=default_user, name="onion")
     await RecipeIngredient.create(
         recipe=recipe, ingredient=potatoes, quantity=200, unit=grams
     )

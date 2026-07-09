@@ -93,6 +93,7 @@ class Ingredient(Model):
 
     id = IntField(primary_key=True)
     name = TextField(required=True)
+    owner = ForeignKeyField("models.User", related_name="ingredients")
 
 
 class TagCategory(Model):
@@ -100,6 +101,7 @@ class TagCategory(Model):
 
     id = IntField(primary_key=True)
     name = TextField(required=True)
+    owner = ForeignKeyField("models.User", related_name="tag_categories")
 
 
 class Tag(Model):
@@ -117,6 +119,7 @@ class Tag(Model):
     id = IntField(primary_key=True)
     category = ForeignKeyField("models.TagCategory", "category")
     name = TextField(required=True)
+    owner = ForeignKeyField("models.User", related_name="tags")
 
 
 class RecipeTag(Model):
@@ -166,6 +169,7 @@ class User(Model):
 class Shop(Model):
     id = IntField(primary_key=True)
     name = TextField(required=True)
+    owner = ForeignKeyField("models.User", related_name="shops")
 
 
 class UserIngredientShop(Model):
@@ -182,11 +186,12 @@ class Unit(Model):
     abbrev = TextField(required=True)
     single = TextField(null=True)
     plural = TextField(null=True)
+    owner = ForeignKeyField("models.User", related_name="units")
 
     @classmethod
-    async def find(cls, query: str) -> "Unit | None":
-        unit = await Unit.filter(
-            Q(abbrev=query) | Q(single=query) | Q(plural=query),
+    async def find(cls, query: str, *, owner_id: int) -> "Unit | None":
+        """Find a unit abbreviation or label for a specific user."""
+        return await cls.filter(
+            Q(owner_id=owner_id)
+            & (Q(abbrev=query) | Q(single=query) | Q(plural=query)),
         ).first()
-
-        return unit

@@ -7,11 +7,13 @@ from src.models import Recipe, RecipeTag, Tag, TagCategory, User
 
 
 @pytest.fixture
-async def season_tags(test_client: AsyncTestClient) -> tuple[TagCategory, Tag, Tag]:
+async def season_tags(
+    test_client: AsyncTestClient, default_user: User
+) -> tuple[TagCategory, Tag, Tag]:
     """Create a season group with two tag values."""
-    category = await TagCategory.create(name="season")
-    summer = await Tag.create(name="summer", category=category)
-    winter = await Tag.create(name="winter", category=category)
+    category = await TagCategory.create(owner=default_user, name="season")
+    summer = await Tag.create(owner=default_user, name="summer", category=category)
+    winter = await Tag.create(owner=default_user, name="winter", category=category)
     return category, summer, winter
 
 
@@ -179,9 +181,11 @@ async def test_delete_group_requires_no_tags(
 
 
 @pytest.mark.asyncio
-async def test_delete_empty_group_succeeds(test_client: AsyncTestClient) -> None:
+async def test_delete_empty_group_succeeds(
+    test_client: AsyncTestClient, default_user: User
+) -> None:
     """Deleting an empty group should succeed."""
-    category = await TagCategory.create(name="diet")
+    category = await TagCategory.create(owner=default_user, name="diet")
 
     response = await test_client.delete(f"/tags/groups/{category.id}")
 

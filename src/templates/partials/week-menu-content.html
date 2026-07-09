@@ -29,7 +29,7 @@
         </form>
         <div class="week-menu-toolbar-actions">
             <label class="week-menu-include-public" for="week-menu-search-include-public">
-                <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on">
+                <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on" {% if include_public %}checked{% endif %}>
                 Include public recipes
             </label>
             <form class="week-menu-randomize-form" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
