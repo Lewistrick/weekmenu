@@ -8,6 +8,7 @@ from loguru import logger
 from src.auth import get_current_user
 from src.models import Ingredient, Shop
 from src.shops import (
+    delete_unused_ingredient,
     get_or_create_shop,
     ingredient_assignment_groups,
     load_shops,
@@ -193,3 +194,19 @@ class ShopController(Controller):
         if request.headers.get("HX-Request"):
             return await self._render_assignments_partial(request)
         return await self._render_manage_page(request, messages=["Assignment saved."])
+
+    @delete(
+        path="/ingredients/{ingredient_id:int}",
+        summary="Delete unused ingredient",
+        status_code=200,
+    )
+    async def delete_ingredient(self, request: Request, ingredient_id: int) -> Template:
+        """Delete an owned ingredient that is not used in any recipe."""
+        owner_id = await self._owner_id(request)
+        deleted = await delete_unused_ingredient(owner_id, ingredient_id)
+        if not deleted:
+            raise NotFoundException()
+        logger.info(f"Deleted unused ingredient: {ingredient_id}")
+        if request.headers.get("HX-Request"):
+            return await self._render_assignments_partial(request)
+        return await self._render_manage_page(request, messages=["Ingredient deleted."])

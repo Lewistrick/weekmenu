@@ -1065,24 +1065,42 @@ div.recipe-detail {
     padding: 0.15rem;
 }
 
-.manage-shop-assignment-row {
+.manage-shop-ingredient-grid {
+    margin-bottom: 0;
+}
+
+.manage-shop-ingredient-tile {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.65rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #3d3d3d;
+    padding: 0.85rem;
+}
+
+.manage-shop-ingredient-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.manage-shop-ingredient-meta {
+    display: flex;
     align-items: center;
-    gap: 0.5rem 1rem;
-    margin-bottom: 0.65rem;
-    padding-bottom: 0.65rem;
-    border-bottom: 1px solid #4d4d4d;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.manage-shop-recipe-count {
+    font-size: 0.85rem;
+    color: #b5b5b5;
+    white-space: nowrap;
 }
 
 .manage-shop-assignment-group {
     margin-bottom: 1.25rem;
-}
-
-.manage-shop-assignment-group:last-child .manage-shop-assignment-row:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
 }
 
 .manage-shop-assignment-group-title {

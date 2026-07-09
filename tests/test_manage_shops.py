@@ -3,8 +3,13 @@
 import pytest
 from litestar.testing import AsyncTestClient
 
-from src.models import Ingredient, Shop, User
-from src.shops import ingredient_assignment_groups, set_ingredient_shop
+from src.models import Ingredient, Recipe, RecipeIngredient, Shop, Unit, User
+from src.shops import (
+    delete_unused_ingredient,
+    ingredient_assignment_groups,
+    load_ingredient_recipe_counts,
+    set_ingredient_shop,
+)
 
 
 @pytest.mark.asyncio
@@ -106,3 +111,133 @@ async def test_ingredient_assignment_groups_orders_unassigned_first(
     assert [group["label"] for group in groups] == ["Unassigned", "Corner store"]
     assert groups[0]["rows"][0]["ingredient"].name == "pepper"
     assert groups[1]["rows"][0]["ingredient"].name == "salt"
+
+
+@pytest.mark.asyncio
+async def test_manage_shops_page_shows_recipe_count(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Ingredients in recipes should show how many recipes use them."""
+    recipe = await Recipe.create(
+        name="Count stew",
+        description="recipe count test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    flour = await Ingredient.create(owner=default_user, name="flour")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=flour, quantity=100, unit=grams
+    )
+
+    response = await test_client.get("/shops/manage")
+
+    assert response.status_code == 200
+    assert "in 1 recipe" in response.text
+
+
+@pytest.mark.asyncio
+async def test_manage_shops_page_shows_delete_for_unused_ingredient(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Unused ingredients should show a zero count and a delete button."""
+    await Ingredient.create(owner=default_user, name="abc")
+
+    response = await test_client.get("/shops/manage")
+
+    assert response.status_code == 200
+    assert "manage-shop-ingredient-tile" in response.text
+    assert "in 0 recipes" in response.text
+    assert 'aria-label="Delete unused ingredient"' in response.text
+
+
+@pytest.mark.asyncio
+async def test_manage_shops_delete_unused_ingredient(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Deleting an unused ingredient should remove it from the assignments list."""
+    leftover = await Ingredient.create(owner=default_user, name="abc")
+
+    response = await test_client.delete(
+        f"/shops/ingredients/{leftover.id}",
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert "abc" not in response.text
+    assert await Ingredient.filter(id=leftover.id).exists() is False
+
+
+@pytest.mark.asyncio
+async def test_manage_shops_cannot_delete_ingredient_in_recipe(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Ingredients used in recipes should not be deletable."""
+    recipe = await Recipe.create(
+        name="Protected stew",
+        description="delete guard test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    salt = await Ingredient.create(owner=default_user, name="salt")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=salt, quantity=5, unit=grams
+    )
+
+    response = await test_client.delete(f"/shops/ingredients/{salt.id}")
+
+    assert response.status_code == 404
+    assert await Ingredient.filter(id=salt.id).exists() is True
+
+
+@pytest.mark.asyncio
+async def test_load_ingredient_recipe_counts(default_user: User) -> None:
+    """Recipe counts should reflect distinct recipes per ingredient."""
+    recipe_a = await Recipe.create(
+        name="Count A",
+        description="count a",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    recipe_b = await Recipe.create(
+        name="Count B",
+        description="count b",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    shared = await Ingredient.create(owner=default_user, name="shared")
+    unused = await Ingredient.create(owner=default_user, name="unused")
+    await RecipeIngredient.create(
+        recipe=recipe_a, ingredient=shared, quantity=10, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_b, ingredient=shared, quantity=20, unit=grams
+    )
+
+    counts = await load_ingredient_recipe_counts(default_user.id)
+
+    assert counts[shared.id] == 2
+    assert unused.id not in counts
+    assert await delete_unused_ingredient(default_user.id, unused.id) is True
+    assert await delete_unused_ingredient(default_user.id, shared.id) is False

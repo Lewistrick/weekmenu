@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TypedDict
 
-from src.models import Ingredient, Shop, UserIngredientShop
+from src.models import Ingredient, RecipeIngredient, Shop, UserIngredientShop
 
 DEFAULT_SHOP_COLORS: tuple[tuple[str, str], ...] = (
     ("#ffffff", "#2563eb"),
@@ -113,16 +114,51 @@ async def set_ingredient_shop(
     await mapping.save()
 
 
+async def load_ingredient_recipe_counts(owner_id: int) -> dict[int, int]:
+    """Return ingredient ids mapped to how many recipes use them."""
+    rows = await RecipeIngredient.filter(ingredient__owner_id=owner_id).values(
+        "ingredient_id", "recipe_id"
+    )
+    recipes_by_ingredient: dict[int, set[int]] = defaultdict(set)
+    for row in rows:
+        recipes_by_ingredient[row["ingredient_id"]].add(row["recipe_id"])
+    return {
+        ingredient_id: len(recipe_ids)
+        for ingredient_id, recipe_ids in recipes_by_ingredient.items()
+    }
+
+
+async def delete_unused_ingredient(owner_id: int, ingredient_id: int) -> bool:
+    """Delete an ingredient that is not used in any recipe.
+
+    Returns:
+        ``True`` when the ingredient was deleted, ``False`` when it is missing
+        or still referenced by at least one recipe.
+    """
+    ingredient = await Ingredient.get_or_none(id=ingredient_id, owner_id=owner_id)
+    if ingredient is None:
+        return False
+    if await RecipeIngredient.filter(ingredient_id=ingredient_id).exists():
+        return False
+    await UserIngredientShop.filter(
+        user_id=owner_id, ingredient_id=ingredient_id
+    ).delete()
+    await ingredient.delete()
+    return True
+
+
 async def ingredient_assignment_rows(owner_id: int) -> list[dict[str, object]]:
     """Return ingredients with their current shop assignment for management UI."""
     ingredients = await Ingredient.filter(owner_id=owner_id).order_by("name")
     shop_ids = await load_ingredient_shop_ids(owner_id)
+    recipe_counts = await load_ingredient_recipe_counts(owner_id)
     rows: list[dict[str, object]] = []
     for ingredient in ingredients:
         rows.append(
             {
                 "ingredient": ingredient,
                 "shop_id": shop_ids.get(ingredient.id),
+                "recipe_count": recipe_counts.get(ingredient.id, 0),
             }
         )
     return rows
