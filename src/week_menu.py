@@ -37,6 +37,8 @@ TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
 GROCERY_ALREADY_HAVE_KEY = "grocery_already_have"
 GROCERY_LIST_KEY = "grocery_list"
+GROCERY_ACTION_FLASH_KEY = "grocery_action_flash"
+GROCERY_LIST_INITIALIZED_KEY = "grocery_list_initialized"
 
 DEFAULT_SERVINGS = 2
 
@@ -406,13 +408,22 @@ def load_grocery_list(request: Request) -> list[GroceryItem]:
 def save_grocery_list(request: Request, items: list[GroceryItem]) -> None:
     """Persist the grocery list for the current user."""
     request.session[_scoped_key(request, GROCERY_LIST_KEY)] = items
+    request.session[_scoped_key(request, GROCERY_LIST_INITIALIZED_KEY)] = True
+
+
+def is_grocery_list_initialized(request: Request) -> bool:
+    """Return whether a grocery list has been generated for this user."""
+    return bool(
+        request.session.get(_scoped_key(request, GROCERY_LIST_INITIALIZED_KEY), False)
+    )
 
 
 def clear_grocery_list(request: Request) -> None:
     """Remove the persisted grocery list for the current user."""
-    key = _scoped_key(request, GROCERY_LIST_KEY)
-    if key in request.session:
-        del request.session[key]
+    for base in (GROCERY_LIST_KEY, GROCERY_LIST_INITIALIZED_KEY):
+        key = _scoped_key(request, base)
+        if key in request.session:
+            del request.session[key]
 
 
 def is_grocery_list_empty(request: Request) -> bool:
@@ -518,14 +529,42 @@ def mark_shop_already_have(
     ingredient_shop_ids: dict[int, int | None],
 ) -> None:
     """Mark every ingredient assigned to one shop as already available."""
+    ids = load_already_have_ids(request)
     for item in items:
         if ingredient_shop_ids.get(item["ingredient_id"]) == shop_id:
-            mark_already_have(request, item["ingredient_id"])
+            ids.add(item["ingredient_id"])
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
 
 
 def clear_already_have(request: Request) -> None:
     """Remove every ingredient from the already-have list."""
     request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
+
+
+def set_grocery_action_flash(request: Request, message: str) -> None:
+    """Store a one-time grocery list action message for the next page load."""
+    request.session[_scoped_key(request, GROCERY_ACTION_FLASH_KEY)] = message
+
+
+def pop_grocery_action_flash(request: Request) -> str | None:
+    """Return and clear a one-time grocery list action message."""
+    key = _scoped_key(request, GROCERY_ACTION_FLASH_KEY)
+    message = request.session.pop(key, None)
+    return str(message) if message else None
+
+
+def empty_already_have_list(request: Request) -> None:
+    """Remove already-have groceries from the plan entirely."""
+    already_have = load_already_have_ids(request)
+    if not already_have:
+        return
+    remaining = [
+        item
+        for item in load_grocery_list(request)
+        if item["ingredient_id"] not in already_have
+    ]
+    save_grocery_list(request, remaining)
+    clear_already_have(request)
 
 
 def parse_grocery_quantity(value: Any) -> float | None:

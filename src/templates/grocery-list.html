@@ -38,11 +38,9 @@
             <div class="grocery-subsection-header">
                 <h3 class="grocery-subsection-title">Already have</h3>
                 {% if already_have_items %}
-                <form method="post" action="/week-menu/grocery-list/already-have/clear"
-                    class="grocery-bulk-form"
-                    onsubmit="return confirm('Remove all items from the already-have list?')">
-                    <button type="submit" class="btn btn-sm btn-ghost">Empty list</button>
-                </form>
+                {% with confirm_id="empty-already-have-confirm", trigger_id="empty-already-have-trigger", confirm_label="Empty list?", confirm_action="/week-menu/grocery-list/already-have/clear", trigger_label="Empty list" %}
+                {% include "partials/grocery-inline-confirm.html" %}
+                {% endwith %}
                 {% endif %}
             </div>
             {% if already_have_items %}
@@ -72,7 +70,8 @@
                     </h3>
                     <form method="post" action="/week-menu/grocery-list/shop/{{ group.shop_id }}/already-have"
                         class="grocery-bulk-form">
-                        <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all">
+                        <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all"
+                            style="color: {{ group.foreground_color }}; border-color: {{ group.foreground_color }};">
                             Mark all ✓
                         </button>
                     </form>
@@ -143,5 +142,30 @@
         textarea.setSelectionRange(0, textarea.value.length);
         navigator.clipboard.writeText(textarea.value);
     }
+
+    document.querySelectorAll(".grocery-inline-confirm-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const confirmId = trigger.dataset.confirmId;
+            const confirm = document.getElementById(confirmId);
+            if (!confirm) {
+                return;
+            }
+            trigger.hidden = true;
+            confirm.hidden = false;
+        });
+    });
+
+    document.querySelectorAll(".grocery-inline-confirm-cancel").forEach((button) => {
+        button.addEventListener("click", () => {
+            const confirm = document.getElementById(button.dataset.confirmId);
+            const trigger = document.getElementById(button.dataset.triggerId);
+            if (confirm) {
+                confirm.hidden = true;
+            }
+            if (trigger) {
+                trigger.hidden = false;
+            }
+        });
+    });
 </script>
 {% endblock %}

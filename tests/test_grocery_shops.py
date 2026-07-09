@@ -12,6 +12,7 @@ from src.models import Ingredient, Recipe, RecipeIngredient, Shop, Unit, User
 from src.shops import ShopInfo, load_ingredient_shop_ids, set_ingredient_shop
 from src.week_menu import (
     GroceryItem,
+    empty_already_have_list,
     load_grocery_list,
     mark_already_have,
     save_grocery_list,
@@ -495,6 +496,11 @@ async def test_grocery_list_mark_all_shop_already_have(
     assert response.status_code == 200
     assert "Already have" in response.text
     assert ">pepper</span>" in response.text
+    assert response.text.count(">pepper</span>") == 1
+    shop_section = response.text.split("By shop", 1)[1].split("Copy for messaging", 1)[
+        0
+    ]
+    assert ">pepper</span>" not in shop_section
 
 
 @pytest.mark.asyncio
@@ -528,8 +534,7 @@ async def test_grocery_list_can_clear_already_have(
     response = await test_client.post("/week-menu/grocery-list/already-have/clear")
 
     assert response.status_code == 200
-    assert "To sort" in response.text
-    assert ">salt</span>" in response.text
+    assert ">salt</span>" not in response.text
 
 
 @pytest.mark.asyncio
@@ -574,11 +579,11 @@ async def test_grocery_list_merges_duplicate_unit_lines(
     response = await test_client.post(
         f"/week-menu/grocery-list/item/{flour.id}/g",
         data={"quantity": "100", "unit": "kg"},
+        headers={"HX-Request": "true"},
     )
 
     assert response.status_code == 200
-    assert "Combined with existing flour (kg)." in response.text
-    assert "101 kg" in response.text
+    assert response.headers.get("HX-Refresh") == "true"
 
 
 def test_update_grocery_line_merges_matching_unit() -> None:
@@ -614,6 +619,34 @@ def test_update_grocery_line_merges_matching_unit() -> None:
     assert len(loaded) == 1
     assert loaded[0]["unit"] == "kg"
     assert loaded[0]["quantity"] == 101.0
+
+
+def test_empty_already_have_list_removes_items() -> None:
+    """Emptying already-have should delete those groceries from the plan."""
+
+    class Session(dict):
+        pass
+
+    class RequestStub:
+        def __init__(self) -> None:
+            self.session = Session({"user_id": 1})
+
+    request = RequestStub()
+    save_grocery_list(
+        request,  # type: ignore[arg-type]
+        [
+            GroceryItem(ingredient_id=1, name="salt", unit="g", quantity=5.0),
+            GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0),
+        ],
+    )
+    mark_already_have(request, 1)  # type: ignore[arg-type]
+
+    empty_already_have_list(request)  # type: ignore[arg-type]
+
+    loaded = load_grocery_list(request)  # type: ignore[arg-type]
+    assert loaded == [
+        GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0)
+    ]
 
 
 def test_save_and_load_grocery_list_round_trip() -> None:

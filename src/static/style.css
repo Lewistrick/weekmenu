@@ -704,6 +704,17 @@ div.recipe-detail {
     margin: 0;
 }
 
+.grocery-inline-confirm {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.grocery-inline-confirm-label {
+    font-size: 0.85rem;
+    color: #c8c8c8;
+}
+
 .grocery-shop-header {
     display: flex;
     align-items: center;
@@ -718,12 +729,14 @@ div.recipe-detail {
 
 .grocery-shop-mark-all {
     color: var(--shop-fg, #ffffff);
-    border-color: color-mix(in srgb, var(--shop-fg, #ffffff) 45%, transparent);
+    border-color: var(--shop-fg, #ffffff);
+    background-color: transparent;
 }
 
 .grocery-shop-mark-all:hover {
     background-color: rgba(0, 0, 0, 0.15);
     color: var(--shop-fg, #ffffff);
+    border-color: var(--shop-fg, #ffffff);
 }
 
 .grocery-layout {

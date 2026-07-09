@@ -41,18 +41,21 @@ from src.week_menu import (
     randomize_week_menu,
     load_include_public,
     load_already_have_ids,
-    clear_already_have,
+    empty_already_have_list,
     ingredient_in_grocery_list,
     find_grocery_line,
     load_grocery_list,
     mark_already_have,
     mark_shop_already_have,
     parse_grocery_quantity,
+    pop_grocery_action_flash,
     reset_grocery_plan,
     save_grocery_list,
+    set_grocery_action_flash,
     unmark_already_have,
     update_grocery_line,
     is_grocery_list_empty,
+    is_grocery_list_initialized,
     save_start_day,
     save_tag_constraints,
     save_include_public,
@@ -298,7 +301,7 @@ class WeekMenuController(Controller):
         recipes_by_id = await self._recipes_by_id(recipe_ids)
 
         grocery_message: str | None = None
-        if preserve_existing and not is_grocery_list_empty(request):
+        if preserve_existing and is_grocery_list_initialized(request):
             grocery_items = load_grocery_list(request)
             grocery_message = (
                 "Your grocery list is preserved and was not regenerated "
@@ -308,6 +311,9 @@ class WeekMenuController(Controller):
             grocery_items = await self._grocery_items_from_week_menu(request)
             reset_grocery_plan(request)
             save_grocery_list(request, grocery_items)
+
+        if action_message is None:
+            action_message = pop_grocery_action_flash(request)
 
         ingredient_shop_ids = await load_ingredient_shop_ids(user_id)
         shops = await load_shops(user_id)
@@ -334,6 +340,18 @@ class WeekMenuController(Controller):
             "grocery_message": grocery_message,
             "grocery_action_message": action_message,
         }
+
+    async def _refresh_grocery_list_response(
+        self, request: Request, *, action_message: str | None = None
+    ) -> Response | Template:
+        """Return a full grocery list refresh, using HX-Refresh for HTMX requests."""
+        if request.headers.get("HX-Request"):
+            if action_message:
+                set_grocery_action_flash(request, action_message)
+            return Response(
+                content="", status_code=200, headers={"HX-Refresh": "true"}
+            )
+        return await self._render_grocery_list(request, action_message=action_message)
 
     async def _render_grocery_list(
         self, request: Request, *, action_message: str | None = None
@@ -569,8 +587,8 @@ class WeekMenuController(Controller):
         summary="Clear the already-have list",
     )
     async def clear_grocery_already_have(self, request: Request) -> Template:
-        """Remove every ingredient from the already-have list."""
-        clear_already_have(request)
+        """Remove every already-have grocery from the plan."""
+        empty_already_have_list(request)
         return await self._render_grocery_list(request)
 
     @get(
@@ -609,7 +627,7 @@ class WeekMenuController(Controller):
     )
     async def update_grocery_item_amount(
         self, request: Request, ingredient_id: int, unit: str
-    ) -> Template:
+    ) -> Response | Template:
         """Persist edited quantity and unit for one grocery line."""
         await self._owned_grocery_line(request, ingredient_id, unit)
         form_data = await request.form()
@@ -627,7 +645,7 @@ class WeekMenuController(Controller):
         if not success:
             raise NotFoundException()
         if merge_message or new_unit != unit:
-            return await self._render_grocery_list(
+            return await self._refresh_grocery_list_response(
                 request, action_message=merge_message
             )
         item = await self._owned_grocery_line(request, ingredient_id, new_unit)
