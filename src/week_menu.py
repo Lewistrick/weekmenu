@@ -36,6 +36,7 @@ START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
 GROCERY_ALREADY_HAVE_KEY = "grocery_already_have"
+GROCERY_LIST_KEY = "grocery_list"
 
 DEFAULT_SERVINGS = 2
 
@@ -370,6 +371,87 @@ def mark_already_have(request: Request, ingredient_id: int) -> None:
     ids = load_already_have_ids(request)
     ids.add(ingredient_id)
     request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+
+
+def unmark_already_have(request: Request, ingredient_id: int) -> None:
+    """Remove one ingredient from the already-have list."""
+    ids = load_already_have_ids(request)
+    ids.discard(ingredient_id)
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+
+
+def load_grocery_list(request: Request) -> list[GroceryItem]:
+    """Load the persisted grocery list for the current user."""
+    stored = request.session.get(_scoped_key(request, GROCERY_LIST_KEY), [])
+    if not isinstance(stored, list):
+        return []
+    items: list[GroceryItem] = []
+    for entry in stored:
+        if not isinstance(entry, dict):
+            continue
+        try:
+            items.append(
+                GroceryItem(
+                    ingredient_id=int(entry["ingredient_id"]),
+                    name=str(entry["name"]),
+                    unit=str(entry["unit"]),
+                    quantity=float(entry["quantity"]),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return items
+
+
+def save_grocery_list(request: Request, items: list[GroceryItem]) -> None:
+    """Persist the grocery list for the current user."""
+    request.session[_scoped_key(request, GROCERY_LIST_KEY)] = items
+
+
+def clear_grocery_list(request: Request) -> None:
+    """Remove the persisted grocery list for the current user."""
+    key = _scoped_key(request, GROCERY_LIST_KEY)
+    if key in request.session:
+        del request.session[key]
+
+
+def is_grocery_list_empty(request: Request) -> bool:
+    """Return whether the user has no persisted grocery list yet."""
+    return len(load_grocery_list(request)) == 0
+
+
+def update_grocery_item(
+    request: Request, ingredient_id: int, *, quantity: float, unit: str
+) -> bool:
+    """Update quantity and unit for one grocery line in the session list."""
+    normalized_unit = unit.strip()
+    if not normalized_unit:
+        return False
+    items = load_grocery_list(request)
+    updated = False
+    for item in items:
+        if item["ingredient_id"] == ingredient_id:
+            item["quantity"] = round(quantity, 2)
+            item["unit"] = normalized_unit
+            updated = True
+            break
+    if updated:
+        save_grocery_list(request, items)
+    return updated
+
+
+def parse_grocery_quantity(value: Any) -> float | None:
+    """Parse a positive grocery quantity from form input."""
+    try:
+        quantity = float(value)
+    except (TypeError, ValueError):
+        return None
+    return quantity if quantity > 0 else None
+
+
+def reset_grocery_plan(request: Request) -> None:
+    """Clear already-have marks for a freshly generated grocery list."""
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
 
 
 def parse_tag_constraints_from_form(

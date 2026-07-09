@@ -673,6 +673,15 @@ div.recipe-detail {
     margin-bottom: 1rem;
 }
 
+.grocery-notice {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #5a9fd4;
+    border-radius: 8px;
+    background-color: rgba(90, 159, 212, 0.12);
+    color: #d8ebfa;
+}
+
 .grocery-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -698,9 +707,20 @@ div.recipe-detail {
 .grocery-shop-group {
     margin-bottom: 1rem;
     padding: 0.75rem;
-    border: 1px solid color-mix(in srgb, var(--shop-bg, #2563eb) 35%, #555);
+    border: 1px solid color-mix(in srgb, var(--shop-bg, #2563eb) 65%, #333);
     border-radius: 10px;
-    background-color: color-mix(in srgb, var(--shop-bg, #2563eb) 18%, transparent);
+    background-color: var(--shop-bg, #2563eb);
+    color: var(--shop-fg, #ffffff);
+}
+
+.grocery-shop-group .grocery-item {
+    background-color: rgba(0, 0, 0, 0.18);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.grocery-shop-group .grocery-item-name,
+.grocery-shop-group .grocery-item-amount {
+    color: inherit;
 }
 
 .grocery-shop-title {
@@ -714,21 +734,62 @@ div.recipe-detail {
 
 .grocery-item {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.45rem;
     padding: 0.5rem 0.65rem;
     border: 1px solid #555;
     border-radius: 8px;
     background-color: #3d3d3d;
 }
 
-.grocery-item-main {
+.grocery-item-row {
     display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.grocery-item-amount-wrap {
+    flex: 0 0 auto;
+}
+
+.grocery-item-amount {
+    padding: 0.15rem 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #b8d9f0;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.grocery-item-amount:hover {
+    border-color: #666;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.grocery-amount-form {
+    display: flex;
+    align-items: center;
     gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.grocery-amount-input {
+    width: 4.5rem;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.85rem;
+}
+
+.grocery-unit-select {
+    width: 4.5rem;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.85rem;
 }
 
 .grocery-item-actions {
@@ -744,7 +805,7 @@ div.recipe-detail {
 }
 
 .grocery-item--muted {
-    opacity: 0.75;
+    opacity: 0.85;
     background-color: #353535;
 }
 
@@ -752,11 +813,27 @@ div.recipe-detail {
     border-style: dashed;
 }
 
+.grocery-copy-section {
+    margin-top: 1.25rem;
+}
+
+.grocery-copy-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.grocery-copy-header .grocery-subsection-title {
+    margin: 0;
+}
+
 .shop-chip-row {
     display: flex;
     flex-wrap: wrap;
     gap: 0.3rem;
-    justify-content: flex-end;
+    width: 100%;
 }
 
 .shop-chip-form,
@@ -800,6 +877,17 @@ div.recipe-detail {
 .shop-chip-btn--clear {
     background-color: #4a4a4a;
     color: #ccc;
+}
+
+.shop-chip-btn--check {
+    background-color: #4a4a4a;
+    color: #ccc;
+}
+
+.shop-chip-btn--check.shop-chip-btn--active {
+    background-color: #16a34a;
+    color: #fff;
+    border-color: #22c55e;
 }
 
 .shop-chip-btn--active {
@@ -877,14 +965,11 @@ div.recipe-detail {
 .grocery-item-name {
     font-weight: 600;
     color: #e8e8e8;
+    min-width: 0;
 }
 
 .grocery-item-sep {
-    color: #8f8f8f;
-}
-
-.grocery-item-amount {
-    color: #b8d9f0;
+    display: none;
 }
 
 .grocery-day-table {

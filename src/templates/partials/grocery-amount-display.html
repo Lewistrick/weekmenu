@@ -1,0 +1,7 @@
+<button type="button" class="grocery-item-amount"
+    hx-get="/week-menu/grocery-list/item/{{ item.ingredient_id }}/edit"
+    hx-target="#grocery-amount-{{ item.ingredient_id }}"
+    hx-swap="innerHTML"
+    title="Edit amount" aria-label="Edit amount for {{ item.name }}">
+    {{ "%g" | format(item.quantity) }} {{ item.unit }}
+</button>

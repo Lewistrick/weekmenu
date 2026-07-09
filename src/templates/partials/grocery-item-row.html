@@ -1,0 +1,39 @@
+<li class="grocery-item{% if item.ingredient_id in already_have_ids %} grocery-item--muted{% endif %}">
+    <div class="grocery-item-row">
+        <span class="grocery-item-name">{{ item.name }}</span>
+        <div id="grocery-amount-{{ item.ingredient_id }}" class="grocery-item-amount-wrap">
+            {% include "partials/grocery-amount-display.html" %}
+        </div>
+    </div>
+    <div class="shop-chip-row" role="group" aria-label="Actions for {{ item.name }}">
+        {% for shop in shops %}
+        <form method="post" action="/week-menu/grocery-list/assign" class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <input type="hidden" name="shop_id" value="{{ shop.id }}">
+            <button type="submit"
+                class="shop-chip-btn{% if ingredient_shop_ids.get(item.ingredient_id) == shop.id %} shop-chip-btn--active{% endif %}"
+                style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};"
+                title="{{ shop.name }}" aria-label="{{ shop.name }}">
+                {{ shop.letter }}
+            </button>
+        </form>
+        {% endfor %}
+        {% if item.ingredient_id in already_have_ids %}
+        <form method="post" action="/week-menu/grocery-list/already-have/remove" class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--check shop-chip-btn--active"
+                title="Remove from already have" aria-label="Remove from already have">
+                ✓
+            </button>
+        </form>
+        {% else %}
+        <form method="post" action="/week-menu/grocery-list/already-have" class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--check"
+                title="Already have this" aria-label="Already have this">
+                ✓
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</li>

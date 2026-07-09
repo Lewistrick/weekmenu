@@ -9,9 +9,12 @@
         <p class="page-lead">Sort ingredients into shops on the left, then review your lists on the right.</p>
     </header>
 
+    {% if grocery_message %}
+    <div class="grocery-notice" role="status">{{ grocery_message }}</div>
+    {% endif %}
+
     <div class="grocery-toolbar">
         <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
-        <a href="/week-menu/grocery-list/export" class="btn btn-secondary" download="grocery-list.txt">Export plaintext</a>
         <a href="/shops/manage" class="btn btn-secondary">🏪 Manage shops</a>
     </div>
 
@@ -22,32 +25,7 @@
             {% if unassigned_items %}
             <ul class="grocery-list">
                 {% for item in unassigned_items %}
-                <li class="grocery-item">
-                    <div class="grocery-item-main">
-                        <span class="grocery-item-name">{{ item.name }}</span>
-                        <span class="grocery-item-sep">-</span>
-                        <span class="grocery-item-amount">{{ "%g" | format(item.quantity) }} {{ item.unit }}</span>
-                    </div>
-                    <div class="grocery-item-actions">
-                        <div class="shop-chip-row" role="group" aria-label="Assign {{ item.name }} to a shop">
-                            {% for shop in shops %}
-                            <form method="post" action="/week-menu/grocery-list/assign" class="shop-chip-form">
-                                <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
-                                <input type="hidden" name="shop_id" value="{{ shop.id }}">
-                                <button type="submit" class="shop-chip-btn"
-                                    style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};"
-                                    title="Assign to {{ shop.name }}" aria-label="Assign to {{ shop.name }}">
-                                    {{ shop.letter }}
-                                </button>
-                            </form>
-                            {% endfor %}
-                        </div>
-                        <form method="post" action="/week-menu/grocery-list/already-have" class="already-have-form">
-                            <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
-                            <button type="submit" class="btn btn-sm btn-ghost already-have-btn">I already have this</button>
-                        </form>
-                    </div>
-                </li>
+                {% include "partials/grocery-item-row.html" %}
                 {% endfor %}
             </ul>
             {% else %}
@@ -58,11 +36,7 @@
             {% if already_have_items %}
             <ul class="grocery-list grocery-list--muted">
                 {% for item in already_have_items %}
-                <li class="grocery-item grocery-item--muted">
-                    <span class="grocery-item-name">{{ item.name }}</span>
-                    <span class="grocery-item-sep">-</span>
-                    <span class="grocery-item-amount">{{ "%g" | format(item.quantity) }} {{ item.unit }}</span>
-                </li>
+                {% include "partials/grocery-item-row.html" %}
                 {% endfor %}
             </ul>
             {% else %}
@@ -77,16 +51,15 @@
             <div class="grocery-shop-group"
                 style="--shop-bg: {{ group.background_color }}; --shop-fg: {{ group.foreground_color }};">
                 <h3 class="grocery-shop-title">
-                    <span class="shop-chip-btn shop-chip-btn--title">{{ group.letter }}</span>
+                    <span class="shop-chip-btn shop-chip-btn--title"
+                        style="color: {{ group.foreground_color }}; background-color: {{ group.background_color }};">
+                        {{ group.letter }}
+                    </span>
                     {{ group.shop_name }}
                 </h3>
                 <ul class="grocery-list">
                     {% for item in group.entries %}
-                    <li class="grocery-item grocery-item--assigned">
-                        <span class="grocery-item-name">{{ item.name }}</span>
-                        <span class="grocery-item-sep">-</span>
-                        <span class="grocery-item-amount">{{ "%g" | format(item.quantity) }} {{ item.unit }}</span>
-                    </li>
+                    {% include "partials/grocery-item-row.html" %}
                     {% endfor %}
                 </ul>
             </div>
@@ -101,13 +74,6 @@
         <p class="search-placeholder">
             No ingredients yet. Add recipes with ingredients to your week menu to build a grocery list.
         </p>
-    </section>
-    {% endif %}
-
-    {% if grocery_export_text %}
-    <section class="recipe-section">
-        <h2 class="section-title">Copy for messaging</h2>
-        <textarea class="plaintext-export" readonly rows="10">{{ grocery_export_text }}</textarea>
     </section>
     {% endif %}
 
@@ -137,6 +103,30 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        {% if grocery_export_text %}
+        <div class="grocery-copy-section">
+            <div class="grocery-copy-header">
+                <h3 class="grocery-subsection-title">Copy for messaging</h3>
+                <button type="button" class="btn btn-secondary btn-sm grocery-copy-btn"
+                    onclick="copyGroceryExport()">
+                    Copy
+                </button>
+            </div>
+            <textarea id="grocery-copy-text" class="plaintext-export" readonly rows="8">{{ grocery_export_text }}</textarea>
+        </div>
+        {% endif %}
     </section>
 </div>
+<script>
+    function copyGroceryExport() {
+        const textarea = document.getElementById("grocery-copy-text");
+        if (!textarea) {
+            return;
+        }
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        navigator.clipboard.writeText(textarea.value);
+    }
+</script>
 {% endblock %}

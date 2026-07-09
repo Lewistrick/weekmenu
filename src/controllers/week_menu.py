@@ -14,7 +14,15 @@ from src.grocery import (
     format_week_menu_export,
     split_grocery_lists,
 )
-from src.models import Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag, TagCategory
+from src.models import (
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    RecipeTag,
+    Tag,
+    TagCategory,
+    Unit,
+)
 from src.shops import load_ingredient_shop_ids, load_shops, set_ingredient_shop
 from src.user_settings import load_user_settings
 from src.week_menu import (
@@ -33,7 +41,14 @@ from src.week_menu import (
     randomize_week_menu,
     load_include_public,
     load_already_have_ids,
+    load_grocery_list,
     mark_already_have,
+    parse_grocery_quantity,
+    reset_grocery_plan,
+    save_grocery_list,
+    unmark_already_have,
+    update_grocery_item,
+    is_grocery_list_empty,
     save_start_day,
     save_tag_constraints,
     save_include_public,
@@ -218,12 +233,12 @@ class WeekMenuController(Controller):
             },
         )
 
-    async def _build_grocery_context(self, request: Request) -> dict:
-        """Build shared grocery-list context for HTML and plaintext export."""
-        user_id = await self._viewer_id(request)
+    async def _grocery_items_from_week_menu(
+        self, request: Request
+    ) -> list[GroceryItem]:
+        """Build a fresh aggregated grocery list from the current week menu."""
         default_servings = await self._default_servings(request)
         menu = load_week_menu(request, default_servings=default_servings)
-        start_day = load_start_day(request)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
         ]
@@ -259,7 +274,33 @@ class WeekMenuController(Controller):
                     )
                 )
 
-        grocery_items = build_grocery_list(entries)
+        return build_grocery_list(entries)
+
+    async def _build_grocery_context(
+        self, request: Request, *, preserve_existing: bool = True
+    ) -> dict:
+        """Build shared grocery-list context for HTML and plaintext export."""
+        user_id = await self._viewer_id(request)
+        default_servings = await self._default_servings(request)
+        menu = load_week_menu(request, default_servings=default_servings)
+        start_day = load_start_day(request)
+        recipe_ids = [
+            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
+        ]
+        recipes_by_id = await self._recipes_by_id(recipe_ids)
+
+        grocery_message: str | None = None
+        if preserve_existing and not is_grocery_list_empty(request):
+            grocery_items = load_grocery_list(request)
+            grocery_message = (
+                "Your grocery list is preserved and was not regenerated "
+                "from the week menu."
+            )
+        else:
+            grocery_items = await self._grocery_items_from_week_menu(request)
+            reset_grocery_plan(request)
+            save_grocery_list(request, grocery_items)
+
         ingredient_shop_ids = await load_ingredient_shop_ids(user_id)
         shops = await load_shops(user_id)
         already_have_ids = load_already_have_ids(request)
@@ -267,6 +308,7 @@ class WeekMenuController(Controller):
             grocery_items, ingredient_shop_ids, shops, already_have_ids
         )
         days = await build_day_rows(menu, recipes_by_id, start_day)
+        units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return {
             "request": request,
             "days": days,
@@ -279,7 +321,29 @@ class WeekMenuController(Controller):
             "week_menu_export_text": format_week_menu_export(days),
             "shops": shops,
             "ingredient_shop_ids": ingredient_shop_ids,
+            "already_have_ids": already_have_ids,
+            "units": units,
+            "grocery_message": grocery_message,
         }
+
+    async def _render_grocery_list(self, request: Request) -> Template:
+        """Render the grocery list page."""
+        return Template(
+            template_name="grocery-list.html",
+            context=await self._build_grocery_context(request),
+        )
+
+    async def _owned_grocery_item(
+        self, request: Request, ingredient_id: int
+    ) -> GroceryItem:
+        """Return a grocery line owned by the current user."""
+        user_id = await self._viewer_id(request)
+        if await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id) is None:
+            raise NotFoundException()
+        for item in load_grocery_list(request):
+            if item["ingredient_id"] == ingredient_id:
+                return item
+        raise NotFoundException()
 
     @get(summary="Week menu planner page")
     async def week_menu_page(self, request: Request) -> Template:
@@ -413,10 +477,7 @@ class WeekMenuController(Controller):
     @get(path="/grocery-list", summary="Generate grocery list for the week menu")
     async def grocery_list(self, request: Request) -> Template:
         """Build an aggregated grocery list scaled to each day's servings."""
-        return Template(
-            template_name="grocery-list.html",
-            context=await self._build_grocery_context(request),
-        )
+        return await self._render_grocery_list(request)
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")
     async def grocery_list_export(self, request: Request) -> Response[str]:
@@ -429,43 +490,96 @@ class WeekMenuController(Controller):
 
     @post(path="/grocery-list/assign", summary="Assign grocery ingredient to shop")
     async def assign_grocery_ingredient(self, request: Request) -> Template:
-        """Assign a shop to an ingredient that is not assigned yet."""
+        """Assign or reassign a shop for one grocery ingredient."""
         user_id = await self._viewer_id(request)
         form_data = await request.form()
         ingredient_id = int(form_data.get("ingredient_id", 0))
         shop_value = str(form_data.get("shop_id", "")).strip()
-        if await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id) is None:
-            raise NotFoundException()
+        await self._owned_grocery_item(request, ingredient_id)
         if not shop_value:
             raise NotFoundException()
         shop_id = int(shop_value)
         shops = await load_shops(user_id)
         if shop_id not in {shop["id"] for shop in shops}:
             raise NotFoundException()
-        existing_shop_id = (await load_ingredient_shop_ids(user_id)).get(ingredient_id)
-        if existing_shop_id is not None:
-            return Template(
-                template_name="grocery-list.html",
-                context=await self._build_grocery_context(request),
-            )
         await set_ingredient_shop(user_id, ingredient_id, shop_id)
-        return Template(
-            template_name="grocery-list.html",
-            context=await self._build_grocery_context(request),
-        )
+        return await self._render_grocery_list(request)
 
     @post(path="/grocery-list/already-have", summary="Mark ingredient as already owned")
     async def mark_grocery_already_have(self, request: Request) -> Template:
         """Move an ingredient to the already-have list for this grocery plan."""
-        user_id = await self._viewer_id(request)
         form_data = await request.form()
         ingredient_id = int(form_data.get("ingredient_id", 0))
-        if await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id) is None:
-            raise NotFoundException()
+        await self._owned_grocery_item(request, ingredient_id)
         mark_already_have(request, ingredient_id)
+        return await self._render_grocery_list(request)
+
+    @post(
+        path="/grocery-list/already-have/remove",
+        summary="Remove ingredient from already-have list",
+    )
+    async def unmark_grocery_already_have(self, request: Request) -> Template:
+        """Return an ingredient from the already-have list to the active grocery plan."""
+        form_data = await request.form()
+        ingredient_id = int(form_data.get("ingredient_id", 0))
+        await self._owned_grocery_item(request, ingredient_id)
+        unmark_already_have(request, ingredient_id)
+        return await self._render_grocery_list(request)
+
+    @get(
+        path="/grocery-list/item/{ingredient_id:int}/display",
+        summary="Show grocery amount display",
+    )
+    async def grocery_item_display(
+        self, request: Request, ingredient_id: int
+    ) -> Template:
+        """Return the read-only amount display for one grocery line."""
+        item = await self._owned_grocery_item(request, ingredient_id)
         return Template(
-            template_name="grocery-list.html",
-            context=await self._build_grocery_context(request),
+            template_name="partials/grocery-amount-display.html",
+            context={"request": request, "item": item},
+        )
+
+    @get(
+        path="/grocery-list/item/{ingredient_id:int}/edit",
+        summary="Show grocery amount editor",
+    )
+    async def grocery_item_editor(
+        self, request: Request, ingredient_id: int
+    ) -> Template:
+        """Show inline editors for one grocery line's quantity and unit."""
+        user_id = await self._viewer_id(request)
+        item = await self._owned_grocery_item(request, ingredient_id)
+        units = await Unit.filter(owner_id=user_id).order_by("abbrev")
+        return Template(
+            template_name="partials/grocery-amount-editor.html",
+            context={"request": request, "item": item, "units": units},
+        )
+
+    @post(path="/grocery-list/item/{ingredient_id:int}", summary="Save grocery amount")
+    async def update_grocery_item_amount(
+        self, request: Request, ingredient_id: int
+    ) -> Template:
+        """Persist edited quantity and unit for one grocery line."""
+        item = await self._owned_grocery_item(request, ingredient_id)
+        form_data = await request.form()
+        quantity = parse_grocery_quantity(form_data.get("quantity"))
+        unit = str(form_data.get("unit", "")).strip()
+        if quantity is None or not unit:
+            raise NotFoundException()
+        if not update_grocery_item(
+            request, ingredient_id, quantity=quantity, unit=unit
+        ):
+            raise NotFoundException()
+        item = GroceryItem(
+            ingredient_id=item["ingredient_id"],
+            name=item["name"],
+            unit=unit,
+            quantity=round(quantity, 2),
+        )
+        return Template(
+            template_name="partials/grocery-amount-display.html",
+            context={"request": request, "item": item},
         )
 
     @get(path="/export", summary="Export week menu as plaintext")

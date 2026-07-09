@@ -131,10 +131,10 @@ async def test_grocery_list_scales_and_aggregates(
 
     assert response.status_code == 200
     # potatoes: 200 * 4/2 + 200 * 2/2 = 400 + 200 = 600 g
-    assert ">600 g</span>" in response.text
+    assert "600 g" in response.text
     assert ">potatoes</span>" in response.text
     # onion: 1 * 4/2 + 1 * 2/2 = 2 + 1 = 3 st
-    assert ">3 st</span>" in response.text
+    assert "3 st" in response.text
     assert ">onion</span>" in response.text
 
 
