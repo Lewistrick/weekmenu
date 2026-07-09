@@ -6,7 +6,9 @@ from litestar import Controller, Request, get, post
 from litestar.exceptions import NotFoundException
 from litestar.response import Template
 from loguru import logger
+from tortoise.expressions import Q
 
+from src.auth import get_current_user
 from src.models import Recipe, RecipeIngredient, RecipeTag, Tag, TagCategory
 from src.week_menu import (
     GroceryItem,
@@ -37,6 +39,33 @@ class WeekMenuController(Controller):
 
     path = "/week-menu"
     tags = ["week-menu"]
+
+    @staticmethod
+    async def _viewer_id(request: Request) -> int:
+        """Return the logged-in user's id or raise when unauthenticated."""
+        user = await get_current_user(request)
+        if user is None:
+            raise NotFoundException()
+        return user.id
+
+    @staticmethod
+    def _visible_filter(user_id: int) -> Q:
+        """Match recipes visible to a user: their own plus public recipes."""
+        return Q(owner_id=user_id) | Q(private=False)
+
+    @staticmethod
+    def _wants_public(request: Request) -> bool:
+        """Return whether the request opts in to including public recipes."""
+        value = request.query_params.get("include_public")
+        return value is not None and value.lower() in {"on", "1", "true", "yes"}
+
+    @staticmethod
+    def _form_wants_public(form_data: dict) -> bool:
+        """Return whether form data opts in to including public recipes."""
+        value = form_data.get("include_public")
+        if value is None:
+            return False
+        return str(value).lower() in {"on", "1", "true", "yes"}
 
     @staticmethod
     async def _tag_groups() -> list[dict]:
@@ -202,11 +231,17 @@ class WeekMenuController(Controller):
                 request,
                 warnings=["All days are pinned. Unpin at least one day to randomize."],
             )
+        form_data = await request.form()
+        include_public = self._form_wants_public(dict(form_data))
         category_ids = await self._category_ids()
         constraints = load_tag_constraints(request, category_ids)
-        recipe_ids = [
-            recipe.id for recipe in await Recipe.filter(enabled=True).only("id")
-        ]
+        user_id = await self._viewer_id(request)
+        recipe_query = Recipe.filter(enabled=True)
+        if include_public:
+            recipe_query = recipe_query.filter(self._visible_filter(user_id))
+        else:
+            recipe_query = recipe_query.filter(owner_id=user_id)
+        recipe_ids = [recipe.id for recipe in await recipe_query.only("id")]
         recipe_tag_map = await self._recipe_tag_map(recipe_ids)
         menu, warnings = randomize_week_menu(
             menu,
@@ -237,8 +272,11 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
+        user_id = await self._viewer_id(request)
+        recipe = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id
+        ).first()
+        if recipe is None:
             raise NotFoundException()
 
         menu = load_week_menu(request)
@@ -342,9 +380,13 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
+        user_id = await self._viewer_id(request)
+        include_public = self._wants_public(request)
         recipes: list[Recipe] = []
         if search:
-            recipes = await Recipe.search(search, limit=5)
+            recipes = await Recipe.search(
+                search, limit=5, viewer_id=user_id, include_public=include_public
+            )
 
         return Template(
             template_name="partials/week-menu-day-search-results.html",
@@ -353,5 +395,6 @@ class WeekMenuController(Controller):
                 "day": day,
                 "recipes": recipes,
                 "search": search or "",
+                "include_public": include_public,
             },
         )

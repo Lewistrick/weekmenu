@@ -5,6 +5,25 @@
 - `uv run litestar --app src.app:app run -r`
     - (remove `-r` when not editing the code)
 
+### Accounts and login
+- The app requires an account. Visiting any page while logged out redirects to the login page.
+- Create an account at `/register` with a username, a password (min. 6 characters), and an optional email address. Registering logs you in automatically.
+- Log in at `/login` and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
+- Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, change your password, or delete your account (which removes the account and its recipes).
+- Passwords are hashed with bcrypt and the logged-in user is tracked in a signed cookie session.
+- The first account to register inherits any pre-existing recipes from an older single-user database (existing data is not lost).
+
+### Recipe sharing and privacy
+- Every recipe has an **owner** (who controls it), a **creator** (who originally wrote it), and a private/public flag (toggle on the edit page). New recipes start private with you as both owner and creator.
+- You always see and manage your own recipes. You can also open other users' **public** recipes (read-only) via direct links or search when you opt in.
+- By default, recipe search, the random recipe picker, listings, and week-menu tools only use **your own** recipes. Check **Include public recipes** on the search or week menu page to also show other users' public recipes in those tools.
+- Import a public recipe you do not own with **Import to my recipes** on its view page. This creates a private copy in your collection, keeps the original creator credited, and blocks importing the same public recipe twice.
+- Trying to edit or delete a recipe you do not own returns a 404.
+
+### Per-user week menu
+- Your week menu, start day, tag constraints, and grocery list are stored per user in the session, so logging out and into another account on the same browser shows that account's own plan rather than the previous user's.
+- Week menu randomization and per-day recipe search use your own recipes by default; enable **Include public recipes** in the week menu toolbar to widen the pool.
+
 ### What will it be able to do
 - Compose your own cookbook
 - Organize recipes with tag groups and values (for example: season, carb type, diet)

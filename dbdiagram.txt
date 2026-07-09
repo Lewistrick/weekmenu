@@ -6,6 +6,8 @@ Table recipes {
   cook_time_minutes int
   servings int
   owner_id int [not null]
+  creator_id int
+  imported_from_id int
   private boolean [not null, default: true]
   enabled boolean [not null, default: true]
 }
@@ -54,7 +56,8 @@ Table recipe_tags {
 Table users {
   id int [pk, increment]
   username varchar(255) [not null, unique]
-  email varchar(255) [not null, unique]
+  email varchar(255)
+  password_hash varchar(255)
 }
 
 Table shops {
@@ -73,6 +76,8 @@ Table user_ingredient_shops {
 }
 
 Ref: recipes.owner_id > users.id
+Ref: recipes.creator_id > users.id
+Ref: recipes.imported_from_id > recipes.id
 Ref: recipe_ingredients.recipe_id > recipes.id
 Ref: recipe_ingredients.ingredient_id > ingredients.id
 Ref: recipe_ingredients.unit_id > units.unit_id

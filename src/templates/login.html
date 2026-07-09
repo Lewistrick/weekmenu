@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in · Weekmenu</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <main class="auth-page">
+        <div class="auth-card">
+            <h1 class="auth-title">Weekmenu</h1>
+            <p class="auth-subtitle">Log in to plan your week.</p>
+
+            {% if errors %}
+            <div class="messages">
+                {% for error in errors %}
+                <div class="flash-banner warning-message">
+                    <span class="flash-banner-text">{{ error }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form class="auth-form" method="post" action="/login">
+                <label class="field-label" for="username">Username</label>
+                <input class="form-control" id="username" name="username" type="text" autocomplete="username"
+                    value="{{ username | default('') }}" required autofocus>
+
+                <label class="field-label" for="password">Password</label>
+                <input class="form-control" id="password" name="password" type="password"
+                    autocomplete="current-password" required>
+
+                <button class="btn btn-primary auth-submit" type="submit">Log in</button>
+            </form>
+
+            <p class="auth-switch">No account yet? <a href="/register">Create one</a>.</p>
+        </div>
+    </main>
+</body>
+
+</html>

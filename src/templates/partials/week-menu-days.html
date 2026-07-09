@@ -50,7 +50,9 @@
                 <label class="field-label" for="search-{{ day_row.day }}">Search recipe</label>
                 <input id="search-{{ day_row.day }}" class="form-control" type="search" name="search"
                     placeholder="Name, description, or ingredient…" hx-get="/week-menu/{{ day_row.day }}/search"
-                    hx-trigger="keyup changed delay:200ms" hx-target="#search-results-{{ day_row.day }}" hx-swap="innerHTML">
+                    hx-include="#week-menu-search-include-public"
+                    hx-trigger="keyup changed delay:200ms, change from:#week-menu-search-include-public"
+                    hx-target="#search-results-{{ day_row.day }}" hx-swap="innerHTML">
                 <div id="search-results-{{ day_row.day }}" class="week-menu-search-results"></div>
             </div>
         </details>

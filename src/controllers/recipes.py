@@ -1,5 +1,5 @@
 import random
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
@@ -9,7 +9,9 @@ from litestar.response import Redirect, Template
 from loguru import logger
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
+from tortoise.expressions import Q
 
+from src.auth import get_current_user
 from src.models import (
     Ingredient,
     Recipe,
@@ -18,7 +20,6 @@ from src.models import (
     Tag,
     TagCategory,
     Unit,
-    User,
 )
 from src.week_menu import (
     assign_recipe_to_unpinned_day,
@@ -42,6 +43,65 @@ class RecipeController(Controller):
     tags = ["recipes"]
 
     @staticmethod
+    async def _current_user_id(request: Request) -> int:
+        """Return the logged-in user's id or raise when unauthenticated."""
+        user = await get_current_user(request)
+        if user is None:
+            raise NotFoundException()
+        return user.id
+
+    @staticmethod
+    def _visible_filter(user_id: int) -> Q:
+        """Match recipes visible to a user: their own plus public recipes."""
+        return Q(owner_id=user_id) | Q(private=False)
+
+    @staticmethod
+    def _wants_public(request: Request) -> bool:
+        """Return whether the request opts in to including public recipes."""
+        value = request.query_params.get("include_public")
+        return value is not None and value.lower() in {"on", "1", "true", "yes"}
+
+    @classmethod
+    async def _get_visible_recipe(cls, request: Request, recipe_id: int) -> Recipe:
+        """Return a recipe if the current user may view it, else 404."""
+        user_id = await cls._current_user_id(request)
+        recipe = await Recipe.filter(cls._visible_filter(user_id), id=recipe_id).first()
+        if recipe is None:
+            raise NotFoundException()
+        return recipe
+
+    @classmethod
+    async def _get_owned_recipe(cls, request: Request, recipe_id: int) -> Recipe:
+        """Return a recipe only if the current user owns it, else 404."""
+        user_id = await cls._current_user_id(request)
+        recipe = await Recipe.get_or_none(id=recipe_id, owner_id=user_id)
+        if recipe is None:
+            raise NotFoundException()
+        return recipe
+
+    @staticmethod
+    async def _user_owns(recipe_id: int, user_id: int) -> bool:
+        """Return whether a user owns the given recipe."""
+        return await Recipe.filter(id=recipe_id, owner_id=user_id).exists()
+
+    @staticmethod
+    async def _already_imported(user_id: int, source_recipe_id: int) -> bool:
+        """Return whether the user already imported the given public recipe."""
+        return await Recipe.filter(
+            owner_id=user_id, imported_from_id=source_recipe_id
+        ).exists()
+
+    @staticmethod
+    def _form_wants_public(form_data: dict[str, Any]) -> bool:
+        """Return whether form data opts in to including public recipes."""
+        value = form_data.get("include_public")
+        if value is None:
+            return False
+        if isinstance(value, bool):
+            return value
+        return str(value).lower() in {"on", "1", "true", "yes"}
+
+    @staticmethod
     async def _tag_groups() -> list[dict[str, Any]]:
         """Return tag categories with their tag values."""
         groups: list[dict[str, Any]] = []
@@ -57,7 +117,7 @@ class RecipeController(Controller):
         ids = await RecipeTag.filter(recipe_id=recipe_id).values_list(
             "tag_id", flat=True
         )
-        return set(ids)
+        return cast("set[int]", set(ids))
 
     @staticmethod
     async def _recipe_tags_by_category(
@@ -78,13 +138,20 @@ class RecipeController(Controller):
         return sorted(groups.values(), key=lambda group: group["category"].name.lower())
 
     @staticmethod
-    async def _recipes_missing_any_tag_group() -> list[dict[str, Any]]:
-        """Return recipes missing at least one tag group with missing group names."""
+    async def _recipes_missing_any_tag_group(owner_id: int) -> list[dict[str, Any]]:
+        """Return the owner's recipes missing at least one tag group.
+
+        Args:
+            owner_id: Only inspect recipes owned by this user.
+
+        Returns:
+            Rows pairing each recipe with the tag groups it is missing.
+        """
         categories = await TagCategory.all().order_by("name")
         if not categories:
             return []
 
-        recipes = await Recipe.all().order_by("name")
+        recipes = await Recipe.filter(owner_id=owner_id).order_by("name")
         missing_rows: list[dict[str, Any]] = []
         for recipe in recipes:
             tagged_category_ids = set(
@@ -131,21 +198,28 @@ class RecipeController(Controller):
         )
 
     @get(path="/random", summary="View a random recipe")
-    async def random_recipe_page(self) -> Template:
-        """Show the page for viewing/editing a recipe."""
-        recipes = await Recipe.all()
+    async def random_recipe_page(self, request: Request) -> Template:
+        """Show a random recipe from the current user's own collection."""
+        user_id = await self._current_user_id(request)
+        recipes = await Recipe.filter(owner_id=user_id)
+        if not recipes:
+            raise NotFoundException()
         random_recipe = random.choice(recipes)
         logger.debug(f"Random recipe: {random_recipe.name}")
         ingredients = await RecipeIngredient.filter(
             recipe=random_recipe.id
         ).select_related("ingredient", "unit")
-        await random_recipe.fetch_related("owner")
+        await random_recipe.fetch_related("owner", "creator")
 
         return Template(
             template_name="view-recipe.html",
             context={
+                "request": request,
                 "recipe": random_recipe,
                 "ingredients": ingredients,
+                "can_edit": await self._user_owns(random_recipe.id, user_id),
+                "can_import": False,
+                "already_imported": False,
                 "recipe_tag_groups": await self._recipe_tags_by_category(
                     random_recipe.id
                 ),
@@ -153,40 +227,127 @@ class RecipeController(Controller):
         )
 
     @get(path="/view/{recipe_id:int}", summary="Get the page to view a recipe")
-    async def view_recipe_page(self, recipe_id: int) -> Template:
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
+    async def view_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        user_id = await self._current_user_id(request)
+        recipe = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id
+        ).first()
+        if recipe is None:
             raise NotFoundException()
 
-        await recipe.fetch_related("owner")
+        await recipe.fetch_related("owner", "creator")
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
+        can_edit = await self._user_owns(recipe.id, user_id)
         return Template(
             template_name="view-recipe.html",
             context={
+                "request": request,
                 "recipe": recipe,
                 "ingredients": ingredients,
+                "can_edit": can_edit,
+                "can_import": not can_edit,
+                "already_imported": await self._already_imported(user_id, recipe.id),
                 "recipe_tag_groups": await self._recipe_tags_by_category(recipe.id),
             },
         )
 
+    @post(
+        path="/{recipe_id:int}/import",
+        summary="Import a public recipe into your collection",
+    )
+    async def import_recipe(
+        self, request: Request, recipe_id: int
+    ) -> Template | Redirect:
+        """Create a private editable copy of a public recipe owned by someone else."""
+        user_id = await self._current_user_id(request)
+        source = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id, private=False
+        ).first()
+        if source is None or await self._user_owns(recipe_id, user_id):
+            raise NotFoundException()
+
+        await source.fetch_related("owner", "creator")
+        ingredients = await RecipeIngredient.filter(recipe=source.id).select_related(
+            "ingredient", "unit"
+        )
+        can_edit = False
+        can_import = True
+        already_imported = await self._already_imported(user_id, recipe_id)
+        view_context = {
+            "request": request,
+            "recipe": source,
+            "ingredients": ingredients,
+            "can_edit": can_edit,
+            "can_import": can_import,
+            "already_imported": already_imported,
+            "recipe_tag_groups": await self._recipe_tags_by_category(source.id),
+        }
+
+        if already_imported:
+            return Template(
+                template_name="view-recipe.html",
+                context={
+                    **view_context,
+                    "warnings": ["You already imported this recipe."],
+                },
+            )
+
+        creator = source.creator or source.owner
+        copy = await Recipe.create(
+            name=source.name,
+            description=source.description,
+            prep_time_minutes=source.prep_time_minutes,
+            cook_time_minutes=source.cook_time_minutes,
+            servings=source.servings,
+            owner_id=user_id,
+            creator=creator,
+            imported_from=source,
+            private=True,
+            enabled=source.enabled,
+        )
+
+        source_ingredients = await RecipeIngredient.filter(
+            recipe_id=source.id
+        ).select_related("ingredient", "unit")
+        for recipe_ingredient in source_ingredients:
+            await RecipeIngredient.create(
+                recipe=copy,
+                ingredient=recipe_ingredient.ingredient,
+                quantity=recipe_ingredient.quantity,
+                unit=recipe_ingredient.unit,
+            )
+
+        tag_ids = await RecipeTag.filter(recipe_id=source.id).values_list(
+            "tag_id", flat=True
+        )
+        for tag_id in tag_ids:
+            await RecipeTag.create(recipe=copy, tag_id=tag_id)
+
+        logger.info(f"User {user_id} imported recipe {recipe_id} as {copy.id}")
+        return Redirect(path=f"/recipes/view/{copy.id}")
+
     @get(path="/missing-tags", summary="Find recipes missing tag groups")
     async def recipes_missing_tags_page(self, request: Request) -> Template:
         """Show recipes that have no tag in one or more tag groups."""
+        user_id = await self._current_user_id(request)
         return Template(
             template_name="recipes-missing-tags.html",
             context={
                 "request": request,
-                "rows": await self._recipes_missing_any_tag_group(),
+                "rows": await self._recipes_missing_any_tag_group(user_id),
             },
         )
 
     @post(path="/{recipe_id:int}/add-to-week-menu", summary="Add recipe to week menu")
     async def add_to_week_menu(self, request: Request, recipe_id: int) -> Template:
         """Assign recipe to first unpinned day or return warning when all are pinned."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
+        user_id = await self._current_user_id(request)
+        recipe = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id
+        ).first()
+        if recipe is None:
             raise NotFoundException()
 
         source = str((await request.form()).get("source", "view"))
@@ -209,22 +370,26 @@ class RecipeController(Controller):
                 template_name="recipes-missing-tags.html",
                 context={
                     "request": request,
-                    "rows": await self._recipes_missing_any_tag_group(),
+                    "rows": await self._recipes_missing_any_tag_group(user_id),
                     "messages": messages,
                     "warnings": warnings,
                 },
             )
 
-        await recipe.fetch_related("owner")
+        await recipe.fetch_related("owner", "creator")
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
+        can_edit = await self._user_owns(recipe.id, user_id)
         return Template(
             template_name="view-recipe.html",
             context={
                 "request": request,
                 "recipe": recipe,
                 "ingredients": ingredients,
+                "can_edit": can_edit,
+                "can_import": not can_edit,
+                "already_imported": await self._already_imported(user_id, recipe.id),
                 "recipe_tag_groups": await self._recipe_tags_by_category(recipe.id),
                 "messages": messages,
                 "warnings": warnings,
@@ -232,10 +397,8 @@ class RecipeController(Controller):
         )
 
     @get(path="/edit/{recipe_id:int}", summary="Get the page to edit a recipe")
-    async def edit_recipe_page(self, recipe_id: int) -> Template:
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+    async def edit_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         await recipe.fetch_related("owner")
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
@@ -252,29 +415,26 @@ class RecipeController(Controller):
         )
 
     @get(path="/delete/{recipe_id:int}", summary="Show the delete confirmation")
-    async def delete_recipe_partial(self, recipe_id: int) -> Template:
+    async def delete_recipe_partial(self, request: Request, recipe_id: int) -> Template:
+        await self._get_owned_recipe(request, recipe_id)
         return Template(
             template_name="partials/delete-confirmation.html",
             context={"recipe_id": recipe_id},
         )
 
     @get(path="/title-editor/{recipe_id:int}", summary="Title editor")
-    async def title_editor(self, recipe_id: int) -> Template:
+    async def title_editor(self, request: Request, recipe_id: int) -> Template:
         """Just load the element to edit the title."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         return Template(
             template_name="partials/edit-recipe-title.html", context={"recipe": recipe}
         )
 
     @get(path="/desc-editor/{recipe_id:int}", summary="Description editor")
-    async def desc_editor(self, recipe_id: int) -> Template:
+    async def desc_editor(self, request: Request, recipe_id: int) -> Template:
         """Just load the element to edit the description."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         return Template(
             template_name="partials/edit-recipe-desc.html", context={"recipe": recipe}
@@ -283,15 +443,14 @@ class RecipeController(Controller):
     @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")
     async def edit_title(
         self,
+        request: Request,
         recipe_id: int,
         data: Annotated[
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
         """Edit the title, and return the updated title element."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         messages = []
         if new_title := data.get("new_title"):
@@ -309,15 +468,14 @@ class RecipeController(Controller):
     @post(path="/edit-desc/{recipe_id:int}", summary="Edit the description")
     async def edit_description(
         self,
+        request: Request,
         recipe_id: int,
         data: Annotated[
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
         """Edit the description, and return the updated title element."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         messages = []
         if new_value := data.get("new_desc"):
@@ -335,14 +493,13 @@ class RecipeController(Controller):
     @post(path="/{recipe_id:int}/toggle-private", summary="Toggle recipe privacy")
     async def toggle_private(
         self,
+        request: Request,
         recipe_id: int,
         data: Annotated[
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         recipe.private = not self._toggle_recipe_flag(
             data.get("private"), recipe.private
@@ -356,14 +513,13 @@ class RecipeController(Controller):
     @post(path="/{recipe_id:int}/toggle-enabled", summary="Toggle recipe enabled state")
     async def toggle_enabled(
         self,
+        request: Request,
         recipe_id: int,
         data: Annotated[
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         recipe.enabled = self._toggle_recipe_flag(data.get("enabled"), recipe.enabled)
         await recipe.save()
@@ -376,8 +532,11 @@ class RecipeController(Controller):
         path="/{recipe_id:int}/ingredients/{ingredient_id:int}",
         summary="Show ingredient row",
     )
-    async def ingredient_row(self, recipe_id: int, ingredient_id: int) -> Template:
+    async def ingredient_row(
+        self, request: Request, recipe_id: int, ingredient_id: int
+    ) -> Template:
         """Return the read-only ingredient row, for example when canceling an edit."""
+        await self._get_owned_recipe(request, recipe_id)
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
         )
@@ -398,8 +557,11 @@ class RecipeController(Controller):
         path="/{recipe_id:int}/ingredients/{ingredient_id:int}/edit",
         summary="Show ingredient edit form",
     )
-    async def ingredient_editor(self, recipe_id: int, ingredient_id: int) -> Template:
+    async def ingredient_editor(
+        self, request: Request, recipe_id: int, ingredient_id: int
+    ) -> Template:
         """Show the form to edit an ingredient's quantity, unit, and name."""
+        await self._get_owned_recipe(request, recipe_id)
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
         )
@@ -419,6 +581,7 @@ class RecipeController(Controller):
     )
     async def edit_ingredient(
         self,
+        request: Request,
         recipe_id: int,
         ingredient_id: int,
         data: Annotated[
@@ -426,6 +589,7 @@ class RecipeController(Controller):
         ],
     ) -> Template:
         """Save the edited ingredient quantity, unit, and name."""
+        await self._get_owned_recipe(request, recipe_id)
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
         )
@@ -500,8 +664,11 @@ class RecipeController(Controller):
         summary="Delete ingredient from recipe",
         status_code=200,
     )
-    async def delete_ingredient(self, recipe_id: int, ingredient_id: int) -> Template:
+    async def delete_ingredient(
+        self, request: Request, recipe_id: int, ingredient_id: int
+    ) -> Template:
         """Delete an ingredient from a recipe."""
+        recipe = await self._get_owned_recipe(request, recipe_id)
         recipe_ingredient = await RecipeIngredient.get_or_none(
             id=ingredient_id, recipe=recipe_id
         )
@@ -509,11 +676,6 @@ class RecipeController(Controller):
             raise NotFoundException()
 
         await recipe_ingredient.delete()
-
-        # Reload remaining ingredients for display
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
 
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
@@ -528,11 +690,9 @@ class RecipeController(Controller):
         )
 
     @get(path="/{recipe_id:int}/ingredients/add", summary="Show add ingredient form")
-    async def add_ingredient_form(self, recipe_id: int) -> Template:
+    async def add_ingredient_form(self, request: Request, recipe_id: int) -> Template:
         """Show the form to add a new ingredient to a recipe."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        await self._get_owned_recipe(request, recipe_id)
 
         return Template(
             template_name="partials/add-ingredient-form.html",
@@ -542,15 +702,14 @@ class RecipeController(Controller):
     @post(path="/{recipe_id:int}/ingredients/add", summary="Add ingredient to recipe")
     async def add_ingredient(
         self,
+        request: Request,
         recipe_id: int,
         data: Annotated[
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
         """Add a new ingredient to a recipe."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         quantity = data.get("quantity")
         unit_abbrev = data.get("unit")
@@ -605,9 +764,7 @@ class RecipeController(Controller):
     @post(path="/{recipe_id:int}/tags", summary="Update selected tags for recipe")
     async def update_recipe_tags(self, recipe_id: int, request: Request) -> Template:
         """Replace a recipe's selected tags with submitted values."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+        recipe = await self._get_owned_recipe(request, recipe_id)
 
         form_data = await request.form()
         submitted_tag_ids = (
@@ -643,14 +800,15 @@ class RecipeController(Controller):
     @get(
         path="/delete-confirmation/{recipe_id:int}", summary="Delete the recipe by ID."
     )
-    async def delete_recipe_page(self, recipe_id: int) -> Template:
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+    async def delete_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        recipe = await self._get_owned_recipe(request, recipe_id)
         await recipe.delete()
         return Template(
             "index.html",
-            context={"messages": [f"Recipe deleted: {recipe.name}"]},
+            context={
+                "request": request,
+                "messages": [f"Recipe deleted: {recipe.name}"],
+            },
         )
 
     @get(path="/new-ingredient-input", summary="Get a new ingredient input field")
@@ -683,43 +841,61 @@ class RecipeController(Controller):
                 continue
             tag_filters[int(category_id_str)] = int(value)
 
+        user_id = await self._current_user_id(request)
+        include_public = self._wants_public(request)
         if not search and not tag_filters:
             recipes: list[Recipe] = []
         else:
-            recipes = await Recipe.search(search, tag_filters=tag_filters)
+            recipes = await Recipe.search(
+                search,
+                tag_filters=tag_filters,
+                viewer_id=user_id,
+                include_public=include_public,
+            )
 
         return Template(
             template_name="search-results.html",
-            context={"request": request, "recipes": recipes},
+            context={
+                "request": request,
+                "recipes": recipes,
+                "include_public": include_public,
+            },
         )
 
     @get(summary="Show all recipes")
-    async def showall(self) -> list[RecipeSchema]:  # type: ignore
-        """Show all recipes."""
-        return await RecipeSchema.from_queryset(Recipe.all())
+    async def showall(self, request: Request) -> list[RecipeSchema]:  # type: ignore
+        """Show the current user's own recipes."""
+        user_id = await self._current_user_id(request)
+        return await RecipeSchema.from_queryset(Recipe.filter(owner_id=user_id))
 
     @get(path="/count", summary="Count the number of recipes")
-    async def count(self) -> int:
-        """Count recipes."""
-        q = await Recipe.all().count()
-        return q
+    async def count(self, request: Request) -> int:
+        """Count the current user's own recipes."""
+        user_id = await self._current_user_id(request)
+        return await Recipe.filter(owner_id=user_id).count()
 
     @get(path="/{recipe_id:int}/detail", summary="Get recipe details as HTML")
     async def get_recipe_detail(
         self, request: Request, recipe_id: int, search: str | None = None
     ) -> Template:
         """Get recipe details and re-render the search results with the selection."""
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
+        user_id = await self._current_user_id(request)
+        recipe = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id
+        ).first()
+        if recipe is None:
             raise NotFoundException()
 
         ingredients = await RecipeIngredient.filter(recipe=recipe_id).select_related(
             "ingredient", "unit"
         )
 
+        include_public = self._wants_public(request)
         search_results: list[Recipe] = []
         if search:
-            search_results = await Recipe.search(search, limit=10)
+            search_results = await Recipe.search(
+                search, limit=10, viewer_id=user_id, include_public=include_public
+            )
 
         return Template(
             template_name="partials/recipe-detail-and-search-results.html",
@@ -729,26 +905,18 @@ class RecipeController(Controller):
                 "ingredients": ingredients,
                 "recipes": search_results,
                 "selected_id": recipe_id,
+                "include_public": include_public,
             },
         )
 
     @get(path="/{recipe_id:int}", summary="Get one recipe by id")
-    async def from_id(self, recipe_id: int) -> RecipeSchema | None:  # type: ignore
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+    async def from_id(self, request: Request, recipe_id: int) -> RecipeSchema | None:  # type: ignore
+        recipe = await self._get_visible_recipe(request, recipe_id)
         return await RecipeSchema.from_tortoise_orm(recipe)
 
-    @get(path="/user-profile", summary="Get the user profile page")
-    async def user_profile_page(self, request: Request) -> Template:
-        """Show the user profile page."""
-        return Template(template_name="user-profile.html", context={"request": request})
-
     @delete(path="/{recipe_id:int}", summary="Remove one recipe by id")
-    async def delete(self, recipe_id: int) -> None:
-        recipe = await Recipe.get_or_none(id=recipe_id)
-        if not recipe:
-            raise NotFoundException()
+    async def delete(self, request: Request, recipe_id: int) -> None:
+        recipe = await self._get_owned_recipe(request, recipe_id)
         await recipe.delete()
 
     @post(name="Add a recipe")
@@ -801,7 +969,7 @@ class RecipeController(Controller):
         ]
 
         logger.debug(f"Adding recipe: {name}")
-        owner = await User.get_default()
+        owner = await get_current_user(request)
         recipe = await Recipe.create(
             name=name,
             description=description or name,
@@ -809,6 +977,7 @@ class RecipeController(Controller):
             cook_time_minutes=cook_time_minutes,
             servings=servings,
             owner=owner,
+            creator=owner,
             private=True,
             enabled=True,
         )

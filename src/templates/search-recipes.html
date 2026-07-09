@@ -10,10 +10,14 @@
     </header>
 
     <form class="search-panel" hx-get="/recipes/search-recipe" hx-target="#search-results" hx-swap="innerHTML"
-        hx-trigger="keyup changed delay:200ms from:#recipe-search-input, change from:select">
+        hx-trigger="keyup changed delay:200ms from:#recipe-search-input, change from:select, change from:#include-public-recipes">
         <label class="field-label" for="recipe-search-input">Search</label>
         <input id="recipe-search-input" class="form-control" type="search" name="search"
             placeholder="Name, description, or ingredient…">
+        <label class="search-include-public" for="include-public-recipes">
+            <input id="include-public-recipes" type="checkbox" name="include_public" value="on">
+            Include public recipes
+        </label>
         {% if tag_groups %}
         <section class="form-section">
             <div class="section-heading">

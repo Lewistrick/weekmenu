@@ -9,16 +9,16 @@ from src.models import Recipe, User
 
 
 @pytest.mark.asyncio
-async def test_get_default_user_requires_exactly_one_user(
+async def test_get_by_username_returns_matching_user(
     test_client: AsyncTestClient,
 ) -> None:
-    """Default ownership should only resolve when there is a single user."""
-    with pytest.raises(RuntimeError, match="Expected exactly one user"):
-        await User.get_default()
+    """Looking up a username should return the matching user or None."""
+    assert await User.get_by_username("does-not-exist") is None
 
-    await User.create(username="solo", email="solo@example.com")
-    user = await User.get_default()
-    assert user.username == "solo"
+    created = await User.create(username="solo", email="solo@example.com")
+    found = await User.get_by_username("solo")
+    assert found is not None
+    assert found.id == created.id
 
 
 @pytest.mark.asyncio
@@ -26,7 +26,7 @@ async def test_ensure_recipe_owners_backfills_null_owner(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Recipes without an owner should be assigned to the sole user."""
+    """Recipes without an owner should be assigned to the first user."""
     conn = Tortoise.get_connection("default")
     await conn.execute_query("DROP TABLE recipe")
     await conn.execute_query(

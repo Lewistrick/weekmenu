@@ -1,5 +1,8 @@
+from typing import cast
+
 from tortoise.expressions import Q
 from tortoise.fields import (
+    SET_NULL,
     BooleanField,
     FloatField,
     ForeignKeyField,
@@ -19,6 +22,18 @@ class Recipe(Model):
     cook_time_minutes = IntField()
     servings = IntField()
     owner = ForeignKeyField("models.User", related_name="recipes")
+    creator = ForeignKeyField(
+        "models.User",
+        related_name="created_recipes",
+        null=True,
+        on_delete=SET_NULL,
+    )
+    imported_from = ForeignKeyField(
+        "models.Recipe",
+        related_name="imports",
+        null=True,
+        on_delete=SET_NULL,
+    )
     private = BooleanField(default=True)
     enabled = BooleanField(default=True)
 
@@ -29,6 +44,8 @@ class Recipe(Model):
         *,
         tag_filters: dict[int, int] | None = None,
         limit: int | None = None,
+        viewer_id: int | None = None,
+        include_public: bool = False,
     ) -> list["Recipe"]:
         """Return recipes matching text and optional tag-group filters.
 
@@ -36,11 +53,20 @@ class Recipe(Model):
             query: Optional text to match case-insensitively.
             tag_filters: Mapping of tag-category id to selected tag id.
             limit: Optional maximum number of recipes to return.
+            viewer_id: When given, restrict results to recipes owned by this
+                user (plus public recipes when ``include_public`` is set).
+            include_public: When ``True`` and ``viewer_id`` is given, also
+                include other users' public (non-private) recipes.
 
         Returns:
             Distinct recipes that match the query.
         """
         queryset = cls.all()
+        if viewer_id is not None:
+            visibility = Q(owner_id=viewer_id)
+            if include_public:
+                visibility |= Q(private=False)
+            queryset = queryset.filter(visibility)
         if query:
             filters = (
                 Q(name__icontains=query)
@@ -59,7 +85,7 @@ class Recipe(Model):
         queryset = queryset.distinct()
         if limit is not None:
             queryset = queryset.limit(limit)
-        return await queryset
+        return cast("list[Recipe]", await queryset)
 
 
 class Ingredient(Model):
@@ -121,23 +147,20 @@ class User(Model):
 
     id = IntField(primary_key=True)
     username = TextField(required=True)
-    email = TextField(required=True)
+    email = TextField(null=True)
+    password_hash = TextField(null=True)
 
     @classmethod
-    async def get_default(cls) -> "User":
-        """Return the sole user in the database.
+    async def get_by_username(cls, username: str) -> "User | None":
+        """Return the user with the given username, if any.
+
+        Args:
+            username: Case-sensitive username to look up.
 
         Returns:
-            The only user record.
-
-        Raises:
-            RuntimeError: If there is not exactly one user.
+            The matching user, or ``None`` when no user has that username.
         """
-        users = await cls.all()
-        if len(users) != 1:
-            msg = f"Expected exactly one user for default ownership, found {len(users)}"
-            raise RuntimeError(msg)
-        return users[0]
+        return await cls.filter(username=username).first()
 
 
 class Shop(Model):

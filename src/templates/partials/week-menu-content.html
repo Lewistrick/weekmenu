@@ -28,10 +28,14 @@
             </select>
         </form>
         <div class="week-menu-toolbar-actions">
-            <button type="button" class="btn btn-primary" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
-                hx-swap="outerHTML">
-                🎲 Randomize week
-            </button>
+            <label class="week-menu-include-public" for="week-menu-search-include-public">
+                <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on">
+                Include public recipes
+            </label>
+            <form class="week-menu-randomize-form" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
+                hx-swap="outerHTML" hx-include="#week-menu-search-include-public">
+                <button type="submit" class="btn btn-primary">🎲 Randomize week</button>
+            </form>
             <a href="/week-menu/grocery-list" class="btn btn-secondary">🛒 Grocery list</a>
         </div>
     </div>

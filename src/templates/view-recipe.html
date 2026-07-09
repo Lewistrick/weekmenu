@@ -5,11 +5,27 @@
 {% block content %}
 <article class="recipe-view">
     <header class="recipe-header">
-        <p class="recipe-owner-line">By <strong>{{ recipe.owner.username }}</strong></p>
+        <p class="recipe-owner-line">
+            {% if recipe.creator %}
+            Created by <strong>{{ recipe.creator.username }}</strong>
+            {% else %}
+            By <strong>{{ recipe.owner.username }}</strong>
+            {% endif %}
+        </p>
         <div class="recipe-title-row">
             <h1 class="recipe-title-main">#{{ recipe.id }} {{ recipe.name }}</h1>
             <div class="recipe-title-actions">
+                {% if can_edit %}
                 <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">✏️ Edit recipe</a>
+                {% elif can_import %}
+                    {% if already_imported %}
+                    <span class="recipe-import-note">Already in your collection</span>
+                    {% else %}
+                    <form method="post" action="/recipes/{{ recipe.id }}/import">
+                        <button type="submit" class="btn btn-secondary">📥 Import to my recipes</button>
+                    </form>
+                    {% endif %}
+                {% endif %}
                 <form method="post" action="/recipes/{{ recipe.id }}/add-to-week-menu">
                     <input type="hidden" name="source" value="view">
                     <button type="submit" class="btn btn-primary">🗓️ Add to week menu</button>

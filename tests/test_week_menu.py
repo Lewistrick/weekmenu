@@ -26,7 +26,9 @@ async def menu_recipes(
 ) -> list[Recipe]:
     """Create enabled recipes for week menu tests."""
     recipes = []
-    for index, name in enumerate(["Alpha stew", "Beta pie", "Gamma soup", "Delta salad"], start=1):
+    for index, name in enumerate(
+        ["Alpha stew", "Beta pie", "Gamma soup", "Delta salad"], start=1
+    ):
         recipes.append(
             await Recipe.create(
                 name=name,
@@ -66,7 +68,9 @@ def test_randomize_skips_pinned_days() -> None:
 def test_randomize_fills_unpinned_days() -> None:
     """Unpinned days should receive recipes when randomizing."""
     menu = empty_week_menu()
-    randomized, warnings = randomize_week_menu(menu, [10, 11, 12, 13, 14, 15, 16, 17], rng=random.Random(0))
+    randomized, warnings = randomize_week_menu(
+        menu, [10, 11, 12, 13, 14, 15, 16, 17], rng=random.Random(0)
+    )
 
     assigned = [slot["recipe_id"] for slot in randomized.values()]
     assert warnings == []
@@ -262,13 +266,17 @@ def test_randomize_tag_constraints(
     )
 
     assert warnings == [], scenario
-    assert all(randomized[day]["recipe_id"] is not None for day, slot in randomized.items() if not slot["pinned"]), (
-        scenario
-    )
+    assert all(
+        randomized[day]["recipe_id"] is not None
+        for day, slot in randomized.items()
+        if not slot["pinned"]
+    ), scenario
 
     if scenario == "uniform_same_summer_tag":
         assert all(
-            _recipe_has_tag(randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID)
+            _recipe_has_tag(
+                randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID
+            )
             for day, slot in randomized.items()
             if slot["recipe_id"] is not None
         )
@@ -289,7 +297,9 @@ def test_randomize_tag_constraints(
         vegetarian_count = sum(
             1
             for day, slot in randomized.items()
-            if _recipe_has_tag(slot["recipe_id"], tag_map, DIET_CATEGORY_ID, VEGETARIAN_TAG_ID)
+            if _recipe_has_tag(
+                slot["recipe_id"], tag_map, DIET_CATEGORY_ID, VEGETARIAN_TAG_ID
+            )
         )
         assert vegetarian_count >= 2
 
@@ -330,7 +340,10 @@ def test_randomize_uniform_respects_pinned_recipe() -> None:
     assert warnings == []
     assert randomized["monday"]["recipe_id"] == 1
     assert all(
-        _recipe_has_tag(randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID) for day in randomized
+        _recipe_has_tag(
+            randomized[day]["recipe_id"], tag_map, SEASON_CATEGORY_ID, SUMMER_TAG_ID
+        )
+        for day in randomized
     )
 
 
@@ -404,10 +417,14 @@ async def test_week_menu_page_loads(test_client: AsyncTestClient) -> None:
 @pytest.mark.asyncio
 async def test_start_day_reorders_days(test_client: AsyncTestClient) -> None:
     """Selecting a start day should rotate the displayed weekday order."""
-    response = await test_client.post("/week-menu/start-day", data={"start_day": "wednesday"})
+    response = await test_client.post(
+        "/week-menu/start-day", data={"start_day": "wednesday"}
+    )
 
     assert response.status_code == 200
-    assert response.text.index("week-menu-day-wednesday") < response.text.index("week-menu-day-monday")
+    assert response.text.index("week-menu-day-wednesday") < response.text.index(
+        "week-menu-day-monday"
+    )
 
 
 @pytest.mark.asyncio
@@ -563,7 +580,9 @@ async def tagged_carb_recipes(
     """Create enabled recipes tagged by carb type."""
     category, potato, rice, pasta = carb_tags
     recipes: list[Recipe] = []
-    for index, tag in enumerate([potato, rice, pasta, potato, rice, pasta, rice], start=1):
+    for index, tag in enumerate(
+        [potato, rice, pasta, potato, rice, pasta, rice], start=1
+    ):
         recipe = await Recipe.create(
             name=f"Carb dish {index}",
             description=f"Recipe {index}",

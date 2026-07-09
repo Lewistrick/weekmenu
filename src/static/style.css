@@ -588,8 +588,9 @@ div.recipe-detail {
 
 .week-menu-toolbar-actions {
     display: flex;
-    align-items: flex-end;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
 }
 
 .week-menu-day-servings {
@@ -1260,4 +1261,121 @@ div.recipe-detail {
         width: 100%;
     }
 
+}
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 22rem;
+    padding: 1.75rem;
+    border: 1px solid #555;
+    border-radius: 12px;
+    background-color: #3a3a3a;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.auth-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+}
+
+.auth-subtitle {
+    margin: 0 0 1.25rem;
+    color: #b5b5b5;
+    font-size: 0.9rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.auth-form .field-label {
+    margin-top: 0.6rem;
+}
+
+.auth-submit {
+    margin-top: 1.1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.auth-switch {
+    margin: 1.1rem 0 0;
+    font-size: 0.85rem;
+    color: #b5b5b5;
+    text-align: center;
+}
+
+.auth-switch a {
+    color: #b8d9f0;
+}
+
+.field-optional {
+    color: #8f8f8f;
+    font-weight: 400;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    max-width: 22rem;
+}
+
+.profile-form .form-control {
+    width: 100%;
+}
+
+.profile-form .btn {
+    margin-top: 0.6rem;
+}
+
+.profile-detail {
+    margin: 0 0 0.75rem;
+}
+
+.nav-logout-form {
+    margin: 0;
+}
+
+.nav-logout-btn {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.search-include-public,
+.week-menu-include-public {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.75rem 0 0;
+    font-size: 0.9rem;
+    color: #c8c8c8;
+    cursor: pointer;
+}
+
+.week-menu-include-public {
+    margin: 0;
+}
+
+.week-menu-randomize-form {
+    margin: 0;
+}
+
+.recipe-import-note {
+    align-self: center;
+    font-size: 0.9rem;
+    color: #b5b5b5;
 }

@@ -1,8 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}User Profile{% endblock %}
+{% block title %}Account{% endblock %}
 
 {% block content %}
-    <h1>User Profile</h1>
-    <p>This is the user profile page.</p>
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Account</h1>
+        <p class="page-lead">Manage your account details.</p>
+    </header>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Details</h2>
+        <p class="profile-detail"><strong>Username:</strong> {{ current_user.username }}</p>
+        <form class="profile-form" method="post" action="/profile/email">
+            <label class="field-label" for="email">Email <span class="field-optional">(optional)</span></label>
+            <input class="form-control" id="email" name="email" type="email" value="{{ current_user.email or '' }}">
+            <button class="btn btn-secondary" type="submit">Save email</button>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Change password</h2>
+        <form class="profile-form" method="post" action="/profile/password">
+            <label class="field-label" for="current_password">Current password</label>
+            <input class="form-control" id="current_password" name="current_password" type="password"
+                autocomplete="current-password" required>
+
+            <label class="field-label" for="new_password">New password</label>
+            <input class="form-control" id="new_password" name="new_password" type="password"
+                autocomplete="new-password" required>
+
+            <label class="field-label" for="new_password_confirm">Confirm new password</label>
+            <input class="form-control" id="new_password_confirm" name="new_password_confirm" type="password"
+                autocomplete="new-password" required>
+
+            <button class="btn btn-secondary" type="submit">Change password</button>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <h2 class="section-title">Danger zone</h2>
+        <form class="profile-form" method="post" action="/profile/delete"
+            onsubmit="return confirm('Delete your account and all your recipes? This cannot be undone.');">
+            <button class="btn btn-danger" type="submit">Delete account</button>
+        </form>
+    </section>
+</div>
 {% endblock %}

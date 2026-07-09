@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create account · Weekmenu</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <main class="auth-page">
+        <div class="auth-card">
+            <h1 class="auth-title">Weekmenu</h1>
+            <p class="auth-subtitle">Create your account.</p>
+
+            {% if errors %}
+            <div class="messages">
+                {% for error in errors %}
+                <div class="flash-banner warning-message">
+                    <span class="flash-banner-text">{{ error }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form class="auth-form" method="post" action="/register">
+                <label class="field-label" for="username">Username</label>
+                <input class="form-control" id="username" name="username" type="text" autocomplete="username"
+                    value="{{ username | default('') }}" required autofocus>
+
+                <label class="field-label" for="email">Email <span class="field-optional">(optional)</span></label>
+                <input class="form-control" id="email" name="email" type="email" autocomplete="email"
+                    value="{{ email | default('') }}">
+
+                <label class="field-label" for="password">Password</label>
+                <input class="form-control" id="password" name="password" type="password"
+                    autocomplete="new-password" required>
+
+                <label class="field-label" for="password_confirm">Confirm password</label>
+                <input class="form-control" id="password_confirm" name="password_confirm" type="password"
+                    autocomplete="new-password" required>
+
+                <button class="btn btn-primary auth-submit" type="submit">Create account</button>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="/login">Log in</a>.</p>
+        </div>
+    </main>
+</body>
+
+</html>

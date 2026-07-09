@@ -9,6 +9,8 @@ from typing import Any, TypedDict
 from litestar import Request
 from loguru import logger
 
+from src.auth import SESSION_USER_KEY
+
 WEEK_DAYS: tuple[str, ...] = (
     "monday",
     "tuesday",
@@ -34,6 +36,25 @@ START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 
 DEFAULT_SERVINGS = 2
+
+
+def _scoped_key(request: Request, base: str) -> str:
+    """Return a session key namespaced to the logged-in user.
+
+    Week menu state lives in the cookie session. Namespacing each key with the
+    current user id keeps one user's plan from leaking to the next account that
+    logs in on the same browser.
+
+    Args:
+        request: The incoming request carrying the session.
+        base: The base session key.
+
+    Returns:
+        The base key suffixed with the current user id, or the base key itself
+        when no user is logged in.
+    """
+    user_id = request.session.get(SESSION_USER_KEY)
+    return f"{base}:{user_id}" if user_id is not None else base
 
 
 class TagConstraintMode(StrEnum):
@@ -97,7 +118,7 @@ def is_valid_day(day: str) -> bool:
 
 def load_start_day(request: Request) -> str:
     """Load preferred start day from session."""
-    value = request.session.get(START_DAY_SESSION_KEY, "monday")
+    value = request.session.get(_scoped_key(request, START_DAY_SESSION_KEY), "monday")
     if not isinstance(value, str) or not is_valid_day(value):
         return "monday"
     return value
@@ -108,7 +129,7 @@ def save_start_day(request: Request, day: str) -> None:
     if not is_valid_day(day):
         msg = f"Unknown day: {day}"
         raise ValueError(msg)
-    request.session[START_DAY_SESSION_KEY] = day
+    request.session[_scoped_key(request, START_DAY_SESSION_KEY)] = day
 
 
 def ordered_week_days(start_day: str) -> list[str]:
@@ -132,7 +153,7 @@ def load_week_menu(request: Request) -> dict[str, DaySlot]:
     """Load week menu state from the session, filling missing days."""
     logger.debug("Loading current week menu")
     menu = empty_week_menu()
-    stored = request.session.get(SESSION_KEY, {})
+    stored = request.session.get(_scoped_key(request, SESSION_KEY), {})
     if not isinstance(stored, dict):
         return menu
 
@@ -153,7 +174,7 @@ def load_week_menu(request: Request) -> dict[str, DaySlot]:
 
 def save_week_menu(request: Request, menu: dict[str, DaySlot]) -> None:
     """Persist week menu state to the session."""
-    request.session[SESSION_KEY] = menu
+    request.session[_scoped_key(request, SESSION_KEY)] = menu
 
 
 def toggle_pin(menu: dict[str, DaySlot], day: str) -> dict[str, DaySlot]:
@@ -279,7 +300,7 @@ def load_tag_constraints(
     request: Request, category_ids: list[int]
 ) -> list[TagGroupConstraint]:
     """Load tag constraints from session, filling defaults for each group."""
-    stored = request.session.get(TAG_CONSTRAINTS_SESSION_KEY, [])
+    stored = request.session.get(_scoped_key(request, TAG_CONSTRAINTS_SESSION_KEY), [])
     by_category: dict[int, dict[str, Any]] = {}
     if isinstance(stored, list):
         for item in stored:
@@ -299,7 +320,7 @@ def save_tag_constraints(
     request: Request, constraints: list[TagGroupConstraint]
 ) -> None:
     """Persist tag constraints to the session."""
-    request.session[TAG_CONSTRAINTS_SESSION_KEY] = constraints
+    request.session[_scoped_key(request, TAG_CONSTRAINTS_SESSION_KEY)] = constraints
 
 
 def parse_tag_constraints_from_form(

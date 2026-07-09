@@ -48,14 +48,45 @@ def _use_in_memory_database(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(app, "on_shutdown", [close_test_db])
 
 
+DEFAULT_USERNAME = "testuser"
+DEFAULT_PASSWORD = "secret123"
+DEFAULT_EMAIL = "test@example.com"
+
+
+async def register_user(
+    client: AsyncTestClient,
+    username: str = DEFAULT_USERNAME,
+    password: str = DEFAULT_PASSWORD,
+    email: str = DEFAULT_EMAIL,
+) -> None:
+    """Register (and thereby log in) a user through the client."""
+    await client.post(
+        "/register",
+        data={
+            "username": username,
+            "password": password,
+            "password_confirm": password,
+            "email": email,
+        },
+    )
+
+
 @pytest.fixture
-async def test_client() -> AsyncIterator[AsyncTestClient]:
-    """Provide a test client backed by an in-memory database."""
+async def anon_client() -> AsyncIterator[AsyncTestClient]:
+    """Provide an unauthenticated test client backed by an in-memory database."""
     async with AsyncTestClient(app=app) as client:
         yield client
 
 
 @pytest.fixture
+async def test_client() -> AsyncIterator[AsyncTestClient]:
+    """Provide a test client that is already logged in as the default user."""
+    async with AsyncTestClient(app=app) as client:
+        await register_user(client)
+        yield client
+
+
+@pytest.fixture
 async def default_user(test_client: AsyncTestClient) -> User:
-    """Create the sole user used as the default recipe owner in tests."""
-    return await User.create(username="testuser", email="test@example.com")
+    """Return the default user that ``test_client`` is authenticated as."""
+    return await User.get(username=DEFAULT_USERNAME)
