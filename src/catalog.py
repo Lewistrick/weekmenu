@@ -22,13 +22,11 @@ if TYPE_CHECKING:
 DEFAULT_UNITS: tuple[tuple[str, str | None, str | None], ...] = (
     ("g", "gram", "grams"),
     ("kg", "kilo", "kilo"),
-    ("ml", "milliliter", "milliliters"),
+    ("ml", "milliliter", "milliliter"),
     ("l", "liter", "liter"),
-    ("dl", "deciliter", "deciliters"),
     ("el", "eetlepel", "eetlepels"),
     ("tl", "theelepel", "theelepels"),
     ("st", "stuk", "stuks"),
-    ("pcs", "piece", "pieces"),
 )
 
 
