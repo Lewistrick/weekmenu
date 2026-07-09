@@ -54,7 +54,6 @@ from src.week_menu import (
     set_grocery_action_flash,
     unmark_already_have,
     update_grocery_line,
-    is_grocery_list_empty,
     is_grocery_list_initialized,
     save_start_day,
     save_tag_constraints,
@@ -542,6 +541,7 @@ class WeekMenuController(Controller):
         if shop_id not in {shop["id"] for shop in shops}:
             raise NotFoundException()
         await set_ingredient_shop(user_id, ingredient_id, shop_id)
+        unmark_already_have(request, ingredient_id)
         return await self._render_grocery_list(request)
 
     @post(path="/grocery-list/already-have", summary="Mark ingredient as already owned")

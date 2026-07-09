@@ -538,6 +538,132 @@ async def test_grocery_list_can_clear_already_have(
 
 
 @pytest.mark.asyncio
+async def test_grocery_list_assign_from_already_have_moves_to_shop(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Assigning a shop to an already-have item should move it out of that list."""
+    shop = await Shop.create(owner=default_user, name="Corner store")
+    recipe = await Recipe.create(
+        name="Move stew",
+        description="already-have assign",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    butter = await Ingredient.create(owner=default_user, name="butter")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=butter, quantity=50, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": butter.id},
+    )
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/assign",
+        data={"ingredient_id": butter.id, "shop_id": shop.id},
+    )
+
+    assert response.status_code == 200
+    assert "Corner store" in response.text
+    already_have_section = response.text.split("Already have", 1)[1].split("By shop", 1)[0]
+    assert ">butter</span>" not in already_have_section
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_empty_confirm_starts_hidden(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """The empty-list confirmation should stay hidden until triggered."""
+    recipe = await Recipe.create(
+        name="Confirm stew",
+        description="confirm ui",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    cumin = await Ingredient.create(owner=default_user, name="cumin")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=cumin, quantity=5, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": cumin.id},
+    )
+
+    response = await test_client.get("/week-menu/grocery-list")
+
+    assert response.status_code == 200
+    assert "empty-already-have-confirm" in response.text
+    assert "empty-already-have-trigger" in response.text
+    assert "grocery-inline-confirm-wrap" in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_merge_message_uses_dismissable_banner(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Merge notices should use the standard dismissable flash banner."""
+    recipe_a = await Recipe.create(
+        name="Banner stew A",
+        description="banner test a",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    recipe_b = await Recipe.create(
+        name="Banner stew B",
+        description="banner test b",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    kg = await Unit.filter(owner_id=default_user.id, abbrev="kg").first()
+    assert grams is not None
+    assert kg is not None
+    sugar = await Ingredient.create(owner=default_user, name="sugar")
+    await RecipeIngredient.create(
+        recipe=recipe_a, ingredient=sugar, quantity=200, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_b, ingredient=sugar, quantity=1, unit=kg
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe_a.id}")
+    await test_client.post(f"/week-menu/tuesday/recipe/{recipe_b.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.post(
+        f"/week-menu/grocery-list/item/{sugar.id}/g",
+        data={"quantity": "100", "unit": "kg"},
+    )
+
+    assert response.status_code == 200
+    assert "flash-banner single-message" in response.text
+    assert "Combined with existing sugar (kg)." in response.text
+    assert 'hx-trigger="load delay:5s"' in response.text
+
+
+@pytest.mark.asyncio
 async def test_grocery_list_merges_duplicate_unit_lines(
     test_client: AsyncTestClient,
     default_user: User,

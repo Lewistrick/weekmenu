@@ -1,19 +1,21 @@
-<div class="grocery-inline-confirm" id="{{ confirm_id }}" hidden>
-    <span class="grocery-inline-confirm-label">{{ confirm_label }}</span>
-    <form method="post" action="{{ confirm_action }}" class="grocery-bulk-form">
-        <button type="submit" class="shop-chip-btn shop-chip-btn--check"
-            title="Confirm" aria-label="Confirm">
-            ✓
-        </button>
-    </form>
-    <button type="button" class="shop-chip-btn shop-chip-btn--clear grocery-inline-confirm-cancel"
-        data-confirm-id="{{ confirm_id }}" data-trigger-id="{{ trigger_id }}"
-        title="Cancel" aria-label="Cancel">
-        ✕
+<div class="grocery-inline-confirm-wrap">
+    <button type="button" class="btn btn-sm btn-ghost grocery-inline-confirm-trigger"
+        id="{{ trigger_id }}" data-confirm-id="{{ confirm_id }}"
+        title="{{ trigger_label }}" aria-label="{{ trigger_label }}">
+        {{ trigger_label }}
     </button>
+    <div class="grocery-inline-confirm" id="{{ confirm_id }}" hidden>
+        <span class="grocery-inline-confirm-label">{{ confirm_label }}</span>
+        <form method="post" action="{{ confirm_action }}" class="grocery-bulk-form">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--check"
+                title="Confirm" aria-label="Confirm">
+                ✓
+            </button>
+        </form>
+        <button type="button" class="shop-chip-btn shop-chip-btn--clear grocery-inline-confirm-cancel"
+            data-confirm-id="{{ confirm_id }}" data-trigger-id="{{ trigger_id }}"
+            title="Cancel" aria-label="Cancel">
+            ✕
+        </button>
+    </div>
 </div>
-<button type="button" class="btn btn-sm btn-ghost grocery-inline-confirm-trigger"
-    id="{{ trigger_id }}" data-confirm-id="{{ confirm_id }}"
-    title="{{ trigger_label }}" aria-label="{{ trigger_label }}">
-    {{ trigger_label }}
-</button>

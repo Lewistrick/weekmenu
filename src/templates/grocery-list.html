@@ -13,7 +13,9 @@
     <div class="grocery-notice" role="status">{{ grocery_message }}</div>
     {% endif %}
     {% if grocery_action_message %}
-    <div class="grocery-notice grocery-notice--action" role="status">{{ grocery_action_message }}</div>
+    {% with messages=[grocery_action_message], message_scope="grocery-action" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
     {% endif %}
 
     <div class="grocery-toolbar">

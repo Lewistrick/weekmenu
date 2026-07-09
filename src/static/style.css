@@ -704,6 +704,17 @@ div.recipe-detail {
     margin: 0;
 }
 
+.grocery-inline-confirm-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.grocery-inline-confirm[hidden],
+.grocery-inline-confirm-trigger[hidden] {
+    display: none !important;
+}
+
 .grocery-inline-confirm {
     display: flex;
     align-items: center;
