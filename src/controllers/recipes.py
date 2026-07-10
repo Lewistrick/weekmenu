@@ -174,21 +174,6 @@ class RecipeController(Controller):
 
         return missing_rows
 
-    @staticmethod
-    def _toggle_recipe_flag(value: Any | None, current_value: bool) -> bool:
-        """Translate form input for checkbox-backed boolean flags."""
-        if value is None:
-            return False
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            normalized = value.strip().lower()
-            if normalized in {"false", "0", "off", "no", "none"}:
-                return False
-            if normalized in {"true", "1", "on", "yes"}:
-                return True
-        return bool(value)
-
     @get(path="/add", summary="Get the page to add a new recipe")
     async def add_recipe_page(self, request: Request) -> Template:
         """Show the page for adding a new recipe."""
@@ -521,9 +506,8 @@ class RecipeController(Controller):
     ) -> Template:
         recipe = await self._get_owned_recipe(request, recipe_id)
 
-        recipe.private = not self._toggle_recipe_flag(
-            data.get("private"), recipe.private
-        )
+        # The "Public recipe" switch is checked when the recipe is public.
+        recipe.private = data.get("private") is None
         await recipe.save()
         return Template(
             template_name="partials/recipe-status-controls.html",
@@ -541,7 +525,7 @@ class RecipeController(Controller):
     ) -> Template:
         recipe = await self._get_owned_recipe(request, recipe_id)
 
-        recipe.enabled = self._toggle_recipe_flag(data.get("enabled"), recipe.enabled)
+        recipe.enabled = data.get("enabled") is not None
         await recipe.save()
         return Template(
             template_name="partials/recipe-status-controls.html",

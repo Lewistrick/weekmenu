@@ -1,31 +1,53 @@
 from pathlib import Path
+
 from typing import cast
 
+
 from litestar import Litestar, Request, get
+
 from litestar.contrib.jinja import JinjaTemplateEngine
+
 from litestar.logging import LoggingConfig
+
 from litestar.middleware.session.client_side import CookieBackendConfig
+
 from litestar.openapi import OpenAPIConfig
-from litestar.response import Redirect, Response, Template
+
+from litestar.response import File, Redirect, Response, Template
+
 from litestar.static_files import create_static_files_router
+
 from litestar.template import TemplateConfig
+
 from litestar.types.internal_types import TemplateConfigType
 
+
 import src.db_config as db_config
+
 from src.auth import SESSION_USER_KEY, get_current_user
+
 from src.controllers.auth import AuthController
+
 from src.controllers.elements import ElementController
+
 from src.controllers.ingredients import IngredientController
+
 from src.controllers.recipes import RecipeController
+
 from src.controllers.shops import ShopController
+
 from src.controllers.tags import TagController
+
 from src.controllers.week_menu import WeekMenuController
+
 from src.database import (
     close_database,
     ensure_not_using_production_db_in_tests,
     init_database,
 )
+
 from src.template_utils import render_markdown
+
 
 DEBUG = True
 
@@ -33,14 +55,18 @@ SESSION_SECRET = b"weekmenu-session-secret-key-32b!"
 
 session_config = CookieBackendConfig(secret=SESSION_SECRET)
 
+FAVICON_PATH = Path("src/static/favicon.svg")
 
-PUBLIC_PATH_PREFIXES = ("/login", "/register", "/static", "/schema")
+
+PUBLIC_PATH_PREFIXES = ("/login", "/register", "/static", "/schema", "/favicon.ico")
 
 
 def _is_public_path(path: str) -> bool:
     """Return whether a path can be accessed without authentication."""
 
-    return any(path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
+    return any(
+        path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES
+    )
 
 
 async def require_authentication(request: Request) -> Response | None:
@@ -104,6 +130,13 @@ async def index(request: Request) -> Template:
     return Template(template_name="index.html", context={"request": request})
 
 
+@get("/favicon.ico", include_in_schema=False)
+async def favicon() -> File:
+    """Serve the site icon for browsers that request /favicon.ico by default."""
+
+    return File(path=FAVICON_PATH, media_type="image/svg+xml")
+
+
 async def init_db() -> None:
     """Initialize the database and apply aerich migrations on startup."""
 
@@ -124,12 +157,15 @@ logging_config = LoggingConfig(
     formatters={"standard": {"format": "%(message)s"}},
 )
 
-static_files_router = create_static_files_router(path="/static", directories=["src/static"])
+static_files_router = create_static_files_router(
+    path="/static", directories=["src/static"]
+)
 
 
 app = Litestar(
     route_handlers=[
         index,
+        favicon,
         AuthController,
         RecipeController,
         IngredientController,

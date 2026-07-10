@@ -1,8 +1,10 @@
-"""Tests for application startup and configuration."""
+"""Tests for application startup, configuration, and routes."""
 
 from pathlib import Path
 
+import pytest
 from litestar.contrib.jinja import JinjaTemplateEngine
+from litestar.testing import AsyncTestClient
 
 from src.app import app, register_template_filters
 
@@ -24,3 +26,14 @@ def test_register_template_filters_adds_markdown() -> None:
     register_template_filters(engine)
 
     assert "markdown" in engine.engine.filters
+
+
+@pytest.mark.asyncio
+async def test_favicon_is_available() -> None:
+    """Browsers request /favicon.ico automatically; it should not return 404."""
+    async with AsyncTestClient(app=app) as client:
+        response = await client.get("/favicon.ico")
+
+    assert response.status_code == 200
+    assert "image/svg+xml" in response.headers.get("content-type", "")
+    assert b"<svg" in response.content
