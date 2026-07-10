@@ -18,9 +18,12 @@
     {% endwith %}
     {% endif %}
 
+    {% include "partials/grocery-add-form.html" %}
+
     <div class="grocery-toolbar">
         <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
         <a href="/shops/manage" class="btn btn-secondary">🏪 Manage shops</a>
+        <a href="/weekly-groceries/manage" class="btn btn-secondary">🧺 Weekly groceries</a>
     </div>
 
     {% if unassigned_items or to_check_items or already_have_items or grocery_groups %}
@@ -32,7 +35,8 @@
     {% else %}
     <section class="recipe-section">
         <p class="search-placeholder">
-            No ingredients yet. Add recipes with ingredients to your week menu to build a grocery list.
+            No ingredients yet. Generate a list from your week menu, add your own groceries above,
+            or add your weekly groceries.
         </p>
     </section>
     {% endif %}

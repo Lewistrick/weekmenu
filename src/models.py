@@ -145,6 +145,20 @@ class RecipeIngredient(Model):
         return f"{self.quantity} {unit_name} {ingredient_name}"
 
 
+class WeeklyGrocery(Model):
+    """A recurring grocery a user buys every week, unrelated to the week menu.
+
+    Weekly groceries let a user keep a personal list of staples (with quantity
+    and unit) that can be added to any grocery list in one action.
+    """
+
+    id = IntField(primary_key=True)
+    owner = ForeignKeyField("models.User", related_name="weekly_groceries")
+    ingredient = ForeignKeyField("models.Ingredient", related_name="weekly_groceries")
+    quantity = FloatField(required=True)
+    unit = ForeignKeyField("models.Unit", related_name="weekly_groceries")
+
+
 class User(Model):
     """An application user who owns recipes and shopping preferences."""
 

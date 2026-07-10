@@ -10,6 +10,7 @@ from loguru import logger
 from tortoise.expressions import Q
 
 from src.auth import get_current_user
+from src.catalog import get_or_create_ingredient
 from src.grocery import (
     format_grocery_export,
     format_week_menu_export,
@@ -29,6 +30,7 @@ from src.user_settings import load_user_settings
 from src.week_menu import (
     GroceryItem,
     TagGroupConstraint,
+    add_items_to_grocery_list,
     build_day_rows,
     build_grocery_list,
     is_valid_day,
@@ -75,6 +77,7 @@ from src.week_menu import (
     set_day_servings,
     toggle_pin,
 )
+from src.weekly_groceries import weekly_groceries_as_items
 
 
 class WeekMenuController(Controller):
@@ -586,6 +589,65 @@ class WeekMenuController(Controller):
             set_grocery_suppress_preserve(request)
         else:
             raise NotFoundException()
+        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
+
+    @post(path="/grocery-list/add", summary="Add a custom grocery to the list")
+    async def add_custom_grocery(self, request: Request) -> Redirect:
+        """Add a user-entered ingredient, amount, and unit to the grocery list."""
+        user_id = await self._viewer_id(request)
+        set_grocery_suppress_preserve(request)
+        form_data = await request.form()
+        name = str(form_data.get("ingredient", "")).strip()
+        quantity = parse_grocery_quantity(form_data.get("quantity"))
+        unit_abbrev = str(form_data.get("unit", "")).strip()
+
+        unit = await Unit.find(unit_abbrev, owner_id=user_id) if unit_abbrev else None
+        if not name:
+            set_grocery_action_flash(request, "Enter an ingredient name.")
+        elif quantity is None:
+            set_grocery_action_flash(request, "Enter a positive amount.")
+        elif unit is None:
+            set_grocery_action_flash(request, f"Could not find unit: {unit_abbrev}")
+        else:
+            ingredient, _ = await get_or_create_ingredient(user_id, name)
+            await add_items_to_grocery_list(
+                request,
+                user_id,
+                [
+                    GroceryItem(
+                        ingredient_id=ingredient.id,
+                        name=ingredient.name,
+                        unit=unit.abbrev,
+                        quantity=quantity,
+                    )
+                ],
+            )
+            set_grocery_action_flash(
+                request, f"Added {ingredient.name} to your grocery list."
+            )
+        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
+
+    @post(
+        path="/grocery-list/add-weekly",
+        summary="Add weekly groceries to the list",
+    )
+    async def add_weekly_groceries_to_list(self, request: Request) -> Redirect:
+        """Add every saved weekly grocery to the current grocery list."""
+        user_id = await self._viewer_id(request)
+        set_grocery_suppress_preserve(request)
+        items = await weekly_groceries_as_items(user_id)
+        if not items:
+            set_grocery_action_flash(
+                request,
+                "You have no weekly groceries yet. Add some in Settings first.",
+            )
+        else:
+            await add_items_to_grocery_list(request, user_id, items)
+            count = len(items)
+            noun = "grocery" if count == 1 else "groceries"
+            set_grocery_action_flash(
+                request, f"Added {count} weekly {noun} to your grocery list."
+            )
         return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly groceries{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">Weekly groceries</h1>
+        <p class="page-lead">Keep a list of groceries you buy every week, then add them all to a grocery list in one
+            click.</p>
+    </header>
+
+    {% with message_scope="weekly-groceries" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% with warning_scope="weekly-groceries" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
+
+    <div class="grocery-toolbar">
+        <a href="/week-menu/grocery-list" class="btn btn-secondary">🛒 Back to grocery list</a>
+    </div>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Add weekly grocery</h2>
+        </div>
+        <form method="post" action="/weekly-groceries" class="inline-form">
+            <div class="form-group">
+                <div class="ingredient-input">
+                    <input type="text" name="ingredient" class="form-control" placeholder="Name" required />
+                    <input type="number" name="quantity" class="form-control" placeholder="Amount" min="0.01"
+                        step="any" required />
+                    <select name="unit" class="form-control grocery-unit-select" required aria-label="Unit">
+                        {% for unit in units %}
+                        <option value="{{ unit.abbrev }}">{{ unit.abbrev }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm icon-btn" title="Add weekly grocery"
+                        aria-label="Add weekly grocery">➕</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">Your weekly groceries</h2>
+        </div>
+        {% if weekly_groceries %}
+        <ul class="grocery-list">
+            {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
+            {% for row in weekly_groceries %}
+            <li class="weekly-grocery-row">
+                <form method="post" action="/weekly-groceries/{{ row.id }}" class="inline-form weekly-grocery-edit-form">
+                    <div class="form-group">
+                        <div class="ingredient-input">
+                            <input type="text" name="ingredient" class="form-control" value="{{ row.name }}"
+                                required />
+                            <input type="number" name="quantity" class="form-control" value="{{ row.quantity }}"
+                                min="0.01" step="any" required />
+                            <select name="unit" class="form-control grocery-unit-select" required aria-label="Unit">
+                                {% if row.unit not in unit_abbrevs %}
+                                <option value="{{ row.unit }}" selected>{{ row.unit }}</option>
+                                {% endif %}
+                                {% for unit in units %}
+                                <option value="{{ unit.abbrev }}" {% if unit.abbrev == row.unit %}selected{% endif %}>
+                                    {{ unit.abbrev }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm icon-btn" title="Save" aria-label="Save">💾</button>
+                            <button type="button" class="btn btn-sm icon-btn" hx-delete="/weekly-groceries/{{ row.id }}"
+                                hx-target="body" hx-swap="innerHTML" title="Delete" aria-label="Delete">🗑️</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="search-placeholder">No weekly groceries yet. Add staples you buy every week above.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

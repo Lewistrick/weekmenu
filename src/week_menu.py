@@ -1125,6 +1125,32 @@ def merge_grocery_items(
     return build_grocery_list(existing + new_items)
 
 
+async def add_items_to_grocery_list(
+    request: Request, owner_id: int, new_items: list[GroceryItem]
+) -> list[GroceryItem]:
+    """Add items to the current grocery list, merging matching lines.
+
+    Starts a new list when none exists yet, so manual and weekly groceries can
+    build a grocery list independently of the week menu.
+
+    Args:
+        request: The incoming request carrying session state.
+        owner_id: The logged-in user's id, used to hydrate ingredient names.
+        new_items: Grocery items to add to the list.
+
+    Returns:
+        The updated grocery list after merging.
+    """
+    existing: list[GroceryItem] = []
+    if is_grocery_list_initialized(request):
+        existing = await hydrate_grocery_item_names(
+            owner_id, load_grocery_list(request)
+        )
+    merged = merge_grocery_items(existing, new_items)
+    save_grocery_list(request, merged)
+    return merged
+
+
 def has_grocery_list_items(request: Request) -> bool:
     """Return whether the user has a non-empty persisted grocery list."""
     return is_grocery_list_initialized(request) and not is_grocery_list_empty(request)

@@ -24,6 +24,24 @@ RECIPE_COLUMNS = {
     "owner_id",
 }
 
+WEEKLY_GROCERY_COLUMNS = {
+    "id",
+    "quantity",
+    "ingredient_id",
+    "owner_id",
+    "unit_id",
+}
+
+
+def _table_columns(db_file: Path, table: str) -> set[str]:
+    """Return the column names of a table in the given sqlite database."""
+    connection = sqlite3.connect(db_file)
+    columns = {
+        row[1] for row in connection.execute(f'PRAGMA table_info("{table}")').fetchall()
+    }
+    connection.close()
+    return columns
+
 
 def _load_migration(path: Path):
     """Load a migration module from disk."""
@@ -54,10 +72,16 @@ async def test_migrations_create_expected_recipe_columns(tmp_path: Path) -> None
     for migration_path in MIGRATION_FILES:
         await _apply_migration(db_file, migration_path)
 
-    connection = sqlite3.connect(db_file)
-    columns = {
-        row[1] for row in connection.execute('PRAGMA table_info("recipe")').fetchall()
-    }
-    connection.close()
+    assert RECIPE_COLUMNS.issubset(_table_columns(db_file, "recipe"))
 
-    assert RECIPE_COLUMNS.issubset(columns)
+
+@pytest.mark.asyncio
+async def test_migrations_create_weekly_grocery_table(tmp_path: Path) -> None:
+    """All migrations together should create the weekly grocery table."""
+    db_file = tmp_path / "migrated.sqlite3"
+    sqlite3.connect(db_file).close()
+
+    for migration_path in MIGRATION_FILES:
+        await _apply_migration(db_file, migration_path)
+
+    assert WEEKLY_GROCERY_COLUMNS.issubset(_table_columns(db_file, "weeklygrocery"))

@@ -20,6 +20,7 @@ from src.controllers.recipes import RecipeController
 from src.controllers.shops import ShopController
 from src.controllers.tags import TagController
 from src.controllers.week_menu import WeekMenuController
+from src.controllers.weekly_groceries import WeeklyGroceryController
 from src.database import (
     close_database,
     ensure_not_using_production_db_in_tests,
@@ -36,7 +37,9 @@ PUBLIC_PATH_PREFIXES = ("/login", "/register", "/static", "/schema", "/favicon.i
 
 def _is_public_path(path: str) -> bool:
     """Return whether a path can be accessed without authentication."""
-    return any(path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
+    return any(
+        path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES
+    )
 
 
 async def require_authentication(request: Request) -> Response | None:
@@ -110,7 +113,9 @@ logging_config = LoggingConfig(
     handlers={"default": {"class": "src.log_utils.InterceptHandler"}},
     formatters={"standard": {"format": "%(message)s"}},
 )
-static_files_router = create_static_files_router(path="/static", directories=["src/static"])
+static_files_router = create_static_files_router(
+    path="/static", directories=["src/static"]
+)
 
 app = Litestar(
     route_handlers=[
@@ -122,6 +127,7 @@ app = Litestar(
         TagController,
         ShopController,
         WeekMenuController,
+        WeeklyGroceryController,
         ElementController,
         static_files_router,
     ],
