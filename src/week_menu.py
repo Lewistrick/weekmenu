@@ -36,6 +36,8 @@ START_DAY_SESSION_KEY = "week_menu_start_day"
 TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
 INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
 GROCERY_ALREADY_HAVE_KEY = "grocery_already_have"
+GROCERY_TO_CHECK_KEY = "grocery_to_check"
+GROCERY_LINE_SHOPS_KEY = "grocery_line_shops"
 GROCERY_LIST_KEY = "grocery_list"
 GROCERY_ACTION_FLASH_KEY = "grocery_action_flash"
 GROCERY_LIST_INITIALIZED_KEY = "grocery_list_initialized"
@@ -355,32 +357,113 @@ def save_include_public(request: Request, include_public: bool) -> None:
     request.session[_scoped_key(request, INCLUDE_PUBLIC_SESSION_KEY)] = include_public
 
 
-def load_already_have_ids(request: Request) -> set[int]:
-    """Load ingredient ids the user already has for this grocery list."""
+def load_already_have_line_keys(request: Request) -> set[str]:
+    """Load grocery line keys the user already has for this grocery list."""
     stored = request.session.get(_scoped_key(request, GROCERY_ALREADY_HAVE_KEY), [])
     if not isinstance(stored, list):
         return set()
-    ids: set[int] = set()
+    keys: set[str] = set()
     for value in stored:
-        if isinstance(value, int):
-            ids.add(value)
-        elif isinstance(value, str) and value.isdigit():
-            ids.add(int(value))
-    return ids
+        if isinstance(value, str) and value:
+            keys.add(value)
+    return keys
 
 
-def mark_already_have(request: Request, ingredient_id: int) -> None:
-    """Mark one ingredient as already available at home."""
-    ids = load_already_have_ids(request)
-    ids.add(ingredient_id)
-    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+def mark_already_have_line(request: Request, ingredient_id: int, unit: str) -> None:
+    """Mark one grocery line as already available at home."""
+    keys = load_already_have_line_keys(request)
+    keys.add(grocery_line_key(ingredient_id, unit))
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(keys)
 
 
-def unmark_already_have(request: Request, ingredient_id: int) -> None:
-    """Remove one ingredient from the already-have list."""
-    ids = load_already_have_ids(request)
-    ids.discard(ingredient_id)
-    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+def unmark_already_have_line(request: Request, ingredient_id: int, unit: str) -> None:
+    """Remove one grocery line from the already-have list."""
+    keys = load_already_have_line_keys(request)
+    keys.discard(grocery_line_key(ingredient_id, unit))
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(keys)
+
+
+def load_to_check_line_keys(request: Request) -> set[str]:
+    """Load grocery line keys the user wants to verify before buying."""
+    stored = request.session.get(_scoped_key(request, GROCERY_TO_CHECK_KEY), [])
+    if not isinstance(stored, list):
+        return set()
+    return {value for value in stored if isinstance(value, str) and value}
+
+
+def mark_to_check_line(request: Request, ingredient_id: int, unit: str) -> None:
+    """Move one grocery line to the to-check list."""
+    keys = load_to_check_line_keys(request)
+    keys.add(grocery_line_key(ingredient_id, unit))
+    request.session[_scoped_key(request, GROCERY_TO_CHECK_KEY)] = sorted(keys)
+
+
+def unmark_to_check_line(request: Request, ingredient_id: int, unit: str) -> None:
+    """Return one grocery line from the to-check list to active sorting."""
+    keys = load_to_check_line_keys(request)
+    keys.discard(grocery_line_key(ingredient_id, unit))
+    request.session[_scoped_key(request, GROCERY_TO_CHECK_KEY)] = sorted(keys)
+
+
+def clear_to_check(request: Request) -> None:
+    """Remove every grocery line from the to-check list."""
+    request.session[_scoped_key(request, GROCERY_TO_CHECK_KEY)] = []
+
+
+def empty_to_check_list(request: Request) -> None:
+    """Remove to-check groceries from the plan entirely."""
+    to_check = load_to_check_line_keys(request)
+    if not to_check:
+        return
+    remaining = [
+        item
+        for item in load_grocery_list(request)
+        if grocery_line_key(item["ingredient_id"], item["unit"]) not in to_check
+    ]
+    save_grocery_list(request, remaining)
+    clear_to_check(request)
+
+
+def load_grocery_line_shops(request: Request) -> dict[str, int]:
+    """Load per-line shop overrides for the current grocery list."""
+    stored = request.session.get(_scoped_key(request, GROCERY_LINE_SHOPS_KEY), {})
+    if not isinstance(stored, dict):
+        return {}
+    line_shops: dict[str, int] = {}
+    for key, value in stored.items():
+        if not isinstance(key, str) or not key:
+            continue
+        try:
+            line_shops[key] = int(value)
+        except (TypeError, ValueError):
+            continue
+    return line_shops
+
+
+def set_grocery_line_shop(
+    request: Request, ingredient_id: int, unit: str, shop_id: int
+) -> None:
+    """Assign one grocery line to a shop for the current list."""
+    line_shops = load_grocery_line_shops(request)
+    line_shops[grocery_line_key(ingredient_id, unit)] = shop_id
+    request.session[_scoped_key(request, GROCERY_LINE_SHOPS_KEY)] = line_shops
+
+
+def clear_grocery_line_shops(request: Request) -> None:
+    """Remove per-line shop overrides for the current grocery list."""
+    request.session[_scoped_key(request, GROCERY_LINE_SHOPS_KEY)] = {}
+
+
+def resolve_grocery_line_shop_id(
+    item: GroceryItem,
+    ingredient_shop_ids: dict[int, int | None],
+    line_shop_ids: dict[str, int],
+) -> int | None:
+    """Return the shop id used to group one grocery line."""
+    line_key = grocery_line_key(item["ingredient_id"], item["unit"])
+    if line_key in line_shop_ids:
+        return line_shop_ids[line_key]
+    return ingredient_shop_ids.get(item["ingredient_id"])
 
 
 def load_grocery_list(request: Request) -> list[GroceryItem]:
@@ -570,17 +653,21 @@ def mark_shop_already_have(
     shop_id: int,
     items: list[GroceryItem],
     ingredient_shop_ids: dict[int, int | None],
+    line_shop_ids: dict[str, int],
 ) -> None:
-    """Mark every ingredient assigned to one shop as already available."""
-    ids = load_already_have_ids(request)
+    """Mark every grocery line in one shop section as already available."""
+    keys = load_already_have_line_keys(request)
     for item in items:
-        if ingredient_shop_ids.get(item["ingredient_id"]) == shop_id:
-            ids.add(item["ingredient_id"])
-    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(ids)
+        if (
+            resolve_grocery_line_shop_id(item, ingredient_shop_ids, line_shop_ids)
+            == shop_id
+        ):
+            keys.add(grocery_line_key(item["ingredient_id"], item["unit"]))
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(keys)
 
 
 def clear_already_have(request: Request) -> None:
-    """Remove every ingredient from the already-have list."""
+    """Remove every grocery line from the already-have list."""
     request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
 
 
@@ -609,13 +696,13 @@ def pop_grocery_suppress_preserve(request: Request) -> bool:
 
 def empty_already_have_list(request: Request) -> None:
     """Remove already-have groceries from the plan entirely."""
-    already_have = load_already_have_ids(request)
+    already_have = load_already_have_line_keys(request)
     if not already_have:
         return
     remaining = [
         item
         for item in load_grocery_list(request)
-        if item["ingredient_id"] not in already_have
+        if grocery_line_key(item["ingredient_id"], item["unit"]) not in already_have
     ]
     save_grocery_list(request, remaining)
     clear_already_have(request)
@@ -631,8 +718,10 @@ def parse_grocery_quantity(value: Any) -> float | None:
 
 
 def reset_grocery_plan(request: Request) -> None:
-    """Clear already-have marks for a freshly generated grocery list."""
+    """Clear grocery-list sorting state for a freshly generated list."""
     request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = []
+    clear_to_check(request)
+    clear_grocery_line_shops(request)
 
 
 def parse_tag_constraints_from_form(

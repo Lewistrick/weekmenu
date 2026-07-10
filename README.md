@@ -11,7 +11,6 @@
 - Log in at `/login` and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
 - Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, language, default week-menu servings, change your password, or delete your account (which removes the account and its recipes).
 - Passwords are hashed with bcrypt and the logged-in user is tracked in a signed cookie session.
-- The first account to register inherits any pre-existing recipes from an older single-user database (existing data is not lost).
 
 ### Recipe sharing and privacy
 - Every recipe has an **owner** (who controls it), a **creator** (who originally wrote it), and a private/public flag (toggle on the edit page). New recipes start private with you as both owner and creator.
@@ -37,11 +36,13 @@
 - Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.
 - Manage shops at `/shops/manage` (⚙️ Settings → 🏪 Shops). Each shop has a name plus foreground and background colors used on the grocery list.
 - Generating from the week menu creates a new list when empty, or lets you **Replace** the current list, **Add** week-menu groceries to it, or cancel. Visiting the grocery list page directly preserves a non-empty list and shows a notice instead of regenerating over your sorting work.
-- The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked as already owned appear below the unsorted list and can be restored with the ✓ chip.
+- The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons, a **?** chip for items to verify later, and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked **To check** or **Already have** appear in subsections below the unsorted list and can be moved back with the same chips.
+- Moving an ingredient to a shop, to-check, or already-have updates the list in place (no full page reload), so your scroll position is preserved.
+- When the same ingredient appears in more than one unit (e.g. grams and kilograms), shop and status buttons affect only that specific line.
 - Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
 - Copy grouped plaintext for messaging in two places on the grocery list page: under the grocery columns (ingredients by shop) and under **Days included** (week menu days and recipes).
 - Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
-- Each shop section has a **Mark all ✓** button. The already-have list has an **Empty list** button with a confirmation step.
+- Each shop section has a **Mark all ✓** button. The to-check and already-have lists each have a **🗑 Clear list** button (amber warning style) with inline confirmation; clearing either list removes those groceries from the plan entirely.
 - Export the week menu as plaintext via `GET /week-menu/export` (`{day} - {recipe}` per line, empty days omitted).
 
 ### Per-user catalog (ingredients, units, tags, shops)
@@ -49,7 +50,6 @@
 - Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Unit abbreviations are unique per user (`owner` + `abbrev`), not globally.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
-- Legacy single-user data is assigned to the first registered account on startup; duplicate unit abbreviations for that account are merged during the one-time backfill.
 
 ### What will it be able to do
 - Compose your own cookbook
@@ -85,15 +85,16 @@
     - foreign key `tag_category.id`= `tag.category_id`
 
 ### How to
-- To initialize: `uv run aerich db-init`
-- To migrate to new version:
+- Fresh setup (empty database): `uv run aerich init-db`
+- After changing models in `src/models.py`:
     - `uv run aerich migrate --name [type_reason_here]`
     - `uv run aerich upgrade`
+- The app applies pending aerich migrations automatically on startup (`src/database.py`).
 
 ## Development
 ### Tests
 - Run the suite with `uv run pytest`
-- HTTP tests use an in-memory SQLite database via autouse fixtures in `tests/conftest.py`; they do not write to `src/recipes.sqlite3`
+- HTTP tests use an in-memory SQLite database via autouse fixtures in `tests/conftest.py`; they apply the same aerich migrations and do not write to `src/recipes.sqlite3`
 - If `init_db` runs during pytest while still pointed at `src/recipes.sqlite3`, the app raises an error instead of touching production data
 
 ### Formatting and hooks

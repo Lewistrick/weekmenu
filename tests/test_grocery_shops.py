@@ -13,10 +13,12 @@ from src.shops import ShopInfo, load_ingredient_shop_ids, set_ingredient_shop
 from src.week_menu import (
     GroceryItem,
     empty_already_have_list,
+    empty_to_check_list,
     load_grocery_list,
-    mark_already_have,
+    mark_already_have_line,
+    mark_to_check_line,
     save_grocery_list,
-    unmark_already_have,
+    unmark_already_have_line,
     update_grocery_line,
 )
 
@@ -36,34 +38,61 @@ def test_split_grocery_lists_separates_unassigned_and_shops() -> None:
             letter="A",
         )
     ]
-    unassigned, already_have, groups = split_grocery_lists(
+    unassigned, to_check, already_have, groups = split_grocery_lists(
         items,
         ingredient_shop_ids={1: 10},
         shops=shops,
-        already_have_ids=set(),
+        already_have_line_keys=set(),
+        to_check_line_keys=set(),
+        line_shop_ids={},
     )
 
     assert [item["name"] for item in unassigned] == ["onion"]
+    assert to_check == []
     assert already_have == []
     assert [group["shop_name"] for group in groups] == ["Albert Heijn"]
     assert groups[0]["entries"][0]["name"] == "potatoes"
 
 
 def test_split_grocery_lists_moves_items_to_already_have() -> None:
-    """Marked ingredients should leave the unassigned and shop lists."""
+    """Marked grocery lines should leave the unassigned and shop lists."""
     items = [
         GroceryItem(ingredient_id=1, name="salt", unit="g", quantity=5.0),
         GroceryItem(ingredient_id=2, name="pepper", unit="g", quantity=3.0),
     ]
-    unassigned, already_have, groups = split_grocery_lists(
+    unassigned, to_check, already_have, groups = split_grocery_lists(
         items,
         ingredient_shop_ids={},
         shops=[],
-        already_have_ids={1},
+        already_have_line_keys={"1-g"},
+        to_check_line_keys=set(),
+        line_shop_ids={},
     )
 
     assert [item["name"] for item in unassigned] == ["pepper"]
+    assert to_check == []
     assert [item["name"] for item in already_have] == ["salt"]
+    assert groups == []
+
+
+def test_split_grocery_lists_moves_items_to_to_check() -> None:
+    """To-check lines should appear in the to-check bucket only."""
+    items = [
+        GroceryItem(ingredient_id=1, name="salt", unit="g", quantity=5.0),
+        GroceryItem(ingredient_id=1, name="salt", unit="kg", quantity=1.0),
+    ]
+    unassigned, to_check, already_have, groups = split_grocery_lists(
+        items,
+        ingredient_shop_ids={},
+        shops=[],
+        already_have_line_keys=set(),
+        to_check_line_keys={"1-g"},
+        line_shop_ids={},
+    )
+
+    assert [item["unit"] for item in unassigned] == ["kg"]
+    assert [item["unit"] for item in to_check] == ["g"]
+    assert already_have == []
     assert groups == []
 
 
@@ -71,6 +100,7 @@ def test_format_grocery_export_uses_plaintext_lines_per_shop() -> None:
     """Grocery export should render shop sections with ingredient lines."""
     text = format_grocery_export(
         [GroceryItem(ingredient_id=2, name="onion", unit="st", quantity=3.0)],
+        [],
         [
             {
                 "shop_id": 1,
@@ -172,6 +202,7 @@ async def test_grocery_list_shows_unassigned_items_on_left(
     assert response.status_code == 200
     assert "To sort" in response.text
     assert "shop-chip-btn--check" in response.text
+    assert "shop-chip-btn--question" in response.text
     assert ">carrots</span>" in response.text
 
 
@@ -204,7 +235,11 @@ async def test_grocery_list_allows_reassignment_from_page(
 
     response = await test_client.post(
         "/week-menu/grocery-list/assign",
-        data={"ingredient_id": ingredient.id, "shop_id": second_shop.id},
+        data={
+            "ingredient_id": ingredient.id,
+            "unit": "l",
+            "shop_id": second_shop.id,
+        },
     )
 
     assert response.status_code == 200
@@ -272,7 +307,7 @@ async def test_grocery_list_already_have_moves_item(
 
     response = await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": rice.id},
+        data={"ingredient_id": rice.id, "unit": "g"},
     )
 
     assert response.status_code == 200
@@ -305,12 +340,12 @@ async def test_grocery_list_can_remove_already_have_item(
     await test_client.get("/week-menu/grocery-list")
     await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": beans.id},
+        data={"ingredient_id": beans.id, "unit": "g"},
     )
 
     response = await test_client.post(
         "/week-menu/grocery-list/already-have/remove",
-        data={"ingredient_id": beans.id},
+        data={"ingredient_id": beans.id, "unit": "g"},
     )
 
     assert response.status_code == 200
@@ -560,7 +595,7 @@ async def test_generate_grocery_list_replace_existing(
     await test_client.get("/week-menu/grocery-list")
     await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": onion.id},
+        data={"ingredient_id": onion.id, "unit": "g"},
     )
 
     response = await test_client.post(
@@ -652,7 +687,7 @@ async def test_empty_initialized_grocery_list_regenerates_on_visit(
     await test_client.get("/week-menu/grocery-list")
     await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": thyme.id},
+        data={"ingredient_id": thyme.id, "unit": "g"},
     )
     await test_client.post("/week-menu/grocery-list/already-have/clear")
 
@@ -803,7 +838,7 @@ async def test_grocery_list_can_clear_already_have(
     await test_client.get("/week-menu/grocery-list")
     await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": salt.id},
+        data={"ingredient_id": salt.id, "unit": "g"},
     )
 
     response = await test_client.post("/week-menu/grocery-list/already-have/clear")
@@ -838,12 +873,12 @@ async def test_grocery_list_assign_from_already_have_moves_to_shop(
     await test_client.get("/week-menu/grocery-list")
     await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": butter.id},
+        data={"ingredient_id": butter.id, "unit": "g"},
     )
 
     response = await test_client.post(
         "/week-menu/grocery-list/assign",
-        data={"ingredient_id": butter.id, "shop_id": shop.id},
+        data={"ingredient_id": butter.id, "unit": "g", "shop_id": shop.id},
     )
 
     assert response.status_code == 200
@@ -852,6 +887,168 @@ async def test_grocery_list_assign_from_already_have_moves_to_shop(
         "By shop", 1
     )[0]
     assert ">butter</span>" not in already_have_section
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_htmx_assign_returns_partial(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """HTMX shop assignment should return only the grocery list panel."""
+    shop = await Shop.create(owner=default_user, name="HTMX shop")
+    recipe = await Recipe.create(
+        name="HTMX stew",
+        description="htmx partial",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    oats = await Ingredient.create(owner=default_user, name="oats")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=oats, quantity=80, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/assign",
+        data={"ingredient_id": oats.id, "unit": "g", "shop_id": shop.id},
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert 'id="grocery-list-panel"' in response.text
+    assert "HTMX shop" in response.text
+    assert "<!DOCTYPE html>" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_assign_only_moves_clicked_unit_line(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Assigning a shop should affect only the clicked unit line."""
+    shop = await Shop.create(owner=default_user, name="Unit shop")
+    recipe_a = await Recipe.create(
+        name="Unit stew A",
+        description="unit assign a",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    recipe_b = await Recipe.create(
+        name="Unit stew B",
+        description="unit assign b",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    kg = await Unit.filter(owner_id=default_user.id, abbrev="kg").first()
+    assert grams is not None
+    assert kg is not None
+    sugar = await Ingredient.create(owner=default_user, name="sugar")
+    await RecipeIngredient.create(
+        recipe=recipe_a, ingredient=sugar, quantity=200, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_b, ingredient=sugar, quantity=1, unit=kg
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe_a.id}")
+    await test_client.post(f"/week-menu/tuesday/recipe/{recipe_b.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/assign",
+        data={"ingredient_id": sugar.id, "unit": "g", "shop_id": shop.id},
+    )
+
+    assert response.status_code == 200
+    to_sort_section = response.text.split("To sort", 1)[1].split("To check", 1)[0]
+    assert ">sugar</span>" in to_sort_section
+    assert "1 kg" in to_sort_section or ">1</" in to_sort_section
+    shop_section = response.text.split("By shop", 1)[1].split("Copy for messaging", 1)[
+        0
+    ]
+    assert "200 g" in shop_section or ">200</" in shop_section
+    assert response.text.count(">sugar</span>") == 2
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_to_check_moves_item(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Marking a grocery line to check should move it below the to-sort list."""
+    recipe = await Recipe.create(
+        name="Check stew",
+        description="to-check test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    vinegar = await Ingredient.create(owner=default_user, name="vinegar")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=vinegar, quantity=50, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/to-check",
+        data={"ingredient_id": vinegar.id, "unit": "g"},
+    )
+
+    assert response.status_code == 200
+    assert "To check" in response.text
+    assert response.text.index("To check") < response.text.rindex("vinegar")
+    assert "shop-chip-btn--question" in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_can_clear_to_check(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Clearing to-check should remove those groceries from the plan entirely."""
+    recipe = await Recipe.create(
+        name="Clear check stew",
+        description="clear to-check",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    honey = await Ingredient.create(owner=default_user, name="honey")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=honey, quantity=30, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/to-check",
+        data={"ingredient_id": honey.id, "unit": "g"},
+    )
+
+    response = await test_client.post("/week-menu/grocery-list/to-check/clear")
+
+    assert response.status_code == 200
+    assert ">honey</span>" not in response.text
 
 
 @pytest.mark.asyncio
@@ -879,14 +1076,15 @@ async def test_grocery_list_empty_confirm_starts_hidden(
     await test_client.get("/week-menu/grocery-list")
     await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": cumin.id},
+        data={"ingredient_id": cumin.id, "unit": "g"},
     )
 
     response = await test_client.get("/week-menu/grocery-list")
 
     assert response.status_code == 200
-    assert "empty-already-have-confirm" in response.text
-    assert "empty-already-have-trigger" in response.text
+    assert "clear-already-have-confirm" in response.text
+    assert "clear-already-have-trigger" in response.text
+    assert "grocery-clear-list-trigger" in response.text
     assert "grocery-inline-confirm-wrap" in response.text
 
 
@@ -1028,6 +1226,32 @@ def test_update_grocery_line_merges_matching_unit() -> None:
     assert loaded[0]["quantity"] == 101.0
 
 
+def test_empty_to_check_list_removes_items() -> None:
+    """Clearing to-check should delete those groceries from the plan."""
+
+    class Session(dict):
+        pass
+
+    class RequestStub:
+        def __init__(self) -> None:
+            self.session = Session({"user_id": 1})
+
+    request = RequestStub()
+    save_grocery_list(
+        request,  # type: ignore[arg-type]
+        [
+            GroceryItem(ingredient_id=1, name="salt", unit="g", quantity=5.0),
+            GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0),
+        ],
+    )
+    mark_to_check_line(request, 1, "g")  # type: ignore[arg-type]
+
+    empty_to_check_list(request)  # type: ignore[arg-type]
+
+    loaded = load_grocery_list(request)  # type: ignore[arg-type]
+    assert loaded == [GroceryItem(ingredient_id=2, name="", unit="g", quantity=200.0)]
+
+
 def test_empty_already_have_list_removes_items() -> None:
     """Emptying already-have should delete those groceries from the plan."""
 
@@ -1046,7 +1270,7 @@ def test_empty_already_have_list_removes_items() -> None:
             GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0),
         ],
     )
-    mark_already_have(request, 1)  # type: ignore[arg-type]
+    mark_already_have_line(request, 1, "g")  # type: ignore[arg-type]
 
     empty_already_have_list(request)  # type: ignore[arg-type]
 
@@ -1069,5 +1293,5 @@ def test_save_and_load_grocery_list_round_trip() -> None:
     save_grocery_list(request, items)  # type: ignore[arg-type]
     loaded = load_grocery_list(request)  # type: ignore[arg-type]
     assert loaded == [GroceryItem(ingredient_id=3, name="", unit="g", quantity=250.0)]
-    mark_already_have(request, 3)  # type: ignore[arg-type]
-    unmark_already_have(request, 3)  # type: ignore[arg-type]
+    mark_already_have_line(request, 3, "g")  # type: ignore[arg-type]
+    unmark_already_have_line(request, 3, "g")  # type: ignore[arg-type]

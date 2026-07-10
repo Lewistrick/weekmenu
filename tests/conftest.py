@@ -10,6 +10,7 @@ from pathlib import Path
 
 import src.db_config as db_config_module
 from src.app import app
+from src.database import close_database, init_database
 from src.models import User
 import src.user_settings as user_settings_module
 
@@ -25,21 +26,17 @@ TEST_DB_CONFIG = {
 
 
 async def init_test_db() -> None:
-    """Initialize Tortoise against the in-memory test database."""
+    """Initialize Tortoise and apply migrations against the in-memory test database."""
     try:
         await Tortoise.close_connections()
     except ConfigurationError:
         pass
-    await Tortoise.init(config=TEST_DB_CONFIG)
-    await Tortoise.generate_schemas(safe=True)
+    await init_database(TEST_DB_CONFIG)
 
 
 async def close_test_db() -> None:
     """Close any open Tortoise connections."""
-    try:
-        await Tortoise.close_connections()
-    except ConfigurationError:
-        pass
+    await close_database()
 
 
 @pytest.fixture(autouse=True)

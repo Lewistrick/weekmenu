@@ -1,13 +1,15 @@
 <div class="grocery-inline-confirm-wrap">
-    <button type="button" class="btn btn-sm btn-ghost grocery-inline-confirm-trigger"
+    <button type="button" class="btn btn-sm grocery-inline-confirm-trigger grocery-clear-list-trigger"
         id="{{ trigger_id }}" data-confirm-id="{{ confirm_id }}"
         title="{{ trigger_label }}" aria-label="{{ trigger_label }}">
-        {{ trigger_label }}
+        <span class="grocery-clear-list-icon" aria-hidden="true">{{ trigger_icon | default("🗑") }}</span>
+        <span>{{ trigger_label }}</span>
     </button>
     <div class="grocery-inline-confirm" id="{{ confirm_id }}" hidden>
         <span class="grocery-inline-confirm-label">{{ confirm_label }}</span>
-        <form method="post" action="{{ confirm_action }}" class="grocery-bulk-form">
-            <button type="submit" class="shop-chip-btn shop-chip-btn--check"
+        <form hx-post="{{ confirm_action }}" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+            class="grocery-bulk-form">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--warn"
                 title="Confirm" aria-label="Confirm">
                 ✓
             </button>

@@ -752,6 +752,28 @@ div.recipe-detail {
     color: #c8c8c8;
 }
 
+.grocery-clear-list-trigger {
+    color: #fbbf24;
+    border: 1px solid #b45309;
+    background-color: rgba(180, 83, 9, 0.12);
+}
+
+.grocery-clear-list-trigger:hover {
+    color: #fde68a;
+    border-color: #d97706;
+    background-color: rgba(217, 119, 6, 0.2);
+}
+
+.grocery-clear-list-icon {
+    margin-right: 0.25rem;
+}
+
+.shop-chip-btn--warn {
+    background-color: #b45309;
+    color: #fff;
+    border-color: #d97706;
+}
+
 .grocery-shop-header {
     display: flex;
     align-items: center;
@@ -909,6 +931,25 @@ div.recipe-detail {
 
 .grocery-list--muted .grocery-item {
     border-style: dashed;
+}
+
+.grocery-item--to-check {
+    background-color: #3a3428;
+}
+
+.grocery-list--to-check .grocery-item {
+    border-color: #b45309;
+}
+
+.shop-chip-btn--question {
+    background-color: #4a4a4a;
+    color: #ccc;
+}
+
+.shop-chip-btn--question.shop-chip-btn--active {
+    background-color: #d97706;
+    color: #fff;
+    border-color: #f59e0b;
 }
 
 .grocery-copy-section {

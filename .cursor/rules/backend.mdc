@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+The backend is in Litestar, a modern Python API library.
+
+This library uses controllers to group pages and functionality around database classes. They can be found in src/controllers.

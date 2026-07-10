@@ -2,4 +2,6 @@
 alwaysApply: true
 ---
 
-The models are in src/models.py and reflect the database. Always use the ORM instead of raw SQL.
+The database is an SQLite database and the sqlite3 library is used to interact with it.
+
+The database models are in src/models.py and reflect the database.

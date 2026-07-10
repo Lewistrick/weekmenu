@@ -1,18 +1,17 @@
-import os
 from pathlib import Path
 from typing import cast
 
 from litestar import Litestar, Request, get
-from litestar.middleware.session.client_side import CookieBackendConfig
 from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.logging import LoggingConfig
+from litestar.middleware.session.client_side import CookieBackendConfig
 from litestar.openapi import OpenAPIConfig
 from litestar.response import Redirect, Response, Template
 from litestar.static_files import create_static_files_router
 from litestar.template import TemplateConfig
 from litestar.types.internal_types import TemplateConfigType
-from tortoise import Tortoise
 
+import src.db_config as db_config
 from src.auth import SESSION_USER_KEY, get_current_user
 from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
@@ -21,53 +20,75 @@ from src.controllers.recipes import RecipeController
 from src.controllers.shops import ShopController
 from src.controllers.tags import TagController
 from src.controllers.week_menu import WeekMenuController
-import src.db_config as db_config
-from src.models import Unit, User
+from src.database import (
+    close_database,
+    ensure_not_using_production_db_in_tests,
+    init_database,
+)
 from src.template_utils import render_markdown
 
 DEBUG = True
+
 SESSION_SECRET = b"weekmenu-session-secret-key-32b!"
+
 session_config = CookieBackendConfig(secret=SESSION_SECRET)
+
 
 PUBLIC_PATH_PREFIXES = ("/login", "/register", "/static", "/schema")
 
 
 def _is_public_path(path: str) -> bool:
     """Return whether a path can be accessed without authentication."""
-    return any(
-        path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES
-    )
+
+    return any(path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
 
 
 async def require_authentication(request: Request) -> Response | None:
     """Redirect unauthenticated visitors to the login page.
 
+
+
     Args:
+
         request: The incoming request.
 
+
+
     Returns:
+
         A redirect response when authentication is required and missing,
+
         otherwise ``None`` to continue normal handling.
+
     """
+
     if _is_public_path(request.url.path):
         return None
+
     if await get_current_user(request) is not None:
         return None
+
     request.session.pop(SESSION_USER_KEY, None)
+
     if request.headers.get("HX-Request"):
         return Response(content=b"", status_code=200, headers={"HX-Redirect": "/login"})
+
     return Redirect(path="/login")
 
 
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     """Register custom Jinja filters."""
+
     template_engine.engine.filters["markdown"] = render_markdown
 
 
 def create_template_engine() -> JinjaTemplateEngine:
     """Create and configure the Jinja template engine."""
+
     template_engine = JinjaTemplateEngine(directory=Path("src/templates"))
+
     register_template_filters(template_engine)
+
     return template_engine
 
 
@@ -79,170 +100,32 @@ template_config = cast(
 
 @get("/", tags=["home"])
 async def index(request: Request) -> Template:
+
     return Template(template_name="index.html", context={"request": request})
 
 
-async def _ensure_recipe_owners(conn) -> None:
-    """Add recipe.owner_id when missing and backfill null values."""
-    table_info = await conn.execute_query("PRAGMA table_info(recipe)")
-    columns = {row[1] for row in table_info[1]}
-
-    first_user = await User.all().order_by("id").first()
-    default_user_id = first_user.id if first_user else None
-
-    if "owner_id" not in columns:
-        if default_user_id is not None:
-            await conn.execute_query(
-                f"ALTER TABLE recipe ADD COLUMN owner_id INT NOT NULL DEFAULT {default_user_id}"
-            )
-        else:
-            await conn.execute_query("ALTER TABLE recipe ADD COLUMN owner_id INT")
-
-    if default_user_id is not None:
-        await conn.execute_query(
-            f"UPDATE recipe SET owner_id = {default_user_id} WHERE owner_id IS NULL"
-        )
-
-
-async def _ensure_user_auth_columns(conn) -> None:
-    """Add the user.password_hash column when migrating an older database."""
-    table_info = await conn.execute_query("PRAGMA table_info(user)")
-    columns = {row[1] for row in table_info[1]}
-    if "password_hash" not in columns:
-        await conn.execute_query("ALTER TABLE user ADD COLUMN password_hash TEXT")
-
-
-async def _ensure_recipe_attribution(conn) -> None:
-    """Add recipe.creator_id and recipe.imported_from_id for older databases.
-
-    Backfills ``creator_id`` from ``owner_id`` so existing recipes are credited
-    to their owner.
-    """
-    table_info = await conn.execute_query("PRAGMA table_info(recipe)")
-    columns = {row[1] for row in table_info[1]}
-    if "creator_id" not in columns:
-        await conn.execute_query("ALTER TABLE recipe ADD COLUMN creator_id INT")
-    if "imported_from_id" not in columns:
-        await conn.execute_query("ALTER TABLE recipe ADD COLUMN imported_from_id INT")
-    await conn.execute_query(
-        "UPDATE recipe SET creator_id = owner_id WHERE creator_id IS NULL"
-    )
-
-
-async def _ensure_catalog_owners(conn) -> None:
-    """Add owner_id to catalog tables, assign legacy rows, dedupe units."""
-    first_user = await User.all().order_by("id").first()
-    if first_user is None:
-        return
-    default_user_id = first_user.id
-
-    catalog_tables = ("ingredient", "unit", "tagcategory", "tag", "shop")
-    for table in catalog_tables:
-        table_exists = await conn.execute_query(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name=?", [table]
-        )
-        if not table_exists[1]:
-            continue
-        table_info = await conn.execute_query(f"PRAGMA table_info({table})")
-        columns = {row[1] for row in table_info[1]}
-        if "owner_id" not in columns:
-            await conn.execute_query(f"ALTER TABLE {table} ADD COLUMN owner_id INT")
-        await conn.execute_query(
-            f"UPDATE {table} SET owner_id = {default_user_id} WHERE owner_id IS NULL"
-        )
-
-    units = await Unit.filter(owner_id=default_user_id).order_by("id")
-    canonical_by_abbrev: dict[str, int] = {}
-    for unit in units:
-        if unit.abbrev in canonical_by_abbrev:
-            duplicate_id = unit.id
-            keep_id = canonical_by_abbrev[unit.abbrev]
-            await conn.execute_query(
-                "UPDATE recipeingredient SET unit_id = ? WHERE unit_id = ?",
-                [keep_id, duplicate_id],
-            )
-            await Unit.filter(id=duplicate_id).delete()
-        else:
-            canonical_by_abbrev[unit.abbrev] = unit.id
-
-    await _ensure_shop_colors(conn)
-
-
-async def _ensure_shop_colors(conn) -> None:
-    """Add shop color columns and backfill defaults for older databases."""
-    table_exists = await conn.execute_query(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", ["shop"]
-    )
-    if not table_exists[1]:
-        return
-    table_info = await conn.execute_query("PRAGMA table_info(shop)")
-    columns = {row[1] for row in table_info[1]}
-    if "foreground_color" not in columns:
-        await conn.execute_query(
-            "ALTER TABLE shop ADD COLUMN foreground_color TEXT DEFAULT '#ffffff'"
-        )
-    if "background_color" not in columns:
-        await conn.execute_query(
-            "ALTER TABLE shop ADD COLUMN background_color TEXT DEFAULT '#2563eb'"
-        )
-    await conn.execute_query(
-        "UPDATE shop SET foreground_color = '#ffffff' "
-        "WHERE foreground_color IS NULL OR foreground_color = ''"
-    )
-    await conn.execute_query(
-        "UPDATE shop SET background_color = '#2563eb' "
-        "WHERE background_color IS NULL OR background_color = ''"
-    )
-
-
-async def _ensure_not_using_production_db_in_tests() -> None:
-    """Block accidental production database use while pytest is running."""
-    if not os.environ.get("PYTEST_CURRENT_TEST"):
-        return
-
-    db_url = str(db_config.TORTOISE_CONFIG["connections"]["default"])
-    if "recipes.sqlite3" in db_url:
-        msg = "Tests must use the in-memory database, not src/recipes.sqlite3."
-        raise RuntimeError(msg)
-
-
 async def init_db() -> None:
-    await _ensure_not_using_production_db_in_tests()
-    await Tortoise.init(config=db_config.TORTOISE_CONFIG)
-    await Tortoise.generate_schemas(safe=True)
+    """Initialize the database and apply aerich migrations on startup."""
 
-    conn = Tortoise.get_connection("default")
-    try:
-        table_info = await conn.execute_query("PRAGMA table_info(recipe)")
-        columns = {row[1] for row in table_info[1]}
-        if "private" not in columns:
-            await conn.execute_query(
-                "ALTER TABLE recipe ADD COLUMN private BOOLEAN NOT NULL DEFAULT 1"
-            )
-        if "enabled" not in columns:
-            await conn.execute_query(
-                "ALTER TABLE recipe ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT 1"
-            )
-        await _ensure_user_auth_columns(conn)
-        await _ensure_recipe_owners(conn)
-        await _ensure_recipe_attribution(conn)
-        await _ensure_catalog_owners(conn)
-    except Exception:
-        pass
+    ensure_not_using_production_db_in_tests()
+
+    await init_database(db_config.TORTOISE_CONFIG)
 
 
 async def close_db() -> None:
-    await Tortoise.close_connections()
+
+    await close_database()
 
 
 openapi_config = OpenAPIConfig(title="Weekmenu", version="1.0.0")
+
 logging_config = LoggingConfig(
     handlers={"default": {"class": "src.log_utils.InterceptHandler"}},
     formatters={"standard": {"format": "%(message)s"}},
 )
-static_files_router = create_static_files_router(
-    path="/static", directories=["src/static"]
-)
+
+static_files_router = create_static_files_router(path="/static", directories=["src/static"])
+
 
 app = Litestar(
     route_handlers=[

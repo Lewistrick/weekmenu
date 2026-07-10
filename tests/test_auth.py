@@ -119,11 +119,11 @@ async def test_logout_clears_session(test_client: AsyncTestClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_first_account_backfills_existing_recipes(
+async def test_first_account_claims_restored_recipes(
     anon_client: AsyncTestClient,
 ) -> None:
-    """The first registered account should inherit legacy password-less data."""
-    legacy_user = await User.create(username="legacy", email="old@example.com")
+    """The first registered account should inherit restored placeholder-owned data."""
+    legacy_user = await User.create(username="_legacy", email="")
     await Recipe.create(
         name="Legacy dish",
         description="Old recipe",
@@ -131,6 +131,7 @@ async def test_first_account_backfills_existing_recipes(
         cook_time_minutes=10,
         servings=2,
         owner=legacy_user,
+        creator=legacy_user,
         enabled=True,
     )
 
@@ -140,16 +141,15 @@ async def test_first_account_backfills_existing_recipes(
     assert new_user is not None
     recipe = await Recipe.get(name="Legacy dish")
     assert recipe.owner_id == new_user.id
-    # The password-less legacy account should be removed.
-    assert await User.get_by_username("legacy") is None
+    assert await User.get_by_username("_legacy") is None
 
 
 @pytest.mark.asyncio
-async def test_register_with_legacy_username_succeeds(
+async def test_register_with_placeholder_username_succeeds(
     anon_client: AsyncTestClient,
 ) -> None:
-    """A password-less legacy account must not block registering that username."""
-    await User.create(username="erick", email="old@example.com")
+    """A restored placeholder username must not block registering that username."""
+    await User.create(username="erick", email="")
 
     await register_user(anon_client, username="erick", password="password1")
 

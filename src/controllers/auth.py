@@ -12,7 +12,7 @@ from src.auth import (
     verify_password,
 )
 from src.catalog import seed_default_units
-from src.models import Recipe, User
+from src.models import Ingredient, Recipe, Shop, Tag, TagCategory, Unit, User
 from src.user_settings import (
     UserSettings,
     delete_user_settings,
@@ -31,19 +31,33 @@ LANGUAGE_OPTIONS = (
 )
 
 
-async def _backfill_first_account(user: User) -> None:
-    """Assign all pre-existing data to the first registered account.
+async def _claim_restored_data(user: User) -> None:
+    """Assign restored placeholder-owned data to the first registered account.
 
-    Older databases may contain recipes owned by a password-less legacy user.
-    When the first real account registers, hand that data over to it and remove
-    the now-unusable legacy accounts.
+    Database restores import catalog and recipe rows under a password-less
+    placeholder user. The first real registration claims that data.
 
     Args:
         user: The freshly created first account.
     """
-    await Recipe.all().update(owner_id=user.id)
-    await User.filter(password_hash__isnull=True).exclude(id=user.id).delete()
-    logger.info(f"Backfilled existing data to first account: {user.username}")
+    legacy_ids = (
+        await User.filter(password_hash__isnull=True)
+        .exclude(id=user.id)
+        .values_list("id", flat=True)
+    )
+    if not legacy_ids:
+        return
+
+    await Recipe.filter(owner_id__in=legacy_ids).update(
+        owner_id=user.id, creator_id=user.id
+    )
+    await Ingredient.filter(owner_id__in=legacy_ids).update(owner_id=user.id)
+    await Unit.filter(owner_id__in=legacy_ids).update(owner_id=user.id)
+    await TagCategory.filter(owner_id__in=legacy_ids).update(owner_id=user.id)
+    await Tag.filter(owner_id__in=legacy_ids).update(owner_id=user.id)
+    await Shop.filter(owner_id__in=legacy_ids).update(owner_id=user.id)
+    await User.filter(id__in=legacy_ids).delete()
+    logger.info(f"Claimed restored data for first account: {user.username}")
 
 
 class AuthController(Controller):
@@ -104,8 +118,6 @@ class AuthController(Controller):
         if not username:
             errors.append("Username is required.")
         elif await User.filter(username=username, password_hash__isnull=False).exists():
-            # Password-less legacy accounts don't block registration; they are
-            # claimed and removed by the first-account backfill below.
             errors.append("That username is already taken.")
         if len(password) < MIN_PASSWORD_LENGTH:
             errors.append(
@@ -132,7 +144,7 @@ class AuthController(Controller):
             password_hash=hash_password(password),
         )
         if is_first_account:
-            await _backfill_first_account(user)
+            await _claim_restored_data(user)
         await seed_default_units(user)
 
         login_user(request, user)

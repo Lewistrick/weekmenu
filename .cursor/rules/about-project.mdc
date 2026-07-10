@@ -2,4 +2,8 @@
 alwaysApply: true
 ---
 
-This project is focused around recipes for dinners. In it, a user can search recipes, add or edit recipes. Recipes have ingredients, which is also an important concept in this app.
+This project is focused around recipes for dinners. In it, a user can search recipes, add or edit recipes.
+
+The user can make a week menu, in which dinners are planned. This week menu can be generated randomly within constraints defined by tags in tag groups.
+
+From the week menu, a grocery list can be generated. Groceries are sorted per shop.

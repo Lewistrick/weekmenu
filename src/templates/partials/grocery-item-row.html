@@ -1,4 +1,11 @@
-<li class="grocery-item{% if item.ingredient_id in already_have_ids %} grocery-item--muted{% endif %}">
+{% set line_key = item.ingredient_id ~ '-' ~ item.unit %}
+{% if line_key in line_shop_ids %}
+{% set active_shop_id = line_shop_ids[line_key] %}
+{% else %}
+{% set active_shop_id = ingredient_shop_ids.get(item.ingredient_id) %}
+{% endif %}
+<li class="grocery-item{% if line_key in already_have_line_keys %} grocery-item--muted{% elif line_key in to_check_line_keys %} grocery-item--to-check{% endif %}"
+    id="grocery-line-{{ item.ingredient_id }}-{{ item.unit }}">
     <div class="grocery-item-row">
         <span class="grocery-item-name">{{ item.name }}</span>
         <div id="grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}" class="grocery-item-amount-wrap">
@@ -7,28 +14,55 @@
     </div>
     <div class="shop-chip-row" role="group" aria-label="Actions for {{ item.name }}">
         {% for shop in shops %}
-        <form method="post" action="/week-menu/grocery-list/assign" class="shop-chip-form">
+        <form hx-post="/week-menu/grocery-list/assign" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+            class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <input type="hidden" name="unit" value="{{ item.unit }}">
             <input type="hidden" name="shop_id" value="{{ shop.id }}">
             <button type="submit"
-                class="shop-chip-btn{% if ingredient_shop_ids.get(item.ingredient_id) == shop.id and item.ingredient_id not in already_have_ids %} shop-chip-btn--active{% endif %}"
+                class="shop-chip-btn{% if active_shop_id == shop.id and line_key not in already_have_line_keys and line_key not in to_check_line_keys %} shop-chip-btn--active{% endif %}"
                 style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};"
                 title="{{ shop.name }}" aria-label="{{ shop.name }}">
                 {{ shop.letter }}
             </button>
         </form>
         {% endfor %}
-        {% if item.ingredient_id in already_have_ids %}
-        <form method="post" action="/week-menu/grocery-list/already-have/remove" class="shop-chip-form">
+        {% if line_key in to_check_line_keys %}
+        <form hx-post="/week-menu/grocery-list/to-check/remove" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+            class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <input type="hidden" name="unit" value="{{ item.unit }}">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--question shop-chip-btn--active"
+                title="Remove from to check" aria-label="Remove from to check">
+                ?
+            </button>
+        </form>
+        {% else %}
+        <form hx-post="/week-menu/grocery-list/to-check" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+            class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <input type="hidden" name="unit" value="{{ item.unit }}">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--question"
+                title="Move to to check" aria-label="Move to to check">
+                ?
+            </button>
+        </form>
+        {% endif %}
+        {% if line_key in already_have_line_keys %}
+        <form hx-post="/week-menu/grocery-list/already-have/remove" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+            class="shop-chip-form">
+            <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <input type="hidden" name="unit" value="{{ item.unit }}">
             <button type="submit" class="shop-chip-btn shop-chip-btn--check shop-chip-btn--active"
                 title="Remove from already have" aria-label="Remove from already have">
                 ✓
             </button>
         </form>
         {% else %}
-        <form method="post" action="/week-menu/grocery-list/already-have" class="shop-chip-form">
+        <form hx-post="/week-menu/grocery-list/already-have" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+            class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
+            <input type="hidden" name="unit" value="{{ item.unit }}">
             <button type="submit" class="shop-chip-btn shop-chip-btn--check"
                 title="Already have this" aria-label="Already have this">
                 ✓
