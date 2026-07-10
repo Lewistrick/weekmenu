@@ -1,0 +1,13 @@
+<div id="grocery-action-messages" hx-swap-oob="innerHTML">
+    {% if grocery_action_message %}
+    {% with messages=[grocery_action_message], message_scope="grocery-action" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% endif %}
+</div>
+{% include "partials/grocery-list-body.html" %}
+{% if grocery_add_reset_form %}
+<div id="grocery-add-form" hx-swap-oob="outerHTML">
+    {% include "partials/grocery-add-form.html" %}
+</div>
+{% endif %}

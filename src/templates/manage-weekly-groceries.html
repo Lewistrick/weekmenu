@@ -48,13 +48,13 @@
             <h2 class="section-title">Your weekly groceries</h2>
         </div>
         {% if weekly_groceries %}
-        <ul class="grocery-list">
+        <ul class="weekly-grocery-list">
             {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
             {% for row in weekly_groceries %}
             <li class="weekly-grocery-row">
-                <form method="post" action="/weekly-groceries/{{ row.id }}" class="inline-form weekly-grocery-edit-form">
-                    <div class="form-group">
-                        <div class="ingredient-input">
+                <form method="post" action="/weekly-groceries/{{ row.id }}"
+                    class="inline-form weekly-grocery-edit-form">
+                    <div class="ingredient-input">
                             <input type="text" name="ingredient" class="form-control" value="{{ row.name }}"
                                 required />
                             <input type="number" name="quantity" class="form-control" value="{{ row.quantity }}"
@@ -72,7 +72,6 @@
                             <button type="submit" class="btn btn-sm icon-btn" title="Save" aria-label="Save">💾</button>
                             <button type="button" class="btn btn-sm icon-btn" hx-delete="/weekly-groceries/{{ row.id }}"
                                 hx-target="body" hx-swap="innerHTML" title="Delete" aria-label="Delete">🗑️</button>
-                        </div>
                     </div>
                 </form>
             </li>

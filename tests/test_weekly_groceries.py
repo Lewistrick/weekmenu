@@ -22,7 +22,7 @@ async def test_grocery_list_shows_add_form(test_client: AsyncTestClient) -> None
     response = await test_client.get("/week-menu/grocery-list")
 
     assert response.status_code == 200
-    assert 'action="/week-menu/grocery-list/add"' in response.text
+    assert 'hx-post="/week-menu/grocery-list/add"' in response.text
     assert "🧺 Add weekly groceries" in response.text
     assert 'name="ingredient"' in response.text
 
@@ -293,3 +293,47 @@ async def test_add_weekly_groceries_when_none_exist(
 
     assert response.status_code == 200
     assert "You have no weekly groceries yet." in response.text
+
+
+@pytest.mark.asyncio
+async def test_add_weekly_groceries_skips_when_all_already_on_list(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Weekly groceries already on the list should not be added again."""
+    grams = await _unit(default_user, "g")
+    oats = await Ingredient.create(owner=default_user, name="oats")
+    await WeeklyGrocery.create(
+        owner=default_user, ingredient=oats, quantity=500, unit=grams
+    )
+    await test_client.post(
+        "/week-menu/grocery-list/add-weekly",
+        follow_redirects=True,
+    )
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/add-weekly",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "already on the grocery list" in response.text
+
+
+@pytest.mark.asyncio
+async def test_add_custom_grocery_htmx_returns_partial(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """HTMX grocery adds should update the list body without a full page reload."""
+    response = await test_client.post(
+        "/week-menu/grocery-list/add",
+        data={"ingredient": "bananas", "quantity": "4", "unit": "st"},
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert "<!DOCTYPE html>" not in response.text
+    assert 'id="grocery-list-body"' in response.text
+    assert ">bananas</span>" in response.text
+    assert "Added bananas to your grocery list." in response.text

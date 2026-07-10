@@ -561,6 +561,63 @@ def grocery_line_key(ingredient_id: int, unit: str) -> str:
     return f"{ingredient_id}-{unit.strip()}"
 
 
+def remove_grocery_line_state(request: Request, line_keys: set[str]) -> None:
+    """Drop sorting state for grocery lines that no longer exist."""
+    if not line_keys:
+        return
+    already_have = load_already_have_line_keys(request) - line_keys
+    request.session[_scoped_key(request, GROCERY_ALREADY_HAVE_KEY)] = sorted(
+        already_have
+    )
+    to_check = load_to_check_line_keys(request) - line_keys
+    request.session[_scoped_key(request, GROCERY_TO_CHECK_KEY)] = sorted(to_check)
+    line_shops = load_grocery_line_shops(request)
+    for key in line_keys:
+        line_shops.pop(key, None)
+    request.session[_scoped_key(request, GROCERY_LINE_SHOPS_KEY)] = line_shops
+
+
+async def prune_orphaned_grocery_lines(
+    request: Request, owner_id: int, items: list[GroceryItem] | None = None
+) -> list[GroceryItem]:
+    """Remove grocery lines whose ingredients no longer exist for the user.
+
+    Grocery lists are stored in the session and can outlive deleted ingredients.
+    This drops those stale lines and clears any related sorting state.
+    """
+    working = list(items if items is not None else load_grocery_list(request))
+    if not working:
+        return working
+
+    from src.models import Ingredient
+
+    ingredient_ids = {item["ingredient_id"] for item in working}
+    valid_ids = set(
+        await Ingredient.filter(id__in=ingredient_ids, owner_id=owner_id).values_list(
+            "id", flat=True
+        )
+    )
+    pruned = [item for item in working if item["ingredient_id"] in valid_ids]
+    if len(pruned) == len(working):
+        return pruned
+
+    removed_keys = {
+        grocery_line_key(item["ingredient_id"], item["unit"])
+        for item in working
+        if item["ingredient_id"] not in valid_ids
+    }
+    save_grocery_list(request, pruned)
+    remove_grocery_line_state(request, removed_keys)
+    return pruned
+
+
+def find_grocery_line_in_session(
+    request: Request, ingredient_id: int, unit: str
+) -> GroceryItem | None:
+    """Return a grocery line from the session list, if present."""
+    return find_grocery_line(load_grocery_list(request), ingredient_id, unit)
+
+
 def find_grocery_line(
     items: list[GroceryItem], ingredient_id: int, unit: str
 ) -> GroceryItem | None:

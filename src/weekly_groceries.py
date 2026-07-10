@@ -11,7 +11,7 @@ from typing import Any, TypedDict
 
 from src.catalog import get_or_create_ingredient
 from src.models import Unit, WeeklyGrocery
-from src.week_menu import GroceryItem, parse_grocery_quantity
+from src.week_menu import GroceryItem, grocery_line_key, parse_grocery_quantity
 
 
 class WeeklyGroceryRow(TypedDict):
@@ -52,6 +52,24 @@ async def weekly_groceries_as_items(owner_id: int) -> list[GroceryItem]:
             quantity=row["quantity"],
         )
         for row in await load_weekly_groceries(owner_id)
+    ]
+
+
+def weekly_groceries_missing_from_list(
+    weekly_items: list[GroceryItem], current_items: list[GroceryItem]
+) -> list[GroceryItem]:
+    """Return weekly groceries that are not yet on the grocery list.
+
+    A weekly grocery counts as present when the same ingredient and unit
+    already appear as a line on the current grocery list.
+    """
+    current_keys = {
+        grocery_line_key(item["ingredient_id"], item["unit"]) for item in current_items
+    }
+    return [
+        item
+        for item in weekly_items
+        if grocery_line_key(item["ingredient_id"], item["unit"]) not in current_keys
     ]
 
 

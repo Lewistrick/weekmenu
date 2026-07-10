@@ -1295,3 +1295,49 @@ def test_save_and_load_grocery_list_round_trip() -> None:
     assert loaded == [GroceryItem(ingredient_id=3, name="", unit="g", quantity=250.0)]
     mark_already_have_line(request, 3, "g")  # type: ignore[arg-type]
     unmark_already_have_line(request, 3, "g")  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_prunes_deleted_ingredient(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Grocery lines for deleted ingredients should be removed when the list loads."""
+    ingredient = await Ingredient.create(owner=default_user, name="ghost-pepper")
+    await test_client.post(
+        "/week-menu/grocery-list/add",
+        data={"ingredient": "ghost-pepper", "quantity": "1", "unit": "st"},
+        follow_redirects=True,
+    )
+    await ingredient.delete()
+
+    response = await test_client.get("/week-menu/grocery-list")
+
+    assert response.status_code == 200
+    assert ">ghost-pepper</span>" not in response.text
+    assert f">#{ingredient.id}</span>" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_grocery_list_sorting_works_without_catalog_ingredient(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Sorting actions should work from session data even before orphan pruning."""
+    ingredient = await Ingredient.create(owner=default_user, name="stale-item")
+    await test_client.post(
+        "/week-menu/grocery-list/add",
+        data={"ingredient": "stale-item", "quantity": "2", "unit": "st"},
+        follow_redirects=True,
+    )
+    ingredient_id = ingredient.id
+    await ingredient.delete()
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": ingredient_id, "unit": "st"},
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert "Already have" in response.text

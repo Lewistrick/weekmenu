@@ -48,10 +48,10 @@ from src.week_menu import (
     load_to_check_line_keys,
     empty_already_have_list,
     empty_to_check_list,
-    find_grocery_line,
+    find_grocery_line_in_session,
     has_grocery_list_items,
-    is_grocery_list_initialized,
     hydrate_grocery_item_names,
+    is_grocery_list_initialized,
     load_grocery_list,
     mark_already_have_line,
     mark_shop_already_have,
@@ -60,6 +60,7 @@ from src.week_menu import (
     parse_grocery_quantity,
     pop_grocery_action_flash,
     pop_grocery_suppress_preserve,
+    prune_orphaned_grocery_lines,
     reset_grocery_plan,
     save_grocery_list,
     set_grocery_action_flash,
@@ -77,7 +78,10 @@ from src.week_menu import (
     set_day_servings,
     toggle_pin,
 )
-from src.weekly_groceries import weekly_groceries_as_items
+from src.weekly_groceries import (
+    weekly_groceries_as_items,
+    weekly_groceries_missing_from_list,
+)
 
 
 class WeekMenuController(Controller):
@@ -303,6 +307,7 @@ class WeekMenuController(Controller):
         *,
         preserve_existing: bool = True,
         action_message: str | None = None,
+        grocery_add_reset_form: bool = False,
     ) -> dict:
         """Build shared grocery-list context for HTML and plaintext export."""
         user_id = await self._viewer_id(request)
@@ -316,8 +321,10 @@ class WeekMenuController(Controller):
 
         grocery_message: str | None = None
         if preserve_existing and is_grocery_list_initialized(request):
-            grocery_items = await hydrate_grocery_item_names(
-                user_id, load_grocery_list(request)
+            grocery_items = await prune_orphaned_grocery_lines(
+                request,
+                user_id,
+                await hydrate_grocery_item_names(user_id, load_grocery_list(request)),
             )
             if grocery_items and not pop_grocery_suppress_preserve(request):
                 grocery_message = (
@@ -368,7 +375,29 @@ class WeekMenuController(Controller):
             "units": units,
             "grocery_message": grocery_message,
             "grocery_action_message": action_message,
+            "grocery_add_reset_form": grocery_add_reset_form,
         }
+
+    async def _grocery_add_response(
+        self,
+        request: Request,
+        *,
+        action_message: str | None = None,
+        grocery_add_reset_form: bool = False,
+    ) -> Template | Redirect:
+        """Return an HTMX partial update or redirect after adding groceries."""
+        if request.headers.get("HX-Request"):
+            return Template(
+                template_name="partials/grocery-list-htmx-update.html",
+                context=await self._build_grocery_context(
+                    request,
+                    action_message=action_message,
+                    grocery_add_reset_form=grocery_add_reset_form,
+                ),
+            )
+        if action_message:
+            set_grocery_action_flash(request, action_message)
+        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
 
     async def _render_grocery_panel(
         self, request: Request, *, action_message: str | None = None
@@ -416,7 +445,20 @@ class WeekMenuController(Controller):
         self, request: Request, ingredient_id: int, unit: str
     ) -> GroceryItem:
         """Raise when a grocery line is not on the current list."""
-        return await self._owned_grocery_line(request, ingredient_id, unit)
+        item = find_grocery_line_in_session(request, ingredient_id, unit)
+        if item is None:
+            raise NotFoundException()
+        return item
+
+    @staticmethod
+    async def _hydrated_grocery_line(
+        request: Request, owner_id: int, ingredient_id: int, unit: str
+    ) -> GroceryItem:
+        """Return one grocery line from the session with a display name."""
+        item = find_grocery_line_in_session(request, ingredient_id, unit)
+        if item is None:
+            raise NotFoundException()
+        return (await hydrate_grocery_item_names(owner_id, [item]))[0]
 
     @staticmethod
     def _grocery_line_count_for_ingredient(
@@ -424,19 +466,6 @@ class WeekMenuController(Controller):
     ) -> int:
         """Return how many grocery lines exist for one ingredient."""
         return sum(1 for item in items if item["ingredient_id"] == ingredient_id)
-
-    async def _owned_grocery_line(
-        self, request: Request, ingredient_id: int, unit: str
-    ) -> GroceryItem:
-        """Return one grocery line owned by the current user."""
-        user_id = await self._viewer_id(request)
-        if await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id) is None:
-            raise NotFoundException()
-        items = await hydrate_grocery_item_names(user_id, load_grocery_list(request))
-        item = find_grocery_line(items, ingredient_id, unit)
-        if item is None:
-            raise NotFoundException()
-        return item
 
     @get(summary="Week menu planner page")
     async def week_menu_page(self, request: Request) -> Template:
@@ -592,7 +621,7 @@ class WeekMenuController(Controller):
         return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
 
     @post(path="/grocery-list/add", summary="Add a custom grocery to the list")
-    async def add_custom_grocery(self, request: Request) -> Redirect:
+    async def add_custom_grocery(self, request: Request) -> Template | Redirect:
         """Add a user-entered ingredient, amount, and unit to the grocery list."""
         user_id = await self._viewer_id(request)
         set_grocery_suppress_preserve(request)
@@ -602,12 +631,14 @@ class WeekMenuController(Controller):
         unit_abbrev = str(form_data.get("unit", "")).strip()
 
         unit = await Unit.find(unit_abbrev, owner_id=user_id) if unit_abbrev else None
+        action_message: str | None
+        reset_form = False
         if not name:
-            set_grocery_action_flash(request, "Enter an ingredient name.")
+            action_message = "Enter an ingredient name."
         elif quantity is None:
-            set_grocery_action_flash(request, "Enter a positive amount.")
+            action_message = "Enter a positive amount."
         elif unit is None:
-            set_grocery_action_flash(request, f"Could not find unit: {unit_abbrev}")
+            action_message = f"Could not find unit: {unit_abbrev}"
         else:
             ingredient, _ = await get_or_create_ingredient(user_id, name)
             await add_items_to_grocery_list(
@@ -622,33 +653,48 @@ class WeekMenuController(Controller):
                     )
                 ],
             )
-            set_grocery_action_flash(
-                request, f"Added {ingredient.name} to your grocery list."
-            )
-        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
+            action_message = f"Added {ingredient.name} to your grocery list."
+            reset_form = True
+        return await self._grocery_add_response(
+            request,
+            action_message=action_message,
+            grocery_add_reset_form=reset_form,
+        )
 
     @post(
         path="/grocery-list/add-weekly",
         summary="Add weekly groceries to the list",
     )
-    async def add_weekly_groceries_to_list(self, request: Request) -> Redirect:
-        """Add every saved weekly grocery to the current grocery list."""
+    async def add_weekly_groceries_to_list(
+        self, request: Request
+    ) -> Template | Redirect:
+        """Add saved weekly groceries that are not yet on the grocery list."""
         user_id = await self._viewer_id(request)
         set_grocery_suppress_preserve(request)
-        items = await weekly_groceries_as_items(user_id)
-        if not items:
-            set_grocery_action_flash(
-                request,
-                "You have no weekly groceries yet. Add some in Settings first.",
+        weekly_items = await weekly_groceries_as_items(user_id)
+        if not weekly_items:
+            action_message = (
+                "You have no weekly groceries yet. Add some in Settings first."
             )
         else:
-            await add_items_to_grocery_list(request, user_id, items)
-            count = len(items)
-            noun = "grocery" if count == 1 else "groceries"
-            set_grocery_action_flash(
-                request, f"Added {count} weekly {noun} to your grocery list."
+            current_items = (
+                await hydrate_grocery_item_names(user_id, load_grocery_list(request))
+                if is_grocery_list_initialized(request)
+                else []
             )
-        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
+            missing_items = weekly_groceries_missing_from_list(
+                weekly_items, current_items
+            )
+            if not missing_items:
+                action_message = (
+                    "Your weekly groceries are already on the grocery list."
+                )
+            else:
+                await add_items_to_grocery_list(request, user_id, missing_items)
+                count = len(missing_items)
+                noun = "grocery" if count == 1 else "groceries"
+                action_message = f"Added {count} weekly {noun} to your grocery list."
+        return await self._grocery_add_response(request, action_message=action_message)
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")
     async def grocery_list_export(self, request: Request) -> Response[str]:
@@ -679,7 +725,11 @@ class WeekMenuController(Controller):
             user_id, load_grocery_list(request)
         )
         set_grocery_line_shop(request, ingredient_id, unit, shop_id)
-        if self._grocery_line_count_for_ingredient(hydrated_items, ingredient_id) == 1:
+        if (
+            self._grocery_line_count_for_ingredient(hydrated_items, ingredient_id) == 1
+            and await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id)
+            is not None
+        ):
             await set_ingredient_shop(user_id, ingredient_id, shop_id)
 
         unmark_already_have_line(request, ingredient_id, unit)
@@ -780,7 +830,8 @@ class WeekMenuController(Controller):
         self, request: Request, ingredient_id: int, unit: str
     ) -> Template:
         """Return the read-only amount display for one grocery line."""
-        item = await self._owned_grocery_line(request, ingredient_id, unit)
+        user_id = await self._viewer_id(request)
+        item = await self._hydrated_grocery_line(request, user_id, ingredient_id, unit)
         return Template(
             template_name="partials/grocery-amount-display.html",
             context={"request": request, "item": item},
@@ -795,7 +846,7 @@ class WeekMenuController(Controller):
     ) -> Template:
         """Show inline editors for one grocery line's quantity and unit."""
         user_id = await self._viewer_id(request)
-        item = await self._owned_grocery_line(request, ingredient_id, unit)
+        item = await self._hydrated_grocery_line(request, user_id, ingredient_id, unit)
         units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return Template(
             template_name="partials/grocery-amount-editor.html",
@@ -810,13 +861,13 @@ class WeekMenuController(Controller):
         self, request: Request, ingredient_id: int, unit: str
     ) -> Response | Template:
         """Persist edited quantity and unit for one grocery line."""
-        await self._owned_grocery_line(request, ingredient_id, unit)
+        user_id = await self._viewer_id(request)
+        await self._require_grocery_line(request, ingredient_id, unit)
         form_data = await request.form()
         quantity = parse_grocery_quantity(form_data.get("quantity"))
         new_unit = str(form_data.get("unit", "")).strip()
         if quantity is None or not new_unit:
             raise NotFoundException()
-        user_id = await self._viewer_id(request)
         hydrated_items = await hydrate_grocery_item_names(
             user_id, load_grocery_list(request)
         )
@@ -834,7 +885,9 @@ class WeekMenuController(Controller):
             return await self._refresh_grocery_list_response(
                 request, action_message=merge_message
             )
-        item = await self._owned_grocery_line(request, ingredient_id, new_unit)
+        item = await self._hydrated_grocery_line(
+            request, user_id, ingredient_id, new_unit
+        )
         return Template(
             template_name="partials/grocery-amount-display.html",
             context={"request": request, "item": item},

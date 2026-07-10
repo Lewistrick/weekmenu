@@ -35,7 +35,7 @@
 ### Grocery lists by shop and plaintext export
 - Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.
 - At the top of the grocery list page you can **add your own groceries** that are unrelated to the week menu: enter an ingredient name, an amount, and pick a unit, then click **Add**. Adding an item that matches an existing line (same ingredient and unit) sums the amounts. If no list exists yet, adding an item starts one.
-- The top of the grocery list page also has an **🧺 Add weekly groceries** button that appends every saved weekly grocery to the current list in one click (see below).
+- The top of the grocery list page also has an **🧺 Add weekly groceries** button that appends every saved weekly grocery to the current list in one click (see below). Adding and weekly-grocery buttons update the list in place via HTMX without reloading the page.
 - Manage shops at `/shops/manage` (⚙️ Settings → 🏪 Shops). Each shop has a name plus foreground and background colors used on the grocery list.
 - Generating from the week menu creates a new list when empty, or lets you **Replace** the current list, **Add** week-menu groceries to it, or cancel. Visiting the grocery list page directly preserves a non-empty list and shows a notice instead of regenerating over your sorting work.
 - The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons, a **?** chip for items to verify later, and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked **To check** or **Already have** appear in subsections below the unsorted list and can be moved back with the same chips.
@@ -51,7 +51,7 @@
 - Keep a personal list of recurring groceries (staples you buy every week) that is unrelated to the week menu. Manage it at `/weekly-groceries/manage` (⚙️ Settings → 🧺 Weekly groceries).
 - Each weekly grocery has an ingredient name, an amount, and a unit. Names reuse your ingredient catalog (so shop assignments still apply), units must be existing units, and duplicates (same ingredient and unit) are rejected.
 - Weekly groceries are saved in the database per user, so they persist across sessions.
-- Add them all to your grocery list with the **🧺 Add weekly groceries** button at the top of the grocery list page; matching lines are merged with anything already on the list.
+- Add them all to your grocery list with the **🧺 Add weekly groceries** button at the top of the grocery list page; only groceries not already on the list are added, and matching lines are merged when they are added.
 
 ### Per-user catalog (ingredients, units, tags, shops)
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.

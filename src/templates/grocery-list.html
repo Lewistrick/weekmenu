@@ -12,11 +12,13 @@
     {% if grocery_message %}
     <div class="grocery-notice" role="status">{{ grocery_message }}</div>
     {% endif %}
-    {% if grocery_action_message %}
-    {% with messages=[grocery_action_message], message_scope="grocery-action" %}
-    {% include "partials/flash-messages.html" %}
-    {% endwith %}
-    {% endif %}
+    <div id="grocery-action-messages">
+        {% if grocery_action_message %}
+        {% with messages=[grocery_action_message], message_scope="grocery-action" %}
+        {% include "partials/flash-messages.html" %}
+        {% endwith %}
+        {% endif %}
+    </div>
 
     {% include "partials/grocery-add-form.html" %}
 
@@ -26,20 +28,7 @@
         <a href="/weekly-groceries/manage" class="btn btn-secondary">🧺 Weekly groceries</a>
     </div>
 
-    {% if unassigned_items or to_check_items or already_have_items or grocery_groups %}
-    {% include "partials/grocery-list-panel.html" %}
-
-    {% with copy_title="Copy for messaging", copy_text=grocery_export_text, textarea_id="grocery-copy-text" %}
-    {% include "partials/grocery-copy-section.html" %}
-    {% endwith %}
-    {% else %}
-    <section class="recipe-section">
-        <p class="search-placeholder">
-            No ingredients yet. Generate a list from your week menu, add your own groceries above,
-            or add your weekly groceries.
-        </p>
-    </section>
-    {% endif %}
+    {% include "partials/grocery-list-body.html" %}
 
     <section class="recipe-section">
         <h2 class="section-title">Days included</h2>

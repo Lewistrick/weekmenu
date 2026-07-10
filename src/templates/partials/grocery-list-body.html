@@ -1,0 +1,16 @@
+<div id="grocery-list-body">
+    {% if unassigned_items or to_check_items or already_have_items or grocery_groups %}
+    {% include "partials/grocery-list-panel.html" %}
+
+    {% with copy_title="Copy for messaging", copy_text=grocery_export_text, textarea_id="grocery-copy-text" %}
+    {% include "partials/grocery-copy-section.html" %}
+    {% endwith %}
+    {% else %}
+    <section class="recipe-section">
+        <p class="search-placeholder">
+            No ingredients yet. Generate a list from your week menu, add your own groceries above,
+            or add your weekly groceries.
+        </p>
+    </section>
+    {% endif %}
+</div>

@@ -1175,6 +1175,23 @@ div.recipe-detail {
     gap: 0.35rem;
 }
 
+.weekly-grocery-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.weekly-grocery-list .ingredient-input {
+    padding: 0.35rem 0.5rem;
+}
+
+.weekly-grocery-row {
+    margin: 0;
+}
+
 .grocery-item-name {
     font-weight: 600;
     color: #e8e8e8;
