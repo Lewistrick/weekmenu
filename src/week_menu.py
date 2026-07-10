@@ -31,10 +31,6 @@ DAY_LABELS: dict[str, str] = {
     "sunday": "Sunday",
 }
 
-SESSION_KEY = "week_menu"
-START_DAY_SESSION_KEY = "week_menu_start_day"
-TAG_CONSTRAINTS_SESSION_KEY = "week_menu_tag_constraints"
-INCLUDE_PUBLIC_SESSION_KEY = "week_menu_include_public"
 GROCERY_ACTION_FLASH_KEY = "grocery_action_flash"
 GROCERY_SUPPRESS_PRESERVE_KEY = "grocery_suppress_preserve"
 
@@ -44,9 +40,8 @@ DEFAULT_SERVINGS = 2
 def _scoped_key(request: Request, base: str) -> str:
     """Return a session key namespaced to the logged-in user.
 
-    Week menu state lives in the cookie session. Namespacing each key with the
-    current user id keeps one user's plan from leaking to the next account that
-    logs in on the same browser.
+    Namespacing flash-message keys with the current user id keeps one user's
+    notices from leaking to the next account that logs in on the same browser.
 
     Args:
         request: The incoming request carrying the session.
@@ -103,7 +98,7 @@ def normalize_servings(value: Any, default_servings: int = DEFAULT_SERVINGS) -> 
     """Coerce a servings value into a positive integer.
 
     Args:
-        value: Raw servings value from a form or the session.
+        value: Raw servings value from form input.
 
     Returns:
         A positive integer, falling back to ``default_servings`` when invalid.

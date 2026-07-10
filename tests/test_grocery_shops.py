@@ -358,7 +358,7 @@ async def test_grocery_list_can_edit_amount(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Grocery amounts should be editable and persisted in the session list."""
+    """Grocery amounts should be editable and persisted in the grocery list."""
     recipe = await Recipe.create(
         name="Edit stew",
         description="edit amount test",
@@ -462,10 +462,10 @@ async def test_generate_grocery_list_keeps_user_logged_in(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Generating a grocery list should keep the session and land on the list page."""
+    """Generating a grocery list should keep the user logged in and land on the list page."""
     recipe = await Recipe.create(
-        name="Session stew",
-        description="session test",
+        name="Login stew",
+        description="login test",
         prep_time_minutes=5,
         cook_time_minutes=10,
         servings=2,
@@ -495,14 +495,14 @@ async def test_generate_grocery_list_keeps_user_logged_in(
 
 
 @pytest.mark.asyncio
-async def test_grocery_list_session_stores_compact_items(
+async def test_grocery_list_hydrates_persisted_ingredient_names(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Persisted grocery items should omit names and hydrate them when rendering."""
+    """Persisted grocery items should hydrate ingredient names when rendering."""
     recipe = await Recipe.create(
         name="Compact stew",
-        description="compact session test",
+        description="hydrate names test",
         prep_time_minutes=5,
         cook_time_minutes=10,
         servings=2,
