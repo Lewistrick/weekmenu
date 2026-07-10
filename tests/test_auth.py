@@ -214,6 +214,6 @@ async def test_profile_settings_can_be_updated(test_client: AsyncTestClient) -> 
 
     user = await User.get_by_username(DEFAULT_USERNAME)
     assert user is not None
-    settings = load_user_settings(user.id)
+    settings = await load_user_settings(user.id)
     assert settings["language"] == "🇳🇱 Nederlands"
     assert settings["servings"] == 5

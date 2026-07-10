@@ -4,6 +4,8 @@
 ### To start the app
 - `uv run litestar --app src.app:app run -r`
     - (remove `-r` when not editing the code)
+- To open the app on other devices on your home network, bind to all interfaces:
+  `uv run litestar --app src.app:app run -r --host 0.0.0.0 --port 8000`
 
 ### Accounts and login
 - The app requires an account. Visiting any page while logged out redirects to the login page.
@@ -21,15 +23,13 @@
 - Trying to edit or delete a recipe you do not own returns a 404.
 
 ### Per-user week menu
-- Your week menu, start day, tag constraints, and grocery list are stored per user in the session, so logging out and into another account on the same browser shows that account's own plan rather than the previous user's.
+- Your week menu, start day, tag constraints, include-public preference, and grocery list are stored in the database per account, so they follow you across browsers and devices when you log in.
 - Week menu randomization and per-day recipe search use your own recipes by default; enable **Include public recipes** in the week menu toolbar to widen the pool.
 - New empty week-menu slots use your profile setting for default servings.
 
-### Per-user settings files
-- Account settings are stored as JSON files in `user_settings/{user_id}.json` in the project root.
-- Each file stores:
-  - `language` as a full language label prefixed with a flag (for example: `🇳🇱 Nederlands`)
-  - `servings` as the default servings value used when week-menu day slots are empty
+### Account settings
+- Language and default week-menu servings are stored in the database per account.
+- Legacy `user_settings/{user_id}.json` files are imported automatically the first time settings are loaded after upgrading.
 - Settings are editable from `/profile` under the **Settings** section.
 
 ### Grocery lists by shop and plaintext export

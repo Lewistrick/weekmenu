@@ -22,12 +22,8 @@ from src.models import (
     TagCategory,
     Unit,
 )
-from src.week_menu import (
-    assign_recipe_to_unpinned_day,
-    load_start_day,
-    load_week_menu,
-    save_week_menu,
-)
+from src.plan_store import load_start_day, load_week_menu, save_week_menu
+from src.week_menu import assign_recipe_to_unpinned_day
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
 IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
@@ -355,8 +351,8 @@ class RecipeController(Controller):
             raise NotFoundException()
 
         source = str((await request.form()).get("source", "view"))
-        menu = load_week_menu(request)
-        start_day = load_start_day(request)
+        menu = await load_week_menu(user_id)
+        start_day = await load_start_day(user_id)
         assigned_day = assign_recipe_to_unpinned_day(
             menu, recipe.id, start_day=start_day
         )
@@ -366,7 +362,7 @@ class RecipeController(Controller):
         if assigned_day is None:
             warnings.append("All days are pinned. Unpin a day before adding a recipe.")
         else:
-            save_week_menu(request, menu)
+            await save_week_menu(user_id, menu)
             messages.append(f"Added to week menu: {assigned_day.title()}")
 
         if source == "missing-tags":

@@ -568,7 +568,9 @@ async def test_week_menu_uses_default_servings_from_user_settings(
     default_user: User,
 ) -> None:
     """Week menu should prefill day servings from user settings."""
-    save_user_settings(default_user.id, UserSettings(language="🇬🇧 English", servings=4))
+    await save_user_settings(
+        default_user.id, UserSettings(language="🇬🇧 English", servings=4)
+    )
 
     response = await test_client.get("/week-menu")
 
