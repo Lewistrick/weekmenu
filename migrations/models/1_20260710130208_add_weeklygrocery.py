@@ -1,9 +1,12 @@
+"""Add the weekly grocery table."""
+
 from tortoise import BaseDBAsyncClient
 
 RUN_IN_TRANSACTION = True
 
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
+    """Create the weekly grocery table."""
     return """
         CREATE TABLE IF NOT EXISTS "weeklygrocery" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -15,6 +18,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
+    """Drop the weekly grocery table."""
     return """
         DROP TABLE IF EXISTS "weeklygrocery";"""
 

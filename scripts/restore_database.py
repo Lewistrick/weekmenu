@@ -38,6 +38,7 @@ def _copy_backup_data(
     counts: dict[str, int] = {}
 
     def fetch_backup(query: str) -> list[sqlite3.Row]:
+        """Run a read query against the legacy backup database."""
         return list(backup.execute(query))
 
     try:

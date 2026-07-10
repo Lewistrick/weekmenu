@@ -1,3 +1,5 @@
+"""Ingredient lookup and creation endpoints."""
+
 from litestar import Controller, Request, get, post
 from litestar.exceptions import NotFoundException
 from tortoise.contrib.pydantic import pydantic_model_creator
@@ -10,6 +12,8 @@ IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
 
 
 class IngredientController(Controller):
+    """List and create ingredients for the logged-in user."""
+
     path = "/ingredients"
     tags = ["ingredients"]
 

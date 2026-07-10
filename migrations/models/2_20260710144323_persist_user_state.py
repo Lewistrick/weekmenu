@@ -1,9 +1,12 @@
+"""Persist week menus, grocery lists, and user preferences in the database."""
+
 from tortoise import BaseDBAsyncClient
 
 RUN_IN_TRANSACTION = True
 
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
+    """Create tables for persisted user state."""
     return """
         CREATE TABLE IF NOT EXISTS "grocerylistitem" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -45,6 +48,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
+    """Drop persisted user-state tables."""
     return """
         DROP TABLE IF EXISTS "userpreference";
         DROP TABLE IF EXISTS "weekmenuslot";

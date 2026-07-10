@@ -45,6 +45,7 @@ async def test_module_init_db_patch_does_not_replace_startup_handlers(
     calls: list[str] = []
 
     async def tracked_init_db() -> None:
+        """Record that a patched init handler was invoked."""
         calls.append("patched")
 
     monkeypatch.setattr("src.app.init_db", tracked_init_db)

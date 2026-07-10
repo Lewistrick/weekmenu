@@ -407,7 +407,9 @@ async def remove_grocery_line_state(user_id: int, line_keys: set[str]) -> None:
     """Drop sorting state for grocery lines that no longer exist."""
     if not line_keys:
         return
-    rows = await GroceryListItem.filter(user_id=user_id).select_related("unit", "ingredient")
+    rows = await GroceryListItem.filter(user_id=user_id).select_related(
+        "unit", "ingredient"
+    )
     for row in rows:
         key = grocery_line_key(row.ingredient.id, row.unit.abbrev if row.unit else "")
         if key in line_keys:

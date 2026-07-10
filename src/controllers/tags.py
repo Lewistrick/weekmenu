@@ -1,3 +1,5 @@
+"""Tag and tag-category management endpoints."""
+
 from litestar import Controller, Request, delete, get, post
 from litestar.exceptions import NotFoundException
 from litestar.response import Template
@@ -12,6 +14,8 @@ TagSchema = pydantic_model_creator(Tag, name="Tag")
 
 
 class TagController(Controller):
+    """Manage tag groups and individual tags."""
+
     path = "/tags"
     tags = ["tags"]
 

@@ -1,3 +1,5 @@
+"""HTMX helper endpoints for empty placeholder elements."""
+
 from litestar import Controller, get
 
 

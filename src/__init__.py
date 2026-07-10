@@ -1,0 +1,1 @@
+"""Weekmenu application package."""

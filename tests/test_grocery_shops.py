@@ -124,7 +124,10 @@ def test_format_week_menu_export_skips_empty_days() -> None:
     """Week menu export should only include days with a recipe."""
 
     class RecipeStub:
+        """Minimal recipe-like object for export formatting tests."""
+
         def __init__(self, name: str) -> None:
+            """Store a recipe name for export output."""
             self.name = name
 
     text = format_week_menu_export(

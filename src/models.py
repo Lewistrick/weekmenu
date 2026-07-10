@@ -1,3 +1,5 @@
+"""Tortoise ORM models for recipes, groceries, and user data."""
+
 from typing import cast
 
 from tortoise.expressions import Q
@@ -140,7 +142,8 @@ class RecipeIngredient(Model):
     quantity = FloatField(required=True)
     unit = ForeignKeyField("models.Unit", "unit")
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return a human-readable quantity, unit, and ingredient name."""
         unit_name = Unit.get(id=self.unit).values("abbrev")
         ingredient_name = Ingredient.get(id=self.ingredient).values("name")
         return f"{self.quantity} {unit_name} {ingredient_name}"
@@ -265,6 +268,8 @@ class GroceryListItem(Model):
 
 
 class Shop(Model):
+    """A grocery shop with display colours for the grocery list UI."""
+
     id = IntField(primary_key=True)
     name = TextField(required=True)
     foreground_color = TextField(default="#ffffff")
@@ -273,6 +278,8 @@ class Shop(Model):
 
 
 class UserIngredientShop(Model):
+    """Default shop assignment for an ingredient owned by a user."""
+
     id = IntField(primary_key=True)
     user = ForeignKeyField("models.User", related_name="ingredient_shops")
     ingredient = ForeignKeyField("models.Ingredient", related_name="user_shops")
@@ -290,7 +297,15 @@ class Unit(Model):
 
     @classmethod
     async def find(cls, query: str, *, owner_id: int) -> "Unit | None":
-        """Find a unit abbreviation or label for a specific user."""
+        """Find a unit by abbreviation or label for one user.
+
+        Args:
+            query: Abbreviation or singular/plural label to match.
+            owner_id: Owner whose units should be searched.
+
+        Returns:
+            The matching unit, or ``None`` when no row matches.
+        """
         return await cls.filter(
             Q(owner_id=owner_id)
             & (Q(abbrev=query) | Q(single=query) | Q(plural=query)),

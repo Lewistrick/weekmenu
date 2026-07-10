@@ -1,9 +1,12 @@
+"""Initial database schema for users, recipes, tags, and shops."""
+
 from tortoise import BaseDBAsyncClient
 
 RUN_IN_TRANSACTION = True
 
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
+    """Apply the initial schema migration."""
     return """
         CREATE TABLE IF NOT EXISTS "user" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -81,6 +84,7 @@ CREATE TABLE IF NOT EXISTS "aerich" (
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
+    """Revert the initial schema migration."""
     return """
         """
 

@@ -589,6 +589,7 @@ def _solve_random_assignment(
     unpinned_days = [day for day in WEEK_DAYS if not menu[day]["pinned"]]
 
     def backtrack(index: int) -> bool:
+        """Try recipe candidates for unpinned days from ``index`` onward."""
         if index == len(unpinned_days):
             return _all_minimums_met(assignment, constraints, recipe_tag_map)
 

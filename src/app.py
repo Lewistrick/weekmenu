@@ -1,3 +1,5 @@
+"""Litestar application entry point and global middleware."""
+
 from pathlib import Path
 from typing import cast
 
@@ -89,6 +91,7 @@ template_config = cast(
 
 @get("/", tags=["home"])
 async def index(request: Request) -> Template:
+    """Render the home page."""
     return Template(template_name="index.html", context={"request": request})
 
 
@@ -105,6 +108,7 @@ async def init_db() -> None:
 
 
 async def close_db() -> None:
+    """Close database connections on application shutdown."""
     await close_database()
 
 

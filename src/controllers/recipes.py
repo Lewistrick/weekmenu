@@ -1,3 +1,5 @@
+"""Recipe browsing, editing, search, and import endpoints."""
+
 import random
 from typing import Annotated, Any, cast
 
@@ -30,12 +32,16 @@ IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
 
 
 class RecipeIngredientDetail(BaseModel):
+    """One ingredient line submitted when creating a recipe."""
+
     name: str
     quantity: float
     unit: str
 
 
 class RecipeController(Controller):
+    """HTTP routes for recipes, ingredients, tags, and search."""
+
     path = "/recipes"
     tags = ["recipes"]
 
@@ -244,6 +250,7 @@ class RecipeController(Controller):
 
     @get(path="/view/{recipe_id:int}", summary="Get the page to view a recipe")
     async def view_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        """Render the read-only recipe detail page."""
         user_id = await self._current_user_id(request)
         recipe = await Recipe.filter(
             self._visible_filter(user_id), id=recipe_id
@@ -398,6 +405,7 @@ class RecipeController(Controller):
 
     @get(path="/edit/{recipe_id:int}", summary="Get the page to edit a recipe")
     async def edit_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        """Render the recipe editor for an owned recipe."""
         user_id = await self._current_user_id(request)
         recipe = await self._get_owned_recipe(request, recipe_id)
 
@@ -417,6 +425,7 @@ class RecipeController(Controller):
 
     @get(path="/delete/{recipe_id:int}", summary="Show the delete confirmation")
     async def delete_recipe_partial(self, request: Request, recipe_id: int) -> Template:
+        """Return the inline delete-confirmation partial."""
         await self._get_owned_recipe(request, recipe_id)
         return Template(
             template_name="partials/delete-confirmation.html",
@@ -500,6 +509,7 @@ class RecipeController(Controller):
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
+        """Toggle whether an owned recipe is public."""
         recipe = await self._get_owned_recipe(request, recipe_id)
 
         # The "Public recipe" switch is checked when the recipe is public.
@@ -519,6 +529,7 @@ class RecipeController(Controller):
             dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
         ],
     ) -> Template:
+        """Toggle whether an owned recipe is enabled for week-menu use."""
         recipe = await self._get_owned_recipe(request, recipe_id)
 
         recipe.enabled = data.get("enabled") is not None
@@ -808,6 +819,7 @@ class RecipeController(Controller):
         path="/delete-confirmation/{recipe_id:int}", summary="Delete the recipe by ID."
     )
     async def delete_recipe_page(self, request: Request, recipe_id: int) -> Template:
+        """Delete an owned recipe and return to the home page."""
         recipe = await self._get_owned_recipe(request, recipe_id)
         await recipe.delete()
         return Template(
@@ -842,6 +854,7 @@ class RecipeController(Controller):
     async def search_by_query(
         self, request: Request, search: str | None = None
     ) -> Template:
+        """Search recipes by text and optional tag-group filters."""
         tag_filters: dict[int, int] = {}
         for key, value in request.query_params.items():
             if not key.startswith("tag_group_") or not value:
@@ -921,11 +934,13 @@ class RecipeController(Controller):
 
     @get(path="/{recipe_id:int}", summary="Get one recipe by id")
     async def from_id(self, request: Request, recipe_id: int) -> RecipeSchema | None:  # type: ignore
+        """Return one visible recipe as JSON."""
         recipe = await self._get_visible_recipe(request, recipe_id)
         return await RecipeSchema.from_tortoise_orm(recipe)
 
     @delete(path="/{recipe_id:int}", summary="Remove one recipe by id")
     async def delete(self, request: Request, recipe_id: int) -> None:
+        """Delete an owned recipe via the JSON API."""
         recipe = await self._get_owned_recipe(request, recipe_id)
         await recipe.delete()
 
