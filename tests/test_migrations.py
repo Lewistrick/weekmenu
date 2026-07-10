@@ -32,6 +32,26 @@ WEEKLY_GROCERY_COLUMNS = {
     "unit_id",
 }
 
+USER_PREFERENCE_COLUMNS = {
+    "id",
+    "user_id",
+    "language",
+    "default_servings",
+    "start_day",
+    "include_public",
+    "grocery_list_initialized",
+}
+
+GROCERY_LIST_ITEM_COLUMNS = {
+    "id",
+    "user_id",
+    "ingredient_id",
+    "unit_id",
+    "quantity",
+    "status",
+    "shop_id",
+}
+
 
 def _table_columns(db_file: Path, table: str) -> set[str]:
     """Return the column names of a table in the given sqlite database."""
@@ -85,3 +105,20 @@ async def test_migrations_create_weekly_grocery_table(tmp_path: Path) -> None:
         await _apply_migration(db_file, migration_path)
 
     assert WEEKLY_GROCERY_COLUMNS.issubset(_table_columns(db_file, "weeklygrocery"))
+
+
+@pytest.mark.asyncio
+async def test_migrations_create_user_state_tables(tmp_path: Path) -> None:
+    """All migrations together should create persisted user-state tables."""
+    db_file = tmp_path / "migrated.sqlite3"
+    sqlite3.connect(db_file).close()
+
+    for migration_path in MIGRATION_FILES:
+        await _apply_migration(db_file, migration_path)
+
+    assert USER_PREFERENCE_COLUMNS.issubset(_table_columns(db_file, "userpreference"))
+    assert GROCERY_LIST_ITEM_COLUMNS.issubset(
+        _table_columns(db_file, "grocerylistitem")
+    )
+    assert "user_id" in _table_columns(db_file, "weekmenuslot")
+    assert "user_id" in _table_columns(db_file, "weekmenutagconstraint")

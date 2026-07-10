@@ -13,6 +13,7 @@ from src.auth import (
 )
 from src.catalog import seed_default_units
 from src.models import Ingredient, Recipe, Shop, Tag, TagCategory, Unit, User
+from src.plan_store import ensure_user_preference
 from src.user_settings import (
     UserSettings,
     delete_user_settings,
@@ -146,6 +147,7 @@ class AuthController(Controller):
         if is_first_account:
             await _claim_restored_data(user)
         await seed_default_units(user)
+        await ensure_user_preference(user.id)
 
         login_user(request, user)
         logger.info(f"User registered: {user.username}")
@@ -189,7 +191,9 @@ class AuthController(Controller):
         if servings < 1:
             servings = 1
 
-        save_user_settings(user.id, UserSettings(language=language, servings=servings))
+        await save_user_settings(
+            user.id, UserSettings(language=language, servings=servings)
+        )
         return await self._render_profile(request, messages=["Settings updated."])
 
     @post(path="/profile/password", summary="Change password")
@@ -242,7 +246,7 @@ class AuthController(Controller):
         """Render the profile page with the current user and optional feedback."""
         user = await get_current_user(request)
         settings = (
-            load_user_settings(user.id)
+            await load_user_settings(user.id)
             if user is not None
             else UserSettings(language="🇬🇧 English", servings=2)
         )

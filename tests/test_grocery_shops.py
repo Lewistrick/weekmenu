@@ -9,9 +9,7 @@ from src.grocery import (
     split_grocery_lists,
 )
 from src.models import Ingredient, Recipe, RecipeIngredient, Shop, Unit, User
-from src.shops import ShopInfo, load_ingredient_shop_ids, set_ingredient_shop
-from src.week_menu import (
-    GroceryItem,
+from src.plan_store import (
     empty_already_have_list,
     empty_to_check_list,
     load_grocery_list,
@@ -21,6 +19,8 @@ from src.week_menu import (
     unmark_already_have_line,
     update_grocery_line,
 )
+from src.shops import ShopInfo, load_ingredient_shop_ids, set_ingredient_shop
+from src.week_menu import GroceryItem
 
 
 def test_split_grocery_lists_separates_unassigned_and_shops() -> None:
@@ -1187,114 +1187,96 @@ async def test_grocery_list_merges_duplicate_unit_lines(
     assert response.headers.get("HX-Refresh") == "true"
 
 
-def test_update_grocery_line_merges_matching_unit() -> None:
+@pytest.mark.asyncio
+async def test_update_grocery_line_merges_matching_unit(default_user: User) -> None:
     """Unit changes should combine quantities for the same ingredient-unit pair."""
-
-    class Session(dict):
-        pass
-
-    class RequestStub:
-        def __init__(self) -> None:
-            self.session = Session({"user_id": 1})
-
-    request = RequestStub()
-    save_grocery_list(
-        request,  # type: ignore[arg-type]
+    flour = await Ingredient.create(owner=default_user, name="flour")
+    await save_grocery_list(
+        default_user.id,
         [
-            GroceryItem(ingredient_id=4, name="flour", unit="g", quantity=500.0),
-            GroceryItem(ingredient_id=4, name="flour", unit="kg", quantity=1.0),
+            GroceryItem(ingredient_id=flour.id, name="flour", unit="g", quantity=500.0),
+            GroceryItem(ingredient_id=flour.id, name="flour", unit="kg", quantity=1.0),
         ],
     )
 
-    success, message = update_grocery_line(
-        request,  # type: ignore[arg-type]
-        4,
+    success, message = await update_grocery_line(
+        default_user.id,
+        flour.id,
         "g",
         quantity=100.0,
         unit="kg",
         items=[
-            GroceryItem(ingredient_id=4, name="flour", unit="g", quantity=500.0),
-            GroceryItem(ingredient_id=4, name="flour", unit="kg", quantity=1.0),
+            GroceryItem(ingredient_id=flour.id, name="flour", unit="g", quantity=500.0),
+            GroceryItem(ingredient_id=flour.id, name="flour", unit="kg", quantity=1.0),
         ],
     )
 
     assert success is True
     assert message == "Combined with existing flour (kg)."
-    loaded = load_grocery_list(request)  # type: ignore[arg-type]
+    loaded = await load_grocery_list(default_user.id)
     assert len(loaded) == 1
     assert loaded[0]["unit"] == "kg"
     assert loaded[0]["quantity"] == 101.0
 
 
-def test_empty_to_check_list_removes_items() -> None:
+@pytest.mark.asyncio
+async def test_empty_to_check_list_removes_items(default_user: User) -> None:
     """Clearing to-check should delete those groceries from the plan."""
-
-    class Session(dict):
-        pass
-
-    class RequestStub:
-        def __init__(self) -> None:
-            self.session = Session({"user_id": 1})
-
-    request = RequestStub()
-    save_grocery_list(
-        request,  # type: ignore[arg-type]
+    salt = await Ingredient.create(owner=default_user, name="salt")
+    rice = await Ingredient.create(owner=default_user, name="rice")
+    await save_grocery_list(
+        default_user.id,
         [
-            GroceryItem(ingredient_id=1, name="salt", unit="g", quantity=5.0),
-            GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0),
+            GroceryItem(ingredient_id=salt.id, name="salt", unit="g", quantity=5.0),
+            GroceryItem(ingredient_id=rice.id, name="rice", unit="g", quantity=200.0),
         ],
     )
-    mark_to_check_line(request, 1, "g")  # type: ignore[arg-type]
+    await mark_to_check_line(default_user.id, salt.id, "g")
 
-    empty_to_check_list(request)  # type: ignore[arg-type]
+    await empty_to_check_list(default_user.id)
 
-    loaded = load_grocery_list(request)  # type: ignore[arg-type]
-    assert loaded == [GroceryItem(ingredient_id=2, name="", unit="g", quantity=200.0)]
+    loaded = await load_grocery_list(default_user.id)
+    assert loaded == [
+        GroceryItem(ingredient_id=rice.id, name="rice", unit="g", quantity=200.0)
+    ]
 
 
-def test_empty_already_have_list_removes_items() -> None:
+@pytest.mark.asyncio
+async def test_empty_already_have_list_removes_items(default_user: User) -> None:
     """Emptying already-have should delete those groceries from the plan."""
-
-    class Session(dict):
-        pass
-
-    class RequestStub:
-        def __init__(self) -> None:
-            self.session = Session({"user_id": 1})
-
-    request = RequestStub()
-    save_grocery_list(
-        request,  # type: ignore[arg-type]
+    salt = await Ingredient.create(owner=default_user, name="salt")
+    rice = await Ingredient.create(owner=default_user, name="rice")
+    await save_grocery_list(
+        default_user.id,
         [
-            GroceryItem(ingredient_id=1, name="salt", unit="g", quantity=5.0),
-            GroceryItem(ingredient_id=2, name="rice", unit="g", quantity=200.0),
+            GroceryItem(ingredient_id=salt.id, name="salt", unit="g", quantity=5.0),
+            GroceryItem(ingredient_id=rice.id, name="rice", unit="g", quantity=200.0),
         ],
     )
-    mark_already_have_line(request, 1, "g")  # type: ignore[arg-type]
+    await mark_already_have_line(default_user.id, salt.id, "g")
 
-    empty_already_have_list(request)  # type: ignore[arg-type]
+    await empty_already_have_list(default_user.id)
 
-    loaded = load_grocery_list(request)  # type: ignore[arg-type]
-    assert loaded == [GroceryItem(ingredient_id=2, name="", unit="g", quantity=200.0)]
+    loaded = await load_grocery_list(default_user.id)
+    assert loaded == [
+        GroceryItem(ingredient_id=rice.id, name="rice", unit="g", quantity=200.0)
+    ]
 
 
-def test_save_and_load_grocery_list_round_trip() -> None:
-    """Session grocery list helpers should round-trip item data."""
-
-    class Session(dict):
-        pass
-
-    class RequestStub:
-        def __init__(self) -> None:
-            self.session = Session({"user_id": 1})
-
-    request = RequestStub()
-    items = [GroceryItem(ingredient_id=3, name="flour", unit="g", quantity=250.0)]
-    save_grocery_list(request, items)  # type: ignore[arg-type]
-    loaded = load_grocery_list(request)  # type: ignore[arg-type]
-    assert loaded == [GroceryItem(ingredient_id=3, name="", unit="g", quantity=250.0)]
-    mark_already_have_line(request, 3, "g")  # type: ignore[arg-type]
-    unmark_already_have_line(request, 3, "g")  # type: ignore[arg-type]
+@pytest.mark.asyncio
+async def test_save_and_load_grocery_list_round_trip(default_user: User) -> None:
+    """Grocery list helpers should round-trip item data."""
+    flour = await Ingredient.create(owner=default_user, name="flour")
+    items = [
+        GroceryItem(ingredient_id=flour.id, name="flour", unit="g", quantity=250.0)
+    ]
+    await save_grocery_list(default_user.id, items)
+    loaded = await load_grocery_list(default_user.id)
+    assert loaded == [
+        GroceryItem(ingredient_id=flour.id, name="flour", unit="g", quantity=250.0)
+    ]
+    await mark_already_have_line(default_user.id, flour.id, "g")
+    await unmark_already_have_line(default_user.id, flour.id, "g")
 
 
 @pytest.mark.asyncio
@@ -1319,23 +1301,21 @@ async def test_grocery_list_prunes_deleted_ingredient(
 
 
 @pytest.mark.asyncio
-async def test_grocery_list_sorting_works_without_catalog_ingredient(
+async def test_grocery_list_sorting_persists_in_database(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Sorting actions should work from session data even before orphan pruning."""
+    """Sorting actions should update the database-backed grocery list."""
     ingredient = await Ingredient.create(owner=default_user, name="stale-item")
     await test_client.post(
         "/week-menu/grocery-list/add",
         data={"ingredient": "stale-item", "quantity": "2", "unit": "st"},
         follow_redirects=True,
     )
-    ingredient_id = ingredient.id
-    await ingredient.delete()
 
     response = await test_client.post(
         "/week-menu/grocery-list/already-have",
-        data={"ingredient_id": ingredient_id, "unit": "st"},
+        data={"ingredient_id": ingredient.id, "unit": "st"},
         headers={"HX-Request": "true"},
     )
 

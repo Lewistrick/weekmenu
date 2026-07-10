@@ -26,56 +26,58 @@ from src.models import (
     Unit,
 )
 from src.shops import load_ingredient_shop_ids, load_shops, set_ingredient_shop
+from src.plan_store import (
+    add_items_to_grocery_list,
+    empty_already_have_list,
+    empty_to_check_list,
+    find_grocery_line_in_store,
+    has_grocery_list_items,
+    is_grocery_list_initialized,
+    load_already_have_line_keys,
+    load_grocery_list,
+    load_grocery_line_shops,
+    load_include_public,
+    load_start_day,
+    load_tag_constraints,
+    load_to_check_line_keys,
+    load_week_menu,
+    mark_already_have_line,
+    mark_shop_already_have,
+    mark_to_check_line,
+    prune_orphaned_grocery_lines,
+    reset_grocery_plan,
+    save_grocery_list,
+    save_include_public,
+    save_start_day,
+    save_tag_constraints,
+    save_week_menu,
+    set_grocery_line_shop,
+    unmark_already_have_line,
+    unmark_to_check_line,
+    update_grocery_line,
+)
 from src.user_settings import load_user_settings
 from src.week_menu import (
     GroceryItem,
     TagGroupConstraint,
-    add_items_to_grocery_list,
     build_day_rows,
     build_grocery_list,
     is_valid_day,
-    load_start_day,
-    load_tag_constraints,
-    load_week_menu,
     move_day,
     normalize_servings,
     ordered_week_days,
     parse_tag_constraints_from_form,
     randomize_week_menu,
-    load_include_public,
-    load_already_have_line_keys,
-    load_grocery_line_shops,
-    load_to_check_line_keys,
-    empty_already_have_list,
-    empty_to_check_list,
-    find_grocery_line_in_session,
-    has_grocery_list_items,
     hydrate_grocery_item_names,
-    is_grocery_list_initialized,
-    load_grocery_list,
-    mark_already_have_line,
-    mark_shop_already_have,
-    mark_to_check_line,
     merge_grocery_items,
     parse_grocery_quantity,
     pop_grocery_action_flash,
     pop_grocery_suppress_preserve,
-    prune_orphaned_grocery_lines,
-    reset_grocery_plan,
-    save_grocery_list,
-    set_grocery_action_flash,
-    set_grocery_line_shop,
-    set_grocery_suppress_preserve,
-    unmark_already_have_line,
-    unmark_to_check_line,
-    update_grocery_line,
-    save_start_day,
-    save_tag_constraints,
-    save_include_public,
-    save_week_menu,
     scale_ingredient_quantity,
     set_day_recipe,
     set_day_servings,
+    set_grocery_action_flash,
+    set_grocery_suppress_preserve,
     toggle_pin,
 )
 from src.weekly_groceries import (
@@ -94,7 +96,7 @@ class WeekMenuController(Controller):
     async def _default_servings(request: Request) -> int:
         """Return the current user's preferred default servings."""
         user_id = await WeekMenuController._viewer_id(request)
-        return load_user_settings(user_id)["servings"]
+        return (await load_user_settings(user_id))["servings"]
 
     @staticmethod
     async def _viewer_id(request: Request) -> int:
@@ -181,11 +183,11 @@ class WeekMenuController(Controller):
         """Build template context shared by week menu renders."""
         user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
-        start_day = load_start_day(request)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
+        start_day = await load_start_day(user_id)
         tag_groups = await self._tag_groups(user_id)
         category_ids = [group["category"].id for group in tag_groups]
-        constraints = load_tag_constraints(request, category_ids)
+        constraints = await load_tag_constraints(user_id, category_ids)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
         ]
@@ -207,11 +209,11 @@ class WeekMenuController(Controller):
             "days": await build_day_rows(menu, recipes_by_id, start_day),
             "start_day": start_day,
             "day_options": ordered_week_days("monday"),
-            "include_public": load_include_public(request),
+            "include_public": await load_include_public(user_id),
             "tag_constraint_rows": constraint_rows,
             "messages": messages or [],
             "warnings": warnings or [],
-            "grocery_list_has_items": has_grocery_list_items(request),
+            "grocery_list_has_items": await has_grocery_list_items(user_id),
         }
 
     @staticmethod
@@ -243,9 +245,10 @@ class WeekMenuController(Controller):
 
     async def _render_days(self, request: Request) -> Template:
         """Render the week menu day panel."""
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
-        start_day = load_start_day(request)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
+        start_day = await load_start_day(user_id)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
         ]
@@ -262,8 +265,9 @@ class WeekMenuController(Controller):
         self, request: Request
     ) -> list[GroceryItem]:
         """Build a fresh aggregated grocery list from the current week menu."""
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
         ]
@@ -312,19 +316,20 @@ class WeekMenuController(Controller):
         """Build shared grocery-list context for HTML and plaintext export."""
         user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
-        start_day = load_start_day(request)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
+        start_day = await load_start_day(user_id)
         recipe_ids = [
             slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
         ]
         recipes_by_id = await self._recipes_by_id(recipe_ids)
 
         grocery_message: str | None = None
-        if preserve_existing and is_grocery_list_initialized(request):
+        if preserve_existing and await is_grocery_list_initialized(user_id):
             grocery_items = await prune_orphaned_grocery_lines(
-                request,
                 user_id,
-                await hydrate_grocery_item_names(user_id, load_grocery_list(request)),
+                await hydrate_grocery_item_names(
+                    user_id, await load_grocery_list(user_id)
+                ),
             )
             if grocery_items and not pop_grocery_suppress_preserve(request):
                 grocery_message = (
@@ -333,17 +338,17 @@ class WeekMenuController(Controller):
                 )
         else:
             grocery_items = await self._grocery_items_from_week_menu(request)
-            reset_grocery_plan(request)
-            save_grocery_list(request, grocery_items)
+            await reset_grocery_plan(user_id)
+            await save_grocery_list(user_id, grocery_items)
 
         if action_message is None:
             action_message = pop_grocery_action_flash(request)
 
         ingredient_shop_ids = await load_ingredient_shop_ids(user_id)
         shops = await load_shops(user_id)
-        already_have_line_keys = load_already_have_line_keys(request)
-        to_check_line_keys = load_to_check_line_keys(request)
-        line_shop_ids = load_grocery_line_shops(request)
+        already_have_line_keys = await load_already_have_line_keys(user_id)
+        to_check_line_keys = await load_to_check_line_keys(user_id)
+        line_shop_ids = await load_grocery_line_shops(user_id)
         unassigned_items, to_check_items, already_have_items, grocery_groups = (
             split_grocery_lists(
                 grocery_items,
@@ -442,23 +447,23 @@ class WeekMenuController(Controller):
         )
 
     async def _require_grocery_line(
-        self, request: Request, ingredient_id: int, unit: str
+        self, user_id: int, ingredient_id: int, unit: str
     ) -> GroceryItem:
         """Raise when a grocery line is not on the current list."""
-        item = find_grocery_line_in_session(request, ingredient_id, unit)
+        item = await find_grocery_line_in_store(user_id, ingredient_id, unit)
         if item is None:
             raise NotFoundException()
         return item
 
     @staticmethod
     async def _hydrated_grocery_line(
-        request: Request, owner_id: int, ingredient_id: int, unit: str
+        user_id: int, ingredient_id: int, unit: str
     ) -> GroceryItem:
-        """Return one grocery line from the session with a display name."""
-        item = find_grocery_line_in_session(request, ingredient_id, unit)
+        """Return one grocery line from the database with a display name."""
+        item = await find_grocery_line_in_store(user_id, ingredient_id, unit)
         if item is None:
             raise NotFoundException()
-        return (await hydrate_grocery_item_names(owner_id, [item]))[0]
+        return (await hydrate_grocery_item_names(user_id, [item]))[0]
 
     @staticmethod
     def _grocery_line_count_for_ingredient(
@@ -482,26 +487,28 @@ class WeekMenuController(Controller):
         form_data = await request.form()
         category_ids = await self._category_ids(user_id)
         constraints = parse_tag_constraints_from_form(dict(form_data), category_ids)
-        save_tag_constraints(request, constraints)
+        await save_tag_constraints(user_id, constraints)
         logger.info("Week menu tag constraints updated")
         return await self._render_page(request)
 
     @post(path="/start-day", summary="Set week start day")
     async def set_start_day(self, request: Request) -> Template:
         """Persist preferred first day and re-render week menu."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
         day = str(form_data.get("start_day", "monday"))
         if not is_valid_day(day):
             raise NotFoundException()
-        save_start_day(request, day)
+        await save_start_day(user_id, day)
         logger.info(f"Week menu start day updated to: {day}")
         return await self._render_page(request)
 
     @post(path="/randomize", summary="Randomize unpinned week menu days")
     async def randomize(self, request: Request) -> Template:
         """Pick random enabled recipes for all unpinned days."""
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
         if all(slot["pinned"] for slot in menu.values()):
             return await self._render_page_with_feedback(
                 request,
@@ -509,10 +516,9 @@ class WeekMenuController(Controller):
             )
         form_data = await request.form()
         include_public = self._form_wants_public(dict(form_data))
-        save_include_public(request, include_public)
-        user_id = await self._viewer_id(request)
+        await save_include_public(user_id, include_public)
         category_ids = await self._category_ids(user_id)
-        constraints = load_tag_constraints(request, category_ids)
+        constraints = await load_tag_constraints(user_id, category_ids)
         recipe_query = Recipe.filter(enabled=True)
         if include_public:
             recipe_query = recipe_query.filter(self._visible_filter(user_id))
@@ -527,7 +533,7 @@ class WeekMenuController(Controller):
             recipe_tag_map=recipe_tag_map,
         )
         logger.debug("Randomized week menu, saving...")
-        save_week_menu(request, menu)
+        await save_week_menu(user_id, menu)
         return await self._render_page_with_feedback(request, warnings=warnings)
 
     @post(path="/{day:str}/pin", summary="Toggle pin for a day")
@@ -536,10 +542,11 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
         menu = toggle_pin(menu, day)
-        save_week_menu(request, menu)
+        await save_week_menu(user_id, menu)
         return await self._render_days(request)
 
     @post(path="/{day:str}/recipe/{recipe_id:int}", summary="Assign recipe to day")
@@ -558,9 +565,9 @@ class WeekMenuController(Controller):
             raise NotFoundException()
 
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
         menu = set_day_recipe(menu, day, recipe_id)
-        save_week_menu(request, menu)
+        await save_week_menu(user_id, menu)
         return await self._render_days(request)
 
     @post(
@@ -573,11 +580,12 @@ class WeekMenuController(Controller):
         if not is_valid_day(day) or direction not in {"up", "down"}:
             raise NotFoundException()
 
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
-        start_day = load_start_day(request)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
+        start_day = await load_start_day(user_id)
         menu = move_day(menu, day, direction, start_day=start_day)
-        save_week_menu(request, menu)
+        await save_week_menu(user_id, menu)
         return await self._render_days(request)
 
     @post(path="/{day:str}/servings", summary="Set planned servings for a day")
@@ -586,14 +594,15 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
         form_data = await request.form()
         servings = normalize_servings(
             form_data.get("servings"), default_servings=default_servings
         )
-        menu = load_week_menu(request, default_servings=default_servings)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
         menu = set_day_servings(menu, day, servings, default_servings=default_servings)
-        save_week_menu(request, menu)
+        await save_week_menu(user_id, menu)
         return await self._render_days(request)
 
     @get(path="/grocery-list", summary="Generate grocery list for the week menu")
@@ -604,17 +613,18 @@ class WeekMenuController(Controller):
     @post(path="/grocery-list/generate", summary="Generate grocery list from week menu")
     async def generate_grocery_list(self, request: Request) -> Redirect:
         """Create or update the grocery list from the current week menu."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
         mode = str(form_data.get("mode", "")).strip()
         if mode == "replace":
             items = await self._grocery_items_from_week_menu(request)
-            reset_grocery_plan(request)
-            save_grocery_list(request, items)
+            await reset_grocery_plan(user_id)
+            await save_grocery_list(user_id, items)
             set_grocery_suppress_preserve(request)
         elif mode == "merge":
-            existing = load_grocery_list(request)
+            existing = await load_grocery_list(user_id)
             new_items = await self._grocery_items_from_week_menu(request)
-            save_grocery_list(request, merge_grocery_items(existing, new_items))
+            await save_grocery_list(user_id, merge_grocery_items(existing, new_items))
             set_grocery_suppress_preserve(request)
         else:
             raise NotFoundException()
@@ -642,7 +652,6 @@ class WeekMenuController(Controller):
         else:
             ingredient, _ = await get_or_create_ingredient(user_id, name)
             await add_items_to_grocery_list(
-                request,
                 user_id,
                 [
                     GroceryItem(
@@ -678,8 +687,10 @@ class WeekMenuController(Controller):
             )
         else:
             current_items = (
-                await hydrate_grocery_item_names(user_id, load_grocery_list(request))
-                if is_grocery_list_initialized(request)
+                await hydrate_grocery_item_names(
+                    user_id, await load_grocery_list(user_id)
+                )
+                if await is_grocery_list_initialized(user_id)
                 else []
             )
             missing_items = weekly_groceries_missing_from_list(
@@ -690,7 +701,7 @@ class WeekMenuController(Controller):
                     "Your weekly groceries are already on the grocery list."
                 )
             else:
-                await add_items_to_grocery_list(request, user_id, missing_items)
+                await add_items_to_grocery_list(user_id, missing_items)
                 count = len(missing_items)
                 noun = "grocery" if count == 1 else "groceries"
                 action_message = f"Added {count} weekly {noun} to your grocery list."
@@ -713,7 +724,7 @@ class WeekMenuController(Controller):
         ingredient_id = int(form_data.get("ingredient_id", 0))
         unit = str(form_data.get("unit", "")).strip()
         shop_value = str(form_data.get("shop_id", "")).strip()
-        await self._require_grocery_line(request, ingredient_id, unit)
+        await self._require_grocery_line(user_id, ingredient_id, unit)
         if not shop_value:
             raise NotFoundException()
         shop_id = int(shop_value)
@@ -722,9 +733,9 @@ class WeekMenuController(Controller):
             raise NotFoundException()
 
         hydrated_items = await hydrate_grocery_item_names(
-            user_id, load_grocery_list(request)
+            user_id, await load_grocery_list(user_id)
         )
-        set_grocery_line_shop(request, ingredient_id, unit, shop_id)
+        await set_grocery_line_shop(user_id, ingredient_id, unit, shop_id)
         if (
             self._grocery_line_count_for_ingredient(hydrated_items, ingredient_id) == 1
             and await Ingredient.get_or_none(id=ingredient_id, owner_id=user_id)
@@ -732,19 +743,20 @@ class WeekMenuController(Controller):
         ):
             await set_ingredient_shop(user_id, ingredient_id, shop_id)
 
-        unmark_already_have_line(request, ingredient_id, unit)
-        unmark_to_check_line(request, ingredient_id, unit)
+        await unmark_already_have_line(user_id, ingredient_id, unit)
+        await unmark_to_check_line(user_id, ingredient_id, unit)
         return await self._grocery_list_response(request)
 
     @post(path="/grocery-list/already-have", summary="Mark ingredient as already owned")
     async def mark_grocery_already_have(self, request: Request) -> Template:
         """Move one grocery line to the already-have list for this grocery plan."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
         ingredient_id = int(form_data.get("ingredient_id", 0))
         unit = str(form_data.get("unit", "")).strip()
-        await self._require_grocery_line(request, ingredient_id, unit)
-        mark_already_have_line(request, ingredient_id, unit)
-        unmark_to_check_line(request, ingredient_id, unit)
+        await self._require_grocery_line(user_id, ingredient_id, unit)
+        await mark_already_have_line(user_id, ingredient_id, unit)
+        await unmark_to_check_line(user_id, ingredient_id, unit)
         return await self._grocery_list_response(request)
 
     @post(
@@ -753,22 +765,24 @@ class WeekMenuController(Controller):
     )
     async def unmark_grocery_already_have(self, request: Request) -> Template:
         """Return one grocery line from the already-have list to the active grocery plan."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
         ingredient_id = int(form_data.get("ingredient_id", 0))
         unit = str(form_data.get("unit", "")).strip()
-        await self._require_grocery_line(request, ingredient_id, unit)
-        unmark_already_have_line(request, ingredient_id, unit)
+        await self._require_grocery_line(user_id, ingredient_id, unit)
+        await unmark_already_have_line(user_id, ingredient_id, unit)
         return await self._grocery_list_response(request)
 
     @post(path="/grocery-list/to-check", summary="Mark grocery line for checking")
     async def mark_grocery_to_check(self, request: Request) -> Template:
         """Move one grocery line to the to-check list."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
         ingredient_id = int(form_data.get("ingredient_id", 0))
         unit = str(form_data.get("unit", "")).strip()
-        await self._require_grocery_line(request, ingredient_id, unit)
-        mark_to_check_line(request, ingredient_id, unit)
-        unmark_already_have_line(request, ingredient_id, unit)
+        await self._require_grocery_line(user_id, ingredient_id, unit)
+        await mark_to_check_line(user_id, ingredient_id, unit)
+        await unmark_already_have_line(user_id, ingredient_id, unit)
         return await self._grocery_list_response(request)
 
     @post(
@@ -777,11 +791,12 @@ class WeekMenuController(Controller):
     )
     async def unmark_grocery_to_check(self, request: Request) -> Template:
         """Return one grocery line from the to-check list to active sorting."""
+        user_id = await self._viewer_id(request)
         form_data = await request.form()
         ingredient_id = int(form_data.get("ingredient_id", 0))
         unit = str(form_data.get("unit", "")).strip()
-        await self._require_grocery_line(request, ingredient_id, unit)
-        unmark_to_check_line(request, ingredient_id, unit)
+        await self._require_grocery_line(user_id, ingredient_id, unit)
+        await unmark_to_check_line(user_id, ingredient_id, unit)
         return await self._grocery_list_response(request)
 
     @post(
@@ -796,11 +811,11 @@ class WeekMenuController(Controller):
         shops = await load_shops(user_id)
         if shop_id not in {shop["id"] for shop in shops}:
             raise NotFoundException()
-        items = load_grocery_list(request)
+        items = await load_grocery_list(user_id)
         ingredient_shop_ids = await load_ingredient_shop_ids(user_id)
-        line_shop_ids = load_grocery_line_shops(request)
-        mark_shop_already_have(
-            request, shop_id, items, ingredient_shop_ids, line_shop_ids
+        line_shop_ids = await load_grocery_line_shops(user_id)
+        await mark_shop_already_have(
+            user_id, shop_id, items, ingredient_shop_ids, line_shop_ids
         )
         return await self._grocery_list_response(request)
 
@@ -810,7 +825,8 @@ class WeekMenuController(Controller):
     )
     async def clear_grocery_already_have(self, request: Request) -> Template:
         """Remove every already-have grocery from the plan."""
-        empty_already_have_list(request)
+        user_id = await self._viewer_id(request)
+        await empty_already_have_list(user_id)
         return await self._grocery_list_response(request)
 
     @post(
@@ -819,7 +835,8 @@ class WeekMenuController(Controller):
     )
     async def clear_grocery_to_check(self, request: Request) -> Template:
         """Remove every to-check grocery from the plan."""
-        empty_to_check_list(request)
+        user_id = await self._viewer_id(request)
+        await empty_to_check_list(user_id)
         return await self._grocery_list_response(request)
 
     @get(
@@ -831,7 +848,7 @@ class WeekMenuController(Controller):
     ) -> Template:
         """Return the read-only amount display for one grocery line."""
         user_id = await self._viewer_id(request)
-        item = await self._hydrated_grocery_line(request, user_id, ingredient_id, unit)
+        item = await self._hydrated_grocery_line(user_id, ingredient_id, unit)
         return Template(
             template_name="partials/grocery-amount-display.html",
             context={"request": request, "item": item},
@@ -846,7 +863,7 @@ class WeekMenuController(Controller):
     ) -> Template:
         """Show inline editors for one grocery line's quantity and unit."""
         user_id = await self._viewer_id(request)
-        item = await self._hydrated_grocery_line(request, user_id, ingredient_id, unit)
+        item = await self._hydrated_grocery_line(user_id, ingredient_id, unit)
         units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return Template(
             template_name="partials/grocery-amount-editor.html",
@@ -862,17 +879,17 @@ class WeekMenuController(Controller):
     ) -> Response | Template:
         """Persist edited quantity and unit for one grocery line."""
         user_id = await self._viewer_id(request)
-        await self._require_grocery_line(request, ingredient_id, unit)
+        await self._require_grocery_line(user_id, ingredient_id, unit)
         form_data = await request.form()
         quantity = parse_grocery_quantity(form_data.get("quantity"))
         new_unit = str(form_data.get("unit", "")).strip()
         if quantity is None or not new_unit:
             raise NotFoundException()
         hydrated_items = await hydrate_grocery_item_names(
-            user_id, load_grocery_list(request)
+            user_id, await load_grocery_list(user_id)
         )
-        success, merge_message = update_grocery_line(
-            request,
+        success, merge_message = await update_grocery_line(
+            user_id,
             ingredient_id,
             unit,
             quantity=quantity,
@@ -885,9 +902,7 @@ class WeekMenuController(Controller):
             return await self._refresh_grocery_list_response(
                 request, action_message=merge_message
             )
-        item = await self._hydrated_grocery_line(
-            request, user_id, ingredient_id, new_unit
-        )
+        item = await self._hydrated_grocery_line(user_id, ingredient_id, new_unit)
         return Template(
             template_name="partials/grocery-amount-display.html",
             context={"request": request, "item": item},
@@ -908,10 +923,11 @@ class WeekMenuController(Controller):
         if not is_valid_day(day):
             raise NotFoundException()
 
+        user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
-        menu = load_week_menu(request, default_servings=default_servings)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
         menu = set_day_recipe(menu, day, None)
-        save_week_menu(request, menu)
+        await save_week_menu(user_id, menu)
         return await self._render_days(request)
 
     @get(path="/{day:str}/search", summary="Search recipes for a day")
@@ -927,9 +943,9 @@ class WeekMenuController(Controller):
         include_public = (
             query_preference
             if "include_public" in request.query_params
-            else load_include_public(request)
+            else await load_include_public(user_id)
         )
-        save_include_public(request, include_public)
+        await save_include_public(user_id, include_public)
         recipes: list[Recipe] = []
         if search:
             recipes = await Recipe.search(

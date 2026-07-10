@@ -2,6 +2,7 @@ from typing import cast
 
 from tortoise.expressions import Q
 from tortoise.fields import (
+    CASCADE,
     SET_NULL,
     BooleanField,
     FloatField,
@@ -178,6 +179,89 @@ class User(Model):
             The matching user, or ``None`` when no user has that username.
         """
         return await cls.filter(username=username).first()
+
+
+class UserPreference(Model):
+    """Per-user account and week-menu preferences persisted in the database."""
+
+    id = IntField(primary_key=True)
+    user = ForeignKeyField(
+        "models.User",
+        related_name="preference",
+        unique=True,
+        on_delete=CASCADE,
+    )
+    language = TextField(default="🇬🇧 English")
+    default_servings = IntField(default=2)
+    start_day = TextField(default="monday")
+    include_public = BooleanField(default=False)
+    grocery_list_initialized = BooleanField(default=False)
+
+
+class WeekMenuSlot(Model):
+    """One day in a user's week menu."""
+
+    id = IntField(primary_key=True)
+    user = ForeignKeyField("models.User", related_name="week_menu_slots")
+    day = TextField(required=True)
+    recipe = ForeignKeyField(
+        "models.Recipe",
+        related_name="week_menu_slots",
+        null=True,
+        on_delete=SET_NULL,
+    )
+    pinned = BooleanField(default=False)
+    servings = IntField(default=2)
+
+    class Meta:
+        """Database constraints for week menu slots."""
+
+        unique_together = (("user", "day"),)
+
+
+class WeekMenuTagConstraint(Model):
+    """Tag-group constraint for week menu randomization."""
+
+    id = IntField(primary_key=True)
+    user = ForeignKeyField("models.User", related_name="week_menu_constraints")
+    category = ForeignKeyField(
+        "models.TagCategory", related_name="week_menu_constraints"
+    )
+    mode = TextField(default="off")
+    tag = ForeignKeyField(
+        "models.Tag",
+        related_name="week_menu_constraints",
+        null=True,
+        on_delete=SET_NULL,
+    )
+    minimum_count = IntField(default=1)
+
+    class Meta:
+        """Database constraints for week menu tag constraints."""
+
+        unique_together = (("user", "category"),)
+
+
+class GroceryListItem(Model):
+    """One line on a user's active grocery list."""
+
+    id = IntField(primary_key=True)
+    user = ForeignKeyField("models.User", related_name="grocery_list_items")
+    ingredient = ForeignKeyField("models.Ingredient", related_name="grocery_list_items")
+    unit = ForeignKeyField("models.Unit", related_name="grocery_list_items")
+    quantity = FloatField(required=True)
+    status = TextField(default="active")
+    shop = ForeignKeyField(
+        "models.Shop",
+        related_name="grocery_list_items",
+        null=True,
+        on_delete=SET_NULL,
+    )
+
+    class Meta:
+        """Database constraints for grocery list items."""
+
+        unique_together = (("user", "ingredient", "unit"),)
 
 
 class Shop(Model):
