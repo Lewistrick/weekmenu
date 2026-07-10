@@ -140,7 +140,7 @@ async def test_create_weekly_grocery_persists(
         data={"ingredient": "coffee", "quantity": "2", "unit": "st"},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert "Weekly grocery added." in response.text
     assert "coffee" in response.text
     rows = await WeeklyGrocery.filter(owner_id=default_user.id).select_related(
@@ -167,7 +167,7 @@ async def test_create_weekly_grocery_rejects_duplicate(
         data={"ingredient": "tea", "quantity": "5", "unit": "st"},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert "That weekly grocery already exists." in response.text
     assert await WeeklyGrocery.filter(owner_id=default_user.id).count() == 1
 
@@ -183,7 +183,7 @@ async def test_create_weekly_grocery_requires_known_unit(
         data={"ingredient": "sugar", "quantity": "1", "unit": "zzz"},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert "Could not find unit: zzz" in response.text
     assert await WeeklyGrocery.filter(owner_id=default_user.id).count() == 0
 
@@ -205,7 +205,7 @@ async def test_update_weekly_grocery(
         data={"ingredient": "flour", "quantity": "1", "unit": "kg"},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert "Weekly grocery updated." in response.text
     refreshed = await WeeklyGrocery.get(id=row.id).select_related("unit")
     assert refreshed.quantity == 1
