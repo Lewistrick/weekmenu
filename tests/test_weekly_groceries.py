@@ -126,7 +126,11 @@ async def test_navigation_links_to_weekly_groceries(
     grocery = await test_client.get("/week-menu/grocery-list")
 
     assert "/weekly-groceries/manage" in home.text
-    assert "/weekly-groceries/manage" in grocery.text
+    assert "Add weekly groceries" in grocery.text
+    toolbar = grocery.text.split('class="grocery-toolbar"', 1)[1].split("</div>", 1)[0]
+    assert "Back to week menu" in toolbar
+    assert "/shops/manage" not in toolbar
+    assert "/weekly-groceries/manage" not in toolbar
 
 
 @pytest.mark.asyncio

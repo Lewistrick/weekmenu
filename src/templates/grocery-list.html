@@ -24,43 +24,9 @@
 
     <div class="grocery-toolbar">
         <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
-        <a href="/shops/manage" class="btn btn-secondary">🏪 Manage shops</a>
-        <a href="/weekly-groceries/manage" class="btn btn-secondary">🧺 Weekly groceries</a>
     </div>
 
     {% include "partials/grocery-list-body.html" %}
-
-    <section class="recipe-section">
-        <h2 class="section-title">Days included</h2>
-        <table class="grocery-day-table">
-            <thead>
-                <tr>
-                    <th scope="col">Day</th>
-                    <th scope="col">Recipe</th>
-                    <th scope="col" class="grocery-day-table-servings">Servings</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in days %}
-                <tr>
-                    <td class="grocery-day-label">{{ row.label }}</td>
-                    <td>
-                        {% if row.recipe %}
-                        <a href="/recipes/view/{{ row.recipe.id }}" class="week-menu-recipe-link">{{ row.recipe.name }}</a>
-                        {% else %}
-                        <span class="search-placeholder">No recipe selected</span>
-                        {% endif %}
-                    </td>
-                    <td class="grocery-day-table-servings">{% if row.recipe %}{{ row.servings }}{% else %}—{% endif %}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        {% with copy_title="Copy for messaging", copy_text=week_menu_export_text, textarea_id="week-menu-copy-text" %}
-        {% include "partials/grocery-copy-section.html" %}
-        {% endwith %}
-    </section>
 </div>
 <script>
     function copyPlaintext(textareaId) {

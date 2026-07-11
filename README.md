@@ -42,7 +42,7 @@
 - Moving an ingredient to a shop, to-check, or already-have updates the list in place (no full page reload), so your scroll position is preserved.
 - When the same ingredient appears in more than one unit (e.g. grams and kilograms), shop and status buttons affect only that specific line.
 - Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
-- Copy grouped plaintext for messaging in two places on the grocery list page: under the grocery columns (ingredients by shop) and under **Days included** (week menu days and recipes).
+- Copy grouped plaintext for messaging under the grocery columns (ingredients by shop).
 - Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
 - Each shop section has a **Mark all ✓** button. The to-check and already-have lists each have a **🗑 Clear list** button (amber warning style) with inline confirmation; clearing either list removes those groceries from the plan entirely.
 - Export the week menu as plaintext via `GET /week-menu/export` (`{day} - {recipe}` per line, empty days omitted).

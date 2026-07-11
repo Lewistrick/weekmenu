@@ -745,11 +745,11 @@ async def test_home_page_links_to_grocery_list(test_client: AsyncTestClient) -> 
 
 
 @pytest.mark.asyncio
-async def test_grocery_list_page_has_two_copy_sections(
+async def test_grocery_list_page_has_grocery_copy_section(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Grocery and week menu copy areas should appear in separate sections."""
+    """The grocery list page should offer a copy area for grouped groceries."""
     recipe = await Recipe.create(
         name="Copy stew",
         description="copy sections",
@@ -770,10 +770,10 @@ async def test_grocery_list_page_has_two_copy_sections(
     response = await test_client.get("/week-menu/grocery-list")
 
     assert response.status_code == 200
-    assert response.text.count("Copy for messaging") == 2
+    assert response.text.count("Copy for messaging") == 1
     assert "grocery-copy-text" in response.text
-    assert "week-menu-copy-text" in response.text
-    assert "Copy stew" in response.text
+    assert "week-menu-copy-text" not in response.text
+    assert "Days included" not in response.text
 
 
 @pytest.mark.asyncio
