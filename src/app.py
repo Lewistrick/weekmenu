@@ -21,6 +21,7 @@ from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.shops import ShopController
 from src.controllers.tags import TagController
+from src.controllers.units import UnitController
 from src.controllers.week_menu import WeekMenuController
 from src.controllers.weekly_groceries import WeeklyGroceryController
 from src.database import (
@@ -129,6 +130,7 @@ app = Litestar(
         RecipeController,
         IngredientController,
         TagController,
+        UnitController,
         ShopController,
         WeekMenuController,
         WeeklyGroceryController,

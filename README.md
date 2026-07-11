@@ -56,7 +56,8 @@
 ### Per-user catalog (ingredients, units, tags, shops)
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
 - Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
-- Unit abbreviations are unique per user (`owner` + `abbrev`), not globally.
+- Manage units at `/units/manage` (⚙️ Settings → 📏 Units): edit abbreviation, singular, and plural labels, add new units, or delete unused ones. Units missing a singular or plural label show a warning.
+- Multiple units may share the same abbreviation when their singular or plural labels differ.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
 
 ### What will it be able to do

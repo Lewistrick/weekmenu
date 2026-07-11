@@ -663,7 +663,7 @@ async def test_week_menu_shows_tag_constraint_options(
 def _constraint_row_html(page_html: str, category_name: str) -> str:
     """Return the HTML for one tag constraint row."""
     match = re.search(
-        rf'<div class="week-menu-constraint-row"[^>]*>.*?>{category_name}</label>.*?</div>\s*</div>',
+        rf'<div class="week-menu-constraint-row"[^>]*>.*?>{re.escape(category_name)}</label>.*?</div>\s*</div>\s*</div>',
         page_html,
         flags=re.DOTALL,
     )
