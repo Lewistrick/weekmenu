@@ -12,6 +12,7 @@ from src.auth import (
     verify_password,
 )
 from src.catalog import seed_default_units
+from src.i18n.service import LANGUAGE_OPTIONS, t
 from src.models import Ingredient, Recipe, Shop, Tag, TagCategory, Unit, User
 from src.plan_store import ensure_user_preference
 from src.user_settings import (
@@ -22,14 +23,6 @@ from src.user_settings import (
 )
 
 MIN_PASSWORD_LENGTH = 6
-LANGUAGE_OPTIONS = (
-    "🇬🇧 English",
-    "🇳🇱 Nederlands",
-    "🇫🇷 Français",
-    "🇩🇪 Deutsch",
-    "🇪🇸 Español",
-    "🇮🇹 Italiano",
-)
 
 
 async def _claim_restored_data(user: User) -> None:
@@ -93,7 +86,7 @@ class AuthController(Controller):
                 context={
                     "request": request,
                     "username": username,
-                    "errors": ["Invalid username or password."],
+                    "errors": [t("message.auth.invalid_credentials")],
                 },
             )
 
@@ -117,15 +110,15 @@ class AuthController(Controller):
 
         errors: list[str] = []
         if not username:
-            errors.append("Username is required.")
+            errors.append(t("message.auth.username_required"))
         elif await User.filter(username=username, password_hash__isnull=False).exists():
-            errors.append("That username is already taken.")
+            errors.append(t("message.auth.username_taken"))
         if len(password) < MIN_PASSWORD_LENGTH:
             errors.append(
-                f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
+                t("message.auth.password_min_length", min=MIN_PASSWORD_LENGTH)
             )
         if password != password_confirm:
-            errors.append("Passwords do not match.")
+            errors.append(t("message.auth.passwords_no_match"))
 
         if errors:
             return Template(
@@ -173,7 +166,9 @@ class AuthController(Controller):
         form_data = await request.form()
         user.email = str(form_data.get("email", "")).strip()
         await user.save()
-        return await self._render_profile(request, messages=["Email updated."])
+        return await self._render_profile(
+            request, messages=[t("message.auth.email_updated")]
+        )
 
     @post(path="/profile/settings", summary="Update account settings")
     async def update_settings(self, request: Request) -> Template | Redirect:
@@ -194,7 +189,9 @@ class AuthController(Controller):
         await save_user_settings(
             user.id, UserSettings(language=language, servings=servings)
         )
-        return await self._render_profile(request, messages=["Settings updated."])
+        return await self._render_profile(
+            request, messages=[t("message.auth.settings_updated")]
+        )
 
     @post(path="/profile/password", summary="Change password")
     async def change_password(self, request: Request) -> Template | Redirect:
@@ -209,13 +206,13 @@ class AuthController(Controller):
 
         errors: list[str] = []
         if not verify_password(current_password, user.password_hash):
-            errors.append("Current password is incorrect.")
+            errors.append(t("message.auth.current_password_incorrect"))
         if len(new_password) < MIN_PASSWORD_LENGTH:
             errors.append(
-                f"New password must be at least {MIN_PASSWORD_LENGTH} characters."
+                t("message.auth.new_password_min_length", min=MIN_PASSWORD_LENGTH)
             )
         if new_password != new_password_confirm:
-            errors.append("New passwords do not match.")
+            errors.append(t("message.auth.new_passwords_no_match"))
 
         if errors:
             return await self._render_profile(request, warnings=errors)
@@ -223,7 +220,9 @@ class AuthController(Controller):
         user.password_hash = hash_password(new_password)
         await user.save()
         logger.info(f"Password changed for user: {user.username}")
-        return await self._render_profile(request, messages=["Password changed."])
+        return await self._render_profile(
+            request, messages=[t("message.auth.password_changed")]
+        )
 
     @post(path="/profile/delete", summary="Delete account")
     async def delete_account(self, request: Request) -> Redirect:

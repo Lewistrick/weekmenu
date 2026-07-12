@@ -6,6 +6,7 @@ from litestar.response import Template
 from loguru import logger
 
 from src.auth import get_current_user
+from src.i18n.service import t
 from src.models import Unit
 from src.weekly_groceries import (
     add_weekly_grocery,
@@ -105,4 +106,6 @@ class WeeklyGroceryController(Controller):
         if not await delete_weekly_grocery(owner_id, weekly_id):
             raise NotFoundException()
         logger.info(f"Deleted weekly grocery: {weekly_id}")
-        return await self._render_page(request, messages=["Weekly grocery deleted."])
+        return await self._render_page(
+            request, messages=[t("message.weekly_groceries.deleted")]
+        )

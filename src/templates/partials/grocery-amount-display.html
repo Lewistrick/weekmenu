@@ -2,6 +2,6 @@
     hx-get="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}/edit"
     hx-target="#grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}"
     hx-swap="innerHTML"
-    title="Edit amount" aria-label="Edit amount for {{ item.name }}">
+    title="{{ t('grocery.aria.edit_amount') }}" aria-label="{{ t('grocery.aria.edit_amount_for', item_name=item.name) }}">
     {{ "%g" | format(item.quantity) }} {{ item.unit }}
 </button>

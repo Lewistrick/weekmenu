@@ -29,6 +29,7 @@ from src.database import (
     ensure_not_using_production_db_in_tests,
     init_database,
 )
+from src.i18n.service import load_i18n_context, seed_english_texts, t
 from src.template_utils import render_markdown
 
 DEBUG = True
@@ -71,8 +72,9 @@ async def require_authentication(request: Request) -> Response | None:
 
 
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
-    """Register custom Jinja filters."""
+    """Register custom Jinja filters and globals."""
     template_engine.engine.filters["markdown"] = render_markdown
+    template_engine.engine.globals["t"] = t  # ty: ignore[invalid-assignment]
 
 
 def create_template_engine() -> JinjaTemplateEngine:
@@ -102,10 +104,17 @@ async def favicon() -> File:
     return File(path=FAVICON_PATH, media_type="image/svg+xml")
 
 
+async def before_request(request: Request) -> Response | None:
+    """Load i18n context and enforce authentication."""
+    await load_i18n_context(request)
+    return await require_authentication(request)
+
+
 async def init_db() -> None:
     """Initialize the database and apply aerich migrations on startup."""
     ensure_not_using_production_db_in_tests()
     await init_database(db_config.TORTOISE_CONFIG)
+    await seed_english_texts()
 
 
 async def close_db() -> None:
@@ -138,7 +147,7 @@ app = Litestar(
         static_files_router,
     ],
     middleware=[session_config.middleware],
-    before_request=require_authentication,
+    before_request=before_request,
     on_startup=[init_db],
     on_shutdown=[close_db],
     openapi_config=openapi_config,

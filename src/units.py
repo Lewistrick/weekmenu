@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from src.i18n.service import t
 from src.models import GroceryListItem, RecipeIngredient, Unit, WeeklyGrocery
 
 
@@ -65,9 +66,9 @@ async def add_unit(
     single = _normalize_text(single_raw) or None
     plural = _normalize_text(plural_raw) or None
     if not abbrev:
-        return False, "Abbreviation is required."
+        return False, t("message.units.abbrev_required")
     await Unit.create(owner_id=owner_id, abbrev=abbrev, single=single, plural=plural)
-    return True, "Unit added."
+    return True, t("message.units.added")
 
 
 async def update_unit(
@@ -84,17 +85,17 @@ async def update_unit(
     """
     unit = await Unit.get_or_none(id=unit_id, owner_id=owner_id)
     if unit is None:
-        return False, "Unit not found."
+        return False, t("message.units.not_found")
     abbrev = _normalize_text(abbrev_raw)
     single = _normalize_text(single_raw) or None
     plural = _normalize_text(plural_raw) or None
     if not abbrev:
-        return False, "Abbreviation is required."
+        return False, t("message.units.abbrev_required")
     unit.abbrev = abbrev
     unit.single = single
     unit.plural = plural
     await unit.save()
-    return True, "Unit updated."
+    return True, t("message.units.updated")
 
 
 async def delete_unit(owner_id: int, unit_id: int) -> tuple[bool, str]:
@@ -105,11 +106,11 @@ async def delete_unit(owner_id: int, unit_id: int) -> tuple[bool, str]:
     """
     unit = await Unit.get_or_none(id=unit_id, owner_id=owner_id)
     if unit is None:
-        return False, "Unit not found."
+        return False, t("message.units.not_found")
     if await unit_is_in_use(unit.id):
         return (
             False,
-            f"Cannot delete '{unit.abbrev}' while it is used in recipes or lists.",
+            t("message.units.in_use", abbrev=unit.abbrev),
         )
     await unit.delete()
-    return True, "Unit deleted."
+    return True, t("message.units.deleted")

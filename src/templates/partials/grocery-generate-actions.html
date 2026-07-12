@@ -2,29 +2,29 @@
     {% if grocery_list_has_items %}
     <button type="button" class="btn btn-action btn-action--grocery grocery-generate-trigger"
         id="grocery-generate-trigger" data-confirm-id="grocery-generate-choices"
-        title="Generate grocery list" aria-label="Generate grocery list">
+        title="{{ t('grocery.generate.aria') }}" aria-label="{{ t('grocery.generate.aria') }}">
         <span class="btn-action-icon" aria-hidden="true">🛒</span>
-        <span>Generate grocery list</span>
+        <span>{{ t('grocery.generate.action') }}</span>
     </button>
     <div class="grocery-generate-choices" id="grocery-generate-choices" hidden>
-        <span class="grocery-inline-confirm-label">Update grocery list?</span>
+        <span class="grocery-inline-confirm-label">{{ t('grocery.generate.confirm') }}</span>
         <form method="post" action="/week-menu/grocery-list/generate" class="grocery-bulk-form">
             <input type="hidden" name="mode" value="replace">
             <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"
-                title="Replace list with week menu groceries" aria-label="Replace list">
-                🔄 Replace
+                title="{{ t('grocery.generate.replace.title') }}" aria-label="{{ t('grocery.generate.replace.aria') }}">
+                {{ t('grocery.generate.replace') }}
             </button>
         </form>
         <form method="post" action="/week-menu/grocery-list/generate" class="grocery-bulk-form">
             <input type="hidden" name="mode" value="merge">
             <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"
-                title="Add week menu groceries to current list" aria-label="Add to list">
-                ➕ Add
+                title="{{ t('grocery.generate.add.title') }}" aria-label="{{ t('grocery.generate.add.aria') }}">
+                {{ t('grocery.generate.add') }}
             </button>
         </form>
         <button type="button" class="shop-chip-btn shop-chip-btn--clear grocery-generate-cancel"
             data-confirm-id="grocery-generate-choices" data-trigger-id="grocery-generate-trigger"
-            title="Cancel" aria-label="Cancel">
+            title="{{ t('common.cancel') }}" aria-label="{{ t('common.cancel') }}">
             ✕
         </button>
     </div>
@@ -32,9 +32,9 @@
     <form method="post" action="/week-menu/grocery-list/generate" class="grocery-generate-form">
         <input type="hidden" name="mode" value="replace">
         <button type="submit" class="btn btn-action btn-action--grocery"
-            title="Generate grocery list" aria-label="Generate grocery list">
+            title="{{ t('grocery.generate.aria') }}" aria-label="{{ t('grocery.generate.aria') }}">
             <span class="btn-action-icon" aria-hidden="true">🛒</span>
-            <span>Generate grocery list</span>
+            <span>{{ t('grocery.generate.action') }}</span>
         </button>
     </form>
     {% endif %}

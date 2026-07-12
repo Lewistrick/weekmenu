@@ -15,6 +15,7 @@ from tortoise.expressions import Q
 
 from src.auth import get_current_user
 from src.catalog import copy_recipe_catalog, get_or_create_ingredient
+from src.i18n.service import t
 from src.models import (
     Ingredient,
     Recipe,
@@ -313,7 +314,7 @@ class RecipeController(Controller):
                 template_name="view-recipe.html",
                 context={
                     **view_context,
-                    "warnings": ["You already imported this recipe."],
+                    "warnings": [t("message.recipe.already_imported")],
                 },
             )
 
@@ -367,10 +368,12 @@ class RecipeController(Controller):
         messages: list[str] = []
         warnings: list[str] = []
         if assigned_day is None:
-            warnings.append("All days are pinned. Unpin a day before adding a recipe.")
+            warnings.append(t("message.recipe.all_days_pinned"))
         else:
             await save_week_menu(user_id, menu)
-            messages.append(f"Added to week menu: {assigned_day.title()}")
+            messages.append(
+                t("message.recipe.added_to_week_menu", day=t(f"day.{assigned_day}"))
+            )
 
         if source == "missing-tags":
             return Template(
@@ -466,9 +469,9 @@ class RecipeController(Controller):
         if new_title := data.get("new_title"):
             recipe.name = new_title
             await recipe.save()
-            messages.append("Recipe name updated")
+            messages.append(t("message.recipe.name_updated"))
         else:
-            messages.append("No recipe name found, not saved.")
+            messages.append(t("message.recipe.name_not_saved"))
 
         return Template(
             template_name="partials/edited-recipe-title.html",
@@ -491,9 +494,9 @@ class RecipeController(Controller):
         if new_value := data.get("new_desc"):
             recipe.description = new_value
             await recipe.save()
-            messages.append("Recipe description updated")
+            messages.append(t("message.recipe.description_updated"))
         else:
-            messages.append("No recipe description found, not saved.")
+            messages.append(t("message.recipe.description_not_saved"))
 
         return Template(
             template_name="partials/edited-recipe-desc.html",
@@ -618,10 +621,10 @@ class RecipeController(Controller):
             try:
                 recipe_ingredient.quantity = float(quantity)
             except (ValueError, TypeError):
-                messages.append("Invalid quantity, not saved.")
+                messages.append(t("message.recipe.invalid_quantity"))
                 valid = False
         else:
-            messages.append("No quantity found, not saved.")
+            messages.append(t("message.recipe.no_quantity"))
             valid = False
 
         if unit_abbrev is not None:
@@ -629,10 +632,10 @@ class RecipeController(Controller):
             if unit:
                 recipe_ingredient.unit = unit
             else:
-                messages.append("Could not find unit, not saved.")
+                messages.append(t("message.recipe.unit_not_found"))
                 valid = False
         else:
-            messages.append("No unit found, not saved.")
+            messages.append(t("message.recipe.no_unit"))
             valid = False
 
         if ingredient_name is not None and str(ingredient_name).strip():
@@ -647,17 +650,17 @@ class RecipeController(Controller):
                 .first()
             )
             if duplicate:
-                messages.append("Ingredient already in recipe. Not saved.")
+                messages.append(t("message.recipe.ingredient_duplicate"))
                 valid = False
             else:
                 recipe_ingredient.ingredient = ingredient
         else:
-            messages.append("No ingredient name found, not saved.")
+            messages.append(t("message.recipe.no_ingredient_name"))
             valid = False
 
         if valid:
             await recipe_ingredient.save()
-            messages.append("Ingredient updated")
+            messages.append(t("message.recipe.ingredient_updated"))
 
         # Reload for display
         await recipe_ingredient.fetch_related("ingredient", "unit")
@@ -730,15 +733,17 @@ class RecipeController(Controller):
 
         messages = []
         if not ingredient_name:
-            messages.append("No ingredient selected.")
+            messages.append(t("message.recipe.no_ingredient_selected"))
         elif not quantity:
-            messages.append("No quantity provided.")
+            messages.append(t("message.recipe.no_quantity_provided"))
         elif not unit_abbrev:
-            messages.append("No unit selected.")
+            messages.append(t("message.recipe.no_unit_selected"))
         else:
             unit = await Unit.find(unit_abbrev, owner_id=user_id)
             if not unit:
-                messages.append(f"Could not find unit: {unit_abbrev}")
+                messages.append(
+                    t("message.recipe.unit_not_found_named", unit=unit_abbrev)
+                )
             else:
                 try:
                     ingredient, _ = await get_or_create_ingredient(
@@ -748,9 +753,7 @@ class RecipeController(Controller):
                         recipe=recipe_id, ingredient=ingredient.id
                     ).first()
                     if existing:
-                        messages.append(
-                            "Ingredient already in recipe. Edit existing instead."
-                        )
+                        messages.append(t("message.recipe.ingredient_duplicate_edit"))
                     else:
                         await RecipeIngredient.create(
                             recipe=recipe,
@@ -758,9 +761,9 @@ class RecipeController(Controller):
                             quantity=float(quantity),
                             unit=unit,
                         )
-                        messages.append("Ingredient added")
+                        messages.append(t("message.recipe.ingredient_added"))
                 except (ValueError, TypeError) as e:
-                    messages.append(f"Error: {e}")
+                    messages.append(t("message.recipe.error", error=e))
 
         # Reload ingredients for display
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
@@ -811,7 +814,7 @@ class RecipeController(Controller):
                 "ingredients": ingredients,
                 "tag_groups": await self._tag_groups(user_id),
                 "selected_tag_ids": await self._recipe_tag_ids(recipe.id),
-                "messages": ["Recipe tags updated"],
+                "messages": [t("message.recipe.tags_updated")],
             },
         )
 
@@ -826,7 +829,7 @@ class RecipeController(Controller):
             "index.html",
             context={
                 "request": request,
-                "messages": [f"Recipe deleted: {recipe.name}"],
+                "messages": [t("message.recipe.deleted", name=recipe.name)],
             },
         )
 
@@ -1022,7 +1025,9 @@ class RecipeController(Controller):
                 owner_id, ing_dict["name"]
             )
             if ing_created:
-                messages.append(f"Hey, I didn't know {ingredient.name} yet!")
+                messages.append(
+                    t("message.recipe.new_ingredient", name=ingredient.name)
+                )
 
             logger.debug(
                 f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}"
@@ -1030,7 +1035,11 @@ class RecipeController(Controller):
             unit = await Unit.find(ing_dict["unit"], owner_id=owner_id)
             if unit is None:
                 messages.append(
-                    f"Ingredient not added: {ingredient.name} (could not find unit: {ing_dict['unit']})"
+                    t(
+                        "message.recipe.ingredient_not_added",
+                        name=ingredient.name,
+                        unit=ing_dict["unit"],
+                    )
                 )
                 continue
 

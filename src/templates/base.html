@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Weekmenu{% endblock %}</title>
+    <title>{% block title %}{{ t('app.title.default') }}{% endblock %}</title>
     <link rel="icon" href="/favicon.ico" type="image/svg+xml">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -12,30 +12,30 @@
 
 <body>
     <nav class="navbar">
-        <a href="/" class="navbar-brand">Weekmenu</a>
+        <a href="/" class="navbar-brand">{{ t('app.name') }}</a>
         <div class="navbar-links">
-            <a href="/week-menu" class="nav-link">🗓️ Week menu</a>
-            <a href="/week-menu/grocery-list" class="nav-link">🛒 Grocery list</a>
+            <a href="/week-menu" class="nav-link">{{ t('nav.week_menu') }}</a>
+            <a href="/week-menu/grocery-list" class="nav-link">{{ t('nav.grocery_list') }}</a>
             <details class="nav-group">
-                <summary class="nav-link">🍽️ Recipes</summary>
+                <summary class="nav-link">{{ t('nav.recipes') }}</summary>
                 <div class="nav-group-menu">
-                    <a href="/recipes/search" class="nav-link">🔎 Find recipe</a>
-                    <a href="/recipes/add" class="nav-link">➕ Add recipe</a>
-                    <a href="/recipes/random" class="nav-link">🎲 Random private recipe</a>
-                    <a href="/recipes/random-public" class="nav-link">🌍 Random public recipe</a>
-                    <a href="/recipes/missing-tags" class="nav-link">🏷️ Missing tags</a>
+                    <a href="/recipes/search" class="nav-link">{{ t('nav.find_recipe') }}</a>
+                    <a href="/recipes/add" class="nav-link">{{ t('nav.add_recipe') }}</a>
+                    <a href="/recipes/random" class="nav-link">{{ t('nav.random_private_recipe') }}</a>
+                    <a href="/recipes/random-public" class="nav-link">{{ t('nav.random_public_recipe') }}</a>
+                    <a href="/recipes/missing-tags" class="nav-link">{{ t('nav.missing_tags') }}</a>
                 </div>
             </details>
             <details class="nav-group nav-group--right">
-                <summary class="nav-link nav-link--muted">⚙️ Settings</summary>
+                <summary class="nav-link nav-link--muted">{{ t('nav.settings') }}</summary>
                 <div class="nav-group-menu">
-                    <a href="/tags/manage" class="nav-link">🏷️ Tag groups</a>
-                    <a href="/shops/manage" class="nav-link">🏪 Shops</a>
-                    <a href="/weekly-groceries/manage" class="nav-link">🧺 Weekly groceries</a>
-                    <a href="/units/manage" class="nav-link">📏 Units</a>
-                    <a href="/profile" class="nav-link">👤 Account</a>
+                    <a href="/tags/manage" class="nav-link">{{ t('nav.tag_groups') }}</a>
+                    <a href="/shops/manage" class="nav-link">{{ t('nav.shops') }}</a>
+                    <a href="/weekly-groceries/manage" class="nav-link">{{ t('nav.weekly_groceries') }}</a>
+                    <a href="/units/manage" class="nav-link">{{ t('nav.units') }}</a>
+                    <a href="/profile" class="nav-link">{{ t('nav.account') }}</a>
                     <form class="nav-logout-form" method="post" action="/logout">
-                        <button type="submit" class="nav-link nav-logout-btn">🚪 Log out</button>
+                        <button type="submit" class="nav-link nav-logout-btn">{{ t('nav.logout') }}</button>
                     </form>
                 </div>
             </details>

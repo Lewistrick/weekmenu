@@ -1,7 +1,7 @@
 <div class="content-page" id="week-menu-root">
     <header class="page-header">
-        <h1 class="page-title-main">Week menu</h1>
-        <p class="page-lead">Plan dinners for the week. Pin days you like, randomize the rest, or search for recipes yourself.</p>
+        <h1 class="page-title-main">{{ t('app.title.week_menu') }}</h1>
+        <p class="page-lead">{{ t('week_menu.lead') }}</p>
     </header>
     {% with message_scope="week-menu" %}
     {% include "partials/flash-messages.html" %}
@@ -12,7 +12,7 @@
 
     <div class="week-menu-toolbar">
         <form class="week-menu-start-day">
-            <label class="field-label" for="week-start-day">Start week on</label>
+            <label class="field-label" for="week-start-day">{{ t('week_menu.start_week_on') }}</label>
             <select
                 id="week-start-day"
                 name="start_day"
@@ -23,18 +23,18 @@
                 hx-swap="outerHTML"
             >
                 {% for day in day_options %}
-                <option value="{{ day }}" {% if day == start_day %}selected{% endif %}>{{ day | title }}</option>
+                <option value="{{ day }}" {% if day == start_day %}selected{% endif %}>{{ t('day.' ~ day) }}</option>
                 {% endfor %}
             </select>
         </form>
         <div class="week-menu-toolbar-actions">
             <label class="week-menu-include-public" for="week-menu-search-include-public">
                 <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on" {% if include_public %}checked{% endif %}>
-                Include public recipes
+                {{ t('common.include_public_recipes') }}
             </label>
             <form class="week-menu-randomize-form" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
                 hx-swap="outerHTML" hx-include="#week-menu-search-include-public">
-                <button type="submit" class="btn btn-primary">🎲 Randomize week</button>
+                <button type="submit" class="btn btn-primary">{{ t('week_menu.action.randomize') }}</button>
             </form>
         </div>
     </div>
@@ -42,8 +42,8 @@
     {% if tag_constraint_rows %}
     <section class="week-menu-options">
         <div class="week-menu-options-header">
-            <h2 class="section-title">Tag constraints</h2>
-            <p class="section-hint">Optional rules for randomize. Pinned days count toward constraints.</p>
+            <h2 class="section-title">{{ t('week_menu.constraints.title') }}</h2>
+            <p class="section-hint">{{ t('week_menu.constraints.hint') }}</p>
         </div>
         <form
             class="week-menu-constraints-form"
@@ -62,27 +62,27 @@
                     name="constraint_mode_{{ row.category.id }}"
                     class="form-control week-menu-constraint-mode"
                 >
-                    <option value="off" {% if mode == "off" %}selected{% endif %}>Ignore</option>
-                    <option value="uniform" {% if mode == "uniform" %}selected{% endif %}>Same tag everywhere</option>
-                    <option value="vary" {% if mode == "vary" %}selected{% endif %}>Vary across week</option>
-                    <option value="minimum" {% if mode == "minimum" %}selected{% endif %}>At least N with tag</option>
+                    <option value="off" {% if mode == "off" %}selected{% endif %}>{{ t('week_menu.constraint.ignore') }}</option>
+                    <option value="uniform" {% if mode == "uniform" %}selected{% endif %}>{{ t('week_menu.constraint.same_tag') }}</option>
+                    <option value="vary" {% if mode == "vary" %}selected{% endif %}>{{ t('week_menu.constraint.vary') }}</option>
+                    <option value="minimum" {% if mode == "minimum" %}selected{% endif %}>{{ t('week_menu.constraint.minimum') }}</option>
                 </select>
                 <div class="week-menu-constraint-extra">
                     <div class="week-menu-constraint-tag-field{% if mode not in ["uniform", "minimum"] %} is-hidden{% endif %}">
-                        <label class="visually-hidden" for="constraint-tag-{{ row.category.id }}">Tag for {{ row.category.name }}</label>
+                        <label class="visually-hidden" for="constraint-tag-{{ row.category.id }}">{{ t('week_menu.constraint.aria.tag_for_group', group_name=row.category.name) }}</label>
                         <select
                             id="constraint-tag-{{ row.category.id }}"
                             name="constraint_tag_{{ row.category.id }}"
                             class="form-control week-menu-constraint-tag"
                         >
-                            <option value="">Choose tag</option>
+                            <option value="">{{ t('week_menu.constraint.choose_tag') }}</option>
                             {% for tag in row.tags %}
                             <option value="{{ tag.id }}" {% if constraint and constraint.tag_id == tag.id %}selected{% endif %}>{{ tag.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="week-menu-constraint-min-field{% if mode != "minimum" %} is-hidden{% endif %}">
-                        <label class="visually-hidden" for="constraint-min-{{ row.category.id }}">Minimum count for {{ row.category.name }}</label>
+                        <label class="visually-hidden" for="constraint-min-{{ row.category.id }}">{{ t('week_menu.constraint.aria.minimum_for_group', group_name=row.category.name) }}</label>
                         <input
                             id="constraint-min-{{ row.category.id }}"
                             name="constraint_min_{{ row.category.id }}"
@@ -91,7 +91,7 @@
                             min="1"
                             max="7"
                             value="{{ constraint.minimum_count if constraint else 1 }}"
-                            aria-label="Minimum days with tag for {{ row.category.name }}"
+                            aria-label="{{ t('week_menu.constraint.aria.minimum_days', group_name=row.category.name) }}"
                         >
                     </div>
                 </div>

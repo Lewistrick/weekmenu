@@ -286,6 +286,20 @@ class UserIngredientShop(Model):
     shop = ForeignKeyField("models.Shop", related_name="user_ingredients", null=True)
 
 
+class UIText(Model):
+    """Localized UI string stored in the database catalog."""
+
+    id = IntField(primary_key=True)
+    language_code = TextField(required=True)
+    key = TextField(required=True)
+    text = TextField(required=True)
+
+    class Meta:
+        """Database constraints for UI translations."""
+
+        unique_together = (("language_code", "key"),)
+
+
 class Unit(Model):
     """A unit of measurement for an ingredient in a recipe, e.g. pieces, grams, liters."""
 

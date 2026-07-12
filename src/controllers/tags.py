@@ -8,6 +8,7 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 
 from src.auth import get_current_user
 from src.catalog import get_or_create_tag, get_or_create_tag_category
+from src.i18n.service import t
 from src.models import Tag, TagCategory
 
 TagSchema = pydantic_model_creator(Tag, name="Tag")
@@ -84,11 +85,11 @@ class TagController(Controller):
         if group_name:
             _, created = await get_or_create_tag_category(owner_id, group_name)
             if created:
-                messages.append(f"Tag group added: {group_name}")
+                messages.append(t("message.tags.group_added", name=group_name))
             else:
-                messages.append(f"Tag group already exists: {group_name}")
+                messages.append(t("message.tags.group_exists", name=group_name))
         else:
-            messages.append("Tag group name is required.")
+            messages.append(t("message.tags.group_name_required"))
 
         return Template(
             template_name="manage-tags.html",
@@ -113,9 +114,9 @@ class TagController(Controller):
         if new_name:
             group.name = new_name
             await group.save()
-            messages.append(f"Updated tag group to: {new_name}")
+            messages.append(t("message.tags.group_renamed", name=new_name))
         else:
-            messages.append("Tag group name is required.")
+            messages.append(t("message.tags.group_name_required"))
 
         return Template(
             template_name="manage-tags.html",
@@ -140,11 +141,15 @@ class TagController(Controller):
         if tag_name:
             _, created = await get_or_create_tag(owner_id, tag_name, group)
             if created:
-                messages.append(f"Added tag '{tag_name}' to {group.name}.")
+                messages.append(
+                    t("message.tags.tag_added", tag=tag_name, group=group.name)
+                )
             else:
-                messages.append(f"Tag '{tag_name}' already exists in {group.name}.")
+                messages.append(
+                    t("message.tags.tag_exists", tag=tag_name, group=group.name)
+                )
         else:
-            messages.append("Tag name is required.")
+            messages.append(t("message.tags.tag_name_required"))
 
         return Template(
             template_name="manage-tags.html",
@@ -173,9 +178,9 @@ class TagController(Controller):
         if new_name:
             tag.name = new_name
             await tag.save()
-            messages.append(f"Updated tag to: {new_name}")
+            messages.append(t("message.tags.tag_renamed", name=new_name))
         else:
-            messages.append("Tag name is required.")
+            messages.append(t("message.tags.tag_name_required"))
 
         return Template(
             template_name="manage-tags.html",
@@ -201,7 +206,7 @@ class TagController(Controller):
             context={
                 "request": request,
                 "groups": await self._groups(owner_id),
-                "messages": [f"Deleted tag: {tag_name}"],
+                "messages": [t("message.tags.tag_deleted", name=tag_name)],
             },
         )
 
@@ -217,14 +222,12 @@ class TagController(Controller):
 
         tag_count = await Tag.filter(category_id=group_id, owner_id=owner_id).count()
         if tag_count > 0:
-            warnings = [
-                f"Cannot delete tag group '{group.name}' while it still has tags."
-            ]
+            warnings = [t("message.tags.group_delete_has_tags", name=group.name)]
             messages: list[str] = []
         else:
             group_name = group.name
             await group.delete()
-            messages = [f"Deleted tag group: {group_name}"]
+            messages = [t("message.tags.group_deleted", name=group_name)]
             warnings = []
 
         return Template(

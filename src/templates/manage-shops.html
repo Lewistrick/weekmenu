@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Manage shops{% endblock %}
+{% block title %}{{ t('app.title.manage_shops') }}{% endblock %}
 
 {% block content %}
 <div class="content-page">
     <header class="page-header">
-        <h1 class="page-title-main">Manage shops</h1>
-        <p class="page-lead">Create shops, set their colors, and reassign ingredients between stores.</p>
+        <h1 class="page-title-main">{{ t('app.title.manage_shops') }}</h1>
+        <p class="page-lead">{{ t('shops.lead') }}</p>
     </header>
 
     {% with message_scope="shops" %}
@@ -18,21 +18,21 @@
 
     <section class="form-panel recipe-section">
         <div class="section-heading">
-            <h2 class="section-title">Add shop</h2>
+            <h2 class="section-title">{{ t('shops.section.add_shop') }}</h2>
         </div>
         <form method="post" action="/shops" class="manage-shop-create-form">
-            <input id="shop_name" name="shop_name" class="form-control" placeholder="e.g. Albert Heijn" required>
-            <label class="manage-shop-color-label" for="shop-bg-new">Background</label>
+            <input id="shop_name" name="shop_name" class="form-control" placeholder="{{ t('shops.placeholder.shop_name') }}" required>
+            <label class="manage-shop-color-label" for="shop-bg-new">{{ t('common.background') }}</label>
             <input id="shop-bg-new" name="background_color" class="form-control manage-shop-color-input" type="color" value="#2563eb">
-            <label class="manage-shop-color-label" for="shop-fg-new">Text</label>
+            <label class="manage-shop-color-label" for="shop-fg-new">{{ t('common.text') }}</label>
             <input id="shop-fg-new" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="#ffffff">
-            <button type="submit" class="btn btn-sm icon-btn" title="Add shop" aria-label="Add shop">➕</button>
+            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('shops.aria.add_shop') }}" aria-label="{{ t('shops.aria.add_shop') }}">➕</button>
         </form>
     </section>
 
     <section class="recipe-section">
         <div class="section-heading">
-            <h2 class="section-title">Existing shops</h2>
+            <h2 class="section-title">{{ t('shops.section.existing_shops') }}</h2>
         </div>
         {% if shops %}
         <div class="manage-shop-grid">
@@ -45,15 +45,15 @@
                     </span>
                     <input id="shop-name-{{ shop.id }}" name="shop_name" class="form-control" value="{{ shop.name }}" required>
                     <div class="manage-shop-tile-colors">
-                        <label class="manage-shop-color-label" for="shop-bg-{{ shop.id }}">Background</label>
+                        <label class="manage-shop-color-label" for="shop-bg-{{ shop.id }}">{{ t('common.background') }}</label>
                         <input id="shop-bg-{{ shop.id }}" name="background_color" class="form-control manage-shop-color-input" type="color" value="{{ shop.background_color }}">
-                        <label class="manage-shop-color-label" for="shop-fg-{{ shop.id }}">Text</label>
+                        <label class="manage-shop-color-label" for="shop-fg-{{ shop.id }}">{{ t('common.text') }}</label>
                         <input id="shop-fg-{{ shop.id }}" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="{{ shop.foreground_color }}">
                     </div>
                     <div class="manage-shop-tile-actions">
-                        <button type="submit" class="btn btn-sm icon-btn" title="Save shop" aria-label="Save shop">💾</button>
+                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('shops.aria.save_shop') }}" aria-label="{{ t('shops.aria.save_shop') }}">💾</button>
                         <button type="button" class="btn btn-sm icon-btn" hx-delete="/shops/{{ shop.id }}"
-                            hx-target="body" hx-swap="innerHTML" title="Delete shop" aria-label="Delete shop">
+                            hx-target="body" hx-swap="innerHTML" title="{{ t('shops.aria.delete_shop') }}" aria-label="{{ t('shops.aria.delete_shop') }}">
                             🗑️
                         </button>
                     </div>
@@ -62,7 +62,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="search-placeholder">No shops yet.</p>
+        <p class="search-placeholder">{{ t('shops.empty') }}</p>
         {% endif %}
     </section>
 

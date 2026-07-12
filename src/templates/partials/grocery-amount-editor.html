@@ -6,9 +6,9 @@
     <input type="hidden" name="old_unit" value="{{ item.unit }}">
     <input class="form-control grocery-amount-input" type="number" name="quantity"
         min="0.01" step="any" value="{{ item.quantity }}" required
-        aria-label="Quantity for {{ item.name }}">
+        aria-label="{{ t('grocery.aria.quantity_for', item_name=item.name) }}">
     <select class="form-control grocery-unit-select" name="unit" required
-        aria-label="Unit for {{ item.name }}">
+        aria-label="{{ t('grocery.aria.unit_for', item_name=item.name) }}">
         {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
         {% if item.unit not in unit_abbrevs %}
         <option value="{{ item.unit }}" selected>{{ item.unit }}</option>
@@ -19,12 +19,12 @@
         </option>
         {% endfor %}
     </select>
-    <button type="submit" class="btn btn-sm btn-primary" title="Save amount" aria-label="Save amount">✓</button>
+    <button type="submit" class="btn btn-sm btn-primary" title="{{ t('grocery.aria.save_amount') }}" aria-label="{{ t('grocery.aria.save_amount') }}">✓</button>
     <button type="button" class="btn btn-sm icon-btn"
         hx-get="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}/display"
         hx-target="#grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}"
         hx-swap="innerHTML"
-        title="Cancel edit" aria-label="Cancel edit">
+        title="{{ t('ingredient.aria.cancel_edit') }}" aria-label="{{ t('ingredient.aria.cancel_edit') }}">
         ✕
     </button>
 </form>

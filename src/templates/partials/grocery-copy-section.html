@@ -4,7 +4,7 @@
         <h3 class="grocery-subsection-title">{{ copy_title }}</h3>
         <button type="button" class="btn btn-secondary btn-sm grocery-copy-btn"
             onclick="copyPlaintext('{{ textarea_id }}')">
-            Copy
+            {{ t('common.copy') }}
         </button>
     </div>
     <textarea id="{{ textarea_id }}" class="plaintext-export" readonly rows="8">{{ copy_text }}</textarea>

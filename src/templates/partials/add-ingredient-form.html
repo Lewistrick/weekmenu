@@ -2,13 +2,13 @@
     hx-swap="outerHTML">
     <div class="form-group">
         <div class="ingredient-input">
-            <input type="text" name="quantity" placeholder="Quantity" required />
-            <input type="text" name="unit" placeholder="Unit" required />
-            <input type="text" name="ingredient" placeholder="Name" required />
-            <button type="submit" class="btn btn-primary btn-sm">Add</button>
+            <input type="text" name="quantity" placeholder="{{ t('ingredient.placeholder.quantity') }}" required />
+            <input type="text" name="unit" placeholder="{{ t('ingredient.placeholder.unit') }}" required />
+            <input type="text" name="ingredient" placeholder="{{ t('ingredient.placeholder.name') }}" required />
+            <button type="submit" class="btn btn-primary btn-sm">{{ t('ingredient.action.add') }}</button>
             <button type="button" class="btn btn-ghost btn-sm" hx-get="/elements/empty/div/add-ingredient-form"
                 hx-target="#add-ingredient-form" hx-swap="innerHTML">
-                Cancel
+                {{ t('common.cancel') }}
             </button>
         </div>
     </div>

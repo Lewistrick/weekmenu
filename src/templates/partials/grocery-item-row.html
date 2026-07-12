@@ -12,7 +12,7 @@
             {% include "partials/grocery-amount-display.html" %}
         </div>
     </div>
-    <div class="shop-chip-row" role="group" aria-label="Actions for {{ item.name }}">
+    <div class="shop-chip-row" role="group" aria-label="{{ t('grocery.aria.actions_for_item', item_name=item.name) }}">
         {% for shop in shops %}
         <form hx-post="/week-menu/grocery-list/assign" hx-target="#grocery-list-panel" hx-swap="outerHTML"
             class="shop-chip-form">
@@ -33,7 +33,7 @@
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
             <button type="submit" class="shop-chip-btn shop-chip-btn--question shop-chip-btn--active"
-                title="Remove from to check" aria-label="Remove from to check">
+                title="{{ t('grocery.aria.remove_from_to_check') }}" aria-label="{{ t('grocery.aria.remove_from_to_check') }}">
                 ?
             </button>
         </form>
@@ -43,7 +43,7 @@
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
             <button type="submit" class="shop-chip-btn shop-chip-btn--question"
-                title="Move to to check" aria-label="Move to to check">
+                title="{{ t('grocery.aria.move_to_to_check') }}" aria-label="{{ t('grocery.aria.move_to_to_check') }}">
                 ?
             </button>
         </form>
@@ -54,7 +54,7 @@
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
             <button type="submit" class="shop-chip-btn shop-chip-btn--check shop-chip-btn--active"
-                title="Remove from already have" aria-label="Remove from already have">
+                title="{{ t('grocery.aria.remove_from_already_have') }}" aria-label="{{ t('grocery.aria.remove_from_already_have') }}">
                 ✓
             </button>
         </form>
@@ -64,7 +64,7 @@
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
             <button type="submit" class="shop-chip-btn shop-chip-btn--check"
-                title="Already have this" aria-label="Already have this">
+                title="{{ t('grocery.aria.already_have') }}" aria-label="{{ t('grocery.aria.already_have') }}">
                 ✓
             </button>
         </form>

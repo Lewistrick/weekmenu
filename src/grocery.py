@@ -98,15 +98,18 @@ def format_grocery_export(
     unassigned: list[GroceryItem],
     to_check: list[GroceryItem],
     groups: list[GroceryGroup],
+    *,
+    unassigned_label: str = UNASSIGNED_SHOP_LABEL,
+    to_check_label: str = TO_CHECK_LABEL,
 ) -> str:
     """Render grocery lists as plaintext sections per shop."""
     sections: list[str] = []
     if unassigned:
         lines = [format_grocery_line(item) for item in unassigned]
-        sections.append(f"{UNASSIGNED_SHOP_LABEL}\n" + "\n".join(lines))
+        sections.append(f"{unassigned_label}\n" + "\n".join(lines))
     if to_check:
         lines = [format_grocery_line(item) for item in to_check]
-        sections.append(f"{TO_CHECK_LABEL}\n" + "\n".join(lines))
+        sections.append(f"{to_check_label}\n" + "\n".join(lines))
     for group in groups:
         if not group["entries"]:
             continue

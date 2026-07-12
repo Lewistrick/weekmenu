@@ -1,49 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}{{ recipe.name }}{% endblock %}
+{% block title %}{{ t('app.title.view_recipe', recipe_name=recipe.name) }}{% endblock %}
 
 {% block content %}
 <article class="recipe-view">
     <header class="recipe-header">
         <p class="recipe-owner-line">
             {% if recipe.creator %}
-            Created by <strong>{{ recipe.creator.username }}</strong>
+            {{ t('recipe.view.created_by', username=recipe.creator.username) }}
             {% else %}
-            By <strong>{{ recipe.owner.username }}</strong>
+            {{ t('recipe.view.by_owner', username=recipe.owner.username) }}
             {% endif %}
         </p>
         <div class="recipe-title-row">
-            <h1 class="recipe-title-main">#{{ recipe.id }} {{ recipe.name }}</h1>
+            <h1 class="recipe-title-main">{{ t('recipe.view.title_with_id', recipe_id=recipe.id, recipe_name=recipe.name) }}</h1>
             <div class="recipe-title-actions">
                 {% if can_edit %}
-                <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">✏️ Edit recipe</a>
+                <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">{{ t('recipe.view.action.edit') }}</a>
                 {% elif can_import %}
                     {% if already_imported %}
-                    <span class="recipe-import-note">Already in your collection</span>
+                    <span class="recipe-import-note">{{ t('recipe.view.already_imported') }}</span>
                     {% else %}
                     <form method="post" action="/recipes/{{ recipe.id }}/import">
-                        <button type="submit" class="btn btn-secondary">📥 Import to my recipes</button>
+                        <button type="submit" class="btn btn-secondary">{{ t('recipe.view.action.import') }}</button>
                     </form>
                     {% endif %}
                 {% endif %}
                 <form method="post" action="/recipes/{{ recipe.id }}/add-to-week-menu">
                     <input type="hidden" name="source" value="view">
-                    <button type="submit" class="btn btn-primary">🗓️ Add to week menu</button>
+                    <button type="submit" class="btn btn-primary">{{ t('recipe.view.action.add_to_week_menu') }}</button>
                 </form>
             </div>
         </div>
-        <div class="recipe-status" aria-label="recipe metadata">
+        <div class="recipe-status" aria-label="{{ t('common.aria.recipe_metadata') }}">
             <span class="status-pill">
                 <span class="status-icon">{% if recipe.private %}🔒{% else %}🌐{% endif %}</span>
-                <span class="status-label">{% if recipe.private %}Private{% else %}Public{% endif %}</span>
+                <span class="status-label">{% if recipe.private %}{{ t('common.status.private') }}{% else %}{{ t('common.status.public') }}{% endif %}</span>
             </span>
             <span class="status-pill">
                 <span class="status-icon">{% if recipe.enabled %}✅{% else %}⏸️{% endif %}</span>
-                <span class="status-label">{% if recipe.enabled %}Enabled{% else %}Disabled{% endif %}</span>
+                <span class="status-label">{% if recipe.enabled %}{{ t('common.status.enabled') }}{% else %}{{ t('common.status.disabled') }}{% endif %}</span>
             </span>
         </div>
         {% if recipe_tag_groups %}
-        <div class="recipe-tag-groups" aria-label="recipe tags">
+        <div class="recipe-tag-groups" aria-label="{{ t('common.aria.recipe_tags') }}">
             {% for group in recipe_tag_groups %}
             <div class="recipe-tag-group">
                 <span class="recipe-tag-group-label">{{ group.category.name }}</span>
@@ -57,7 +57,7 @@
     </header>
 
     <section class="recipe-section">
-        <h2 class="section-title">Ingredients</h2>
+        <h2 class="section-title">{{ t('common.ingredients') }}</h2>
         <ul class="recipe-ingredient-list">
             {% for ingredient in ingredients %}
             <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
@@ -66,7 +66,7 @@
     </section>
 
     <section class="recipe-section">
-        <h2 class="section-title">Description</h2>
+        <h2 class="section-title">{{ t('common.description') }}</h2>
         <div class="recipe-description">{{ recipe.description | markdown | safe }}</div>
     </section>
 </article>

@@ -5,7 +5,7 @@
     {% endwith %}
     {% endfor %}
     <button hx-get="/recipes/{{ recipe.id }}/ingredients/add" hx-target="#add-ingredient-form" hx-swap="innerHTML"
-        class="btn btn-sm icon-btn icon-action-btn" type="button" title="Add ingredient" aria-label="Add ingredient">
+        class="btn btn-sm icon-btn icon-action-btn" type="button" title="{{ t('ingredient.aria.add') }}" aria-label="{{ t('ingredient.aria.add') }}">
         ➕
     </button>
     <div id="add-ingredient-form"></div>

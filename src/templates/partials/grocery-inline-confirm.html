@@ -10,13 +10,13 @@
         <form hx-post="{{ confirm_action }}" hx-target="#grocery-list-panel" hx-swap="outerHTML"
             class="grocery-bulk-form">
             <button type="submit" class="shop-chip-btn shop-chip-btn--warn"
-                title="Confirm" aria-label="Confirm">
+                title="{{ t('common.confirm') }}" aria-label="{{ t('common.confirm') }}">
                 ✓
             </button>
         </form>
         <button type="button" class="shop-chip-btn shop-chip-btn--clear grocery-inline-confirm-cancel"
             data-confirm-id="{{ confirm_id }}" data-trigger-id="{{ trigger_id }}"
-            title="Cancel" aria-label="Cancel">
+            title="{{ t('common.cancel') }}" aria-label="{{ t('common.cancel') }}">
             ✕
         </button>
     </div>

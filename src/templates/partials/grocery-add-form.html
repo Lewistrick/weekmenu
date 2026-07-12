@@ -1,25 +1,25 @@
 <div id="grocery-add-form">
     <section class="recipe-section grocery-add-panel">
         <div class="section-heading">
-            <h2 class="section-title">Add groceries</h2>
+            <h2 class="section-title">{{ t('grocery.section.add_groceries') }}</h2>
             <form hx-post="/week-menu/grocery-list/add-weekly" hx-target="#grocery-list-body"
                 hx-swap="outerHTML" class="grocery-add-weekly-form">
-                <button type="submit" class="btn btn-secondary btn-sm">🧺 Add weekly groceries</button>
+                <button type="submit" class="btn btn-secondary btn-sm">{{ t('grocery.action.add_weekly_groceries') }}</button>
             </form>
         </div>
         <form hx-post="/week-menu/grocery-list/add" hx-target="#grocery-list-body" hx-swap="outerHTML"
             class="inline-form grocery-add-form">
             <div class="form-group">
                 <div class="ingredient-input">
-                    <input type="text" name="ingredient" class="form-control" placeholder="Name" required />
-                    <input type="number" name="quantity" class="form-control" placeholder="Amount" min="0.01"
+                    <input type="text" name="ingredient" class="form-control" placeholder="{{ t('common.name') }}" required />
+                    <input type="number" name="quantity" class="form-control" placeholder="{{ t('common.amount') }}" min="0.01"
                         step="any" required />
-                    <select name="unit" class="form-control grocery-unit-select" required aria-label="Unit">
+                    <select name="unit" class="form-control grocery-unit-select" required aria-label="{{ t('common.unit') }}">
                         {% for unit in units %}
                         <option value="{{ unit.abbrev }}">{{ unit.abbrev }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                    <button type="submit" class="btn btn-primary btn-sm">{{ t('common.add') }}</button>
                 </div>
             </div>
         </form>

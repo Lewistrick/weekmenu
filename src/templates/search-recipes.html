@@ -1,34 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}Find recipe{% endblock %}
+{% block title %}{{ t('app.title.find_recipe') }}{% endblock %}
 
 {% block content %}
 <div class="content-page">
     <header class="page-header">
-        <h1 class="page-title-main">Find recipe</h1>
-        <p class="page-lead">Search your cookbook by name, description, or ingredient.</p>
+        <h1 class="page-title-main">{{ t('app.title.find_recipe') }}</h1>
+        <p class="page-lead">{{ t('search.lead') }}</p>
     </header>
 
     <form class="search-panel" hx-get="/recipes/search-recipe" hx-target="#search-results" hx-swap="innerHTML"
         hx-trigger="keyup changed delay:200ms from:#recipe-search-input, change from:select, change from:#include-public-recipes">
-        <label class="field-label" for="recipe-search-input">Search</label>
+        <label class="field-label" for="recipe-search-input">{{ t('common.search') }}</label>
         <input id="recipe-search-input" class="form-control" type="search" name="search"
-            placeholder="Name, description, or ingredient…">
+            placeholder="{{ t('common.placeholder.search_recipe') }}">
         <label class="search-include-public" for="include-public-recipes">
             <input id="include-public-recipes" type="checkbox" name="include_public" value="on">
-            Include public recipes
+            {{ t('common.include_public_recipes') }}
         </label>
         {% if tag_groups %}
         <section class="form-section">
             <div class="section-heading">
-                <h2 class="section-title">Filter by tags</h2>
-                <p class="section-hint">Recipes with no tag in a group always stay included for that group.</p>
+                <h2 class="section-title">{{ t('search.filter_by_tags') }}</h2>
+                <p class="section-hint">{{ t('search.filter_hint') }}</p>
             </div>
             {% for group in tag_groups %}
             <div class="form-group">
                 <label for="tag-group-{{ group.category.id }}">{{ group.category.name }}</label>
                 <select id="tag-group-{{ group.category.id }}" name="tag_group_{{ group.category.id }}" class="form-control">
-                    <option value="">Any</option>
+                    <option value="">{{ t('common.any') }}</option>
                     {% for tag in group.tags %}
                     <option value="{{ tag.id }}">{{ tag.name }}</option>
                     {% endfor %}
@@ -38,7 +38,7 @@
         </section>
         {% endif %}
         <div id="search-results" class="search-results-panel">
-            <p class="search-placeholder">Results will appear here as you type.</p>
+            <p class="search-placeholder">{{ t('search.placeholder.waiting') }}</p>
         </div>
     </form>
 </div>

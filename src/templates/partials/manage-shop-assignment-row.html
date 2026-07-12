@@ -3,25 +3,25 @@
         <span class="manage-shop-ingredient">{{ row.ingredient.name }}</span>
         <div class="manage-shop-ingredient-meta">
             <span class="manage-shop-recipe-count">
-                in {{ row.recipe_count }} recipe{% if row.recipe_count != 1 %}s{% endif %}
+                {{ t('shops.assignments.in_recipes', count=row.recipe_count) }}
             </span>
             {% if row.recipe_count == 0 %}
             <button type="button" class="btn btn-sm icon-btn"
                 hx-delete="/shops/ingredients/{{ row.ingredient.id }}"
                 hx-target="#shop-assignments" hx-swap="outerHTML"
-                title="Delete unused ingredient" aria-label="Delete unused ingredient">
+                title="{{ t('shops.assignments.aria.delete_unused') }}" aria-label="{{ t('shops.assignments.aria.delete_unused') }}">
                 🗑️
             </button>
             {% endif %}
         </div>
     </div>
-    <div class="shop-chip-row" role="group" aria-label="Shop for {{ row.ingredient.name }}">
+    <div class="shop-chip-row" role="group" aria-label="{{ t('shops.assignments.aria.shop_for', ingredient_name=row.ingredient.name) }}">
         <form hx-post="/shops/assignments" hx-target="#shop-assignments" hx-swap="outerHTML"
             class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ row.ingredient.id }}">
             <input type="hidden" name="shop_id" value="">
             <button type="submit" class="shop-chip-btn shop-chip-btn--clear{% if row.shop_id is none %} shop-chip-btn--active{% endif %}"
-                title="Unassigned" aria-label="Unassigned">—</button>
+                title="{{ t('shops.assignments.aria.unassigned') }}" aria-label="{{ t('shops.assignments.aria.unassigned') }}">—</button>
         </form>
         {% for shop in shops %}
         <form hx-post="/shops/assignments" hx-target="#shop-assignments" hx-swap="outerHTML"

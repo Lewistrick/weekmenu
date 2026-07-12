@@ -9,6 +9,7 @@ from src.models import (
     WeekMenuSlot,
     WeekMenuTagConstraint,
 )
+from src.i18n.service import t
 from src.week_menu import (
     DEFAULT_SERVINGS,
     GroceryItem,
@@ -540,7 +541,11 @@ async def update_grocery_line(
             ):
                 item["quantity"] = round(item["quantity"] + quantity, 2)
                 label = item["name"].strip() or f"ingredient {ingredient_id}"
-                merge_message = f"Combined with existing {label} ({normalized_unit})."
+                merge_message = t(
+                    "message.week_menu.combined_existing",
+                    name=label,
+                    unit=normalized_unit,
+                )
                 break
     else:
         remaining.append(

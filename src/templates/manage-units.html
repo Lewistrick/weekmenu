@@ -1,13 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Units{% endblock %}
+{% block title %}{{ t('app.title.units') }}{% endblock %}
 
 {% block content %}
 <div class="content-page">
     <header class="page-header">
-        <h1 class="page-title-main">Units</h1>
-        <p class="page-lead">Manage measurement units used in recipes and grocery lists. Each unit needs an
-            abbreviation, singular label, and plural label.</p>
+        <h1 class="page-title-main">{{ t('app.title.units') }}</h1>
+        <p class="page-lead">{{ t('units.lead') }}</p>
     </header>
 
     {% with message_scope="units" %}
@@ -19,18 +18,18 @@
 
     <section class="recipe-section">
         <div class="section-heading">
-            <h2 class="section-title">Add unit</h2>
+            <h2 class="section-title">{{ t('units.section.add') }}</h2>
         </div>
         <form method="post" action="/units" class="inline-form">
             <div class="form-group">
                 <div class="ingredient-input catalog-unit-input">
-                    <input type="text" name="abbrev" class="form-control" placeholder="Abbrev" required
-                        aria-label="Abbreviation" />
-                    <input type="text" name="single" class="form-control" placeholder="Singular"
-                        aria-label="Singular label" />
-                    <input type="text" name="plural" class="form-control" placeholder="Plural"
-                        aria-label="Plural label" />
-                    <button type="submit" class="btn btn-sm icon-btn" title="Add unit" aria-label="Add unit">➕</button>
+                    <input type="text" name="abbrev" class="form-control" placeholder="{{ t('units.placeholder.abbrev') }}" required
+                        aria-label="{{ t('units.aria.abbreviation') }}" />
+                    <input type="text" name="single" class="form-control" placeholder="{{ t('units.placeholder.singular') }}"
+                        aria-label="{{ t('units.aria.singular_label') }}" />
+                    <input type="text" name="plural" class="form-control" placeholder="{{ t('units.placeholder.plural') }}"
+                        aria-label="{{ t('units.aria.plural_label') }}" />
+                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('units.aria.add_unit') }}" aria-label="{{ t('units.aria.add_unit') }}">➕</button>
                 </div>
             </div>
         </form>
@@ -38,7 +37,7 @@
 
     <section class="recipe-section">
         <div class="section-heading">
-            <h2 class="section-title">Your units</h2>
+            <h2 class="section-title">{{ t('units.section.yours') }}</h2>
         </div>
         {% if units %}
         <div class="catalog-unit-list">
@@ -47,21 +46,21 @@
                 <form method="post" action="/units/{{ row.id }}" class="inline-form catalog-unit-edit-form">
                     <div class="ingredient-input catalog-unit-input">
                         <input type="text" name="abbrev" class="form-control" value="{{ row.abbrev }}" required
-                            aria-label="Abbreviation for {{ row.abbrev }}" />
+                            aria-label="{{ t('units.aria.abbreviation_for', abbrev=row.abbrev) }}" />
                         <input type="text" name="single" class="form-control" value="{{ row.single }}"
-                            placeholder="Singular" aria-label="Singular label for {{ row.abbrev }}" />
+                            placeholder="{{ t('units.placeholder.singular') }}" aria-label="{{ t('units.aria.singular_for', abbrev=row.abbrev) }}" />
                         <input type="text" name="plural" class="form-control" value="{{ row.plural }}"
-                            placeholder="Plural" aria-label="Plural label for {{ row.abbrev }}" />
-                        <button type="submit" class="btn btn-sm icon-btn" title="Save" aria-label="Save">💾</button>
+                            placeholder="{{ t('units.placeholder.plural') }}" aria-label="{{ t('units.aria.plural_for', abbrev=row.abbrev) }}" />
+                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('common.save') }}" aria-label="{{ t('common.save') }}">💾</button>
                         <button type="button" class="btn btn-sm icon-btn" hx-delete="/units/{{ row.id }}"
-                            hx-target="body" hx-swap="innerHTML" title="Delete" aria-label="Delete">🗑️</button>
+                            hx-target="body" hx-swap="innerHTML" title="{{ t('common.delete') }}" aria-label="{{ t('common.delete') }}">🗑️</button>
                     </div>
                 </form>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="search-placeholder">No units yet.</p>
+        <p class="search-placeholder">{{ t('units.empty') }}</p>
         {% endif %}
     </section>
 </div>

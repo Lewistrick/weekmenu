@@ -26,6 +26,7 @@ def test_register_template_filters_adds_markdown() -> None:
     register_template_filters(engine)
 
     assert "markdown" in engine.engine.filters
+    assert "t" in engine.engine.globals
 
 
 @pytest.mark.asyncio

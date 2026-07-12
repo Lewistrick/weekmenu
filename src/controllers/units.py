@@ -6,6 +6,7 @@ from litestar.response import Template
 from loguru import logger
 
 from src.auth import get_current_user
+from src.i18n.service import t
 from src.units import add_unit, delete_unit, load_units, update_unit
 
 
@@ -88,7 +89,7 @@ class UnitController(Controller):
             form_data.get("plural"),
         )
         if not success:
-            if message == "Unit not found.":
+            if message == t("message.units.not_found"):
                 raise NotFoundException()
             return await self._render_page(request, warnings=[message])
         return await self._render_page(request, messages=[message])
@@ -99,7 +100,7 @@ class UnitController(Controller):
         owner_id = await self._owner_id(request)
         success, message = await delete_unit(owner_id, unit_id)
         if not success:
-            if message == "Unit not found.":
+            if message == t("message.units.not_found"):
                 raise NotFoundException()
             return await self._render_page(request, warnings=[message])
         logger.info(f"Deleted unit: {unit_id}")

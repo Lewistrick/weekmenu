@@ -1,57 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Add a new recipe{% endblock %}
+{% block title %}{{ t('app.title.add_recipe') }}{% endblock %}
 
 {% block content %}
 <div class="content-page">
     <header class="page-header">
-        <h1 class="page-title-main">Add a new recipe</h1>
-        <p class="page-lead">Fill in the details below. You can add ingredients one line at a time.</p>
+        <h1 class="page-title-main">{{ t('app.title.add_recipe') }}</h1>
+        <p class="page-lead">{{ t('recipe.add.lead') }}</p>
     </header>
 
     <div class="form-panel">
         <form method="post" action="/recipes" class="recipe-form">
             <div class="form-group">
-                <label for="name">Recipe name</label>
+                <label for="name">{{ t('recipe.field.name') }}</label>
                 <input type="text" id="name" name="name" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="servings">Servings</label>
+                <label for="servings">{{ t('common.servings') }}</label>
                 <input type="number" id="servings" name="servings" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="prep_time_minutes">Prep time (minutes)</label>
+                <label for="prep_time_minutes">{{ t('recipe.field.prep_time_minutes') }}</label>
                 <input type="number" id="prep_time_minutes" name="prep_time_minutes" class="form-control">
             </div>
 
             <div class="form-group">
-                <label for="cook_time_minutes">Cook time (minutes)</label>
+                <label for="cook_time_minutes">{{ t('recipe.field.cook_time_minutes') }}</label>
                 <input type="number" id="cook_time_minutes" name="cook_time_minutes" class="form-control">
             </div>
 
             <div class="form-group">
-                <label for="description">Description</label>
+                <label for="description">{{ t('common.description') }}</label>
                 <textarea id="description" name="description" rows="5" class="form-control"></textarea>
             </div>
 
             <section class="form-section">
                 <div class="section-heading">
-                    <h2 class="section-title">Ingredients</h2>
-                    <p class="section-hint">Add quantity, unit, and ingredient name for each line.</p>
+                    <h2 class="section-title">{{ t('common.ingredients') }}</h2>
+                    <p class="section-hint">{{ t('recipe.add.ingredients_hint') }}</p>
                 </div>
                 <div id="ingredients-container" class="ingredients-container"></div>
                 <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container"
                     hx-swap="beforeend" class="btn btn-secondary btn-sm">
-                    + Add ingredient
+                    {{ t('recipe.add.action.add_ingredient') }}
                 </button>
             </section>
 
             <section class="form-section">
                 <div class="section-heading">
-                    <h2 class="section-title">Tags</h2>
-                    <p class="section-hint">Select any tag values that describe this recipe.</p>
+                    <h2 class="section-title">{{ t('common.tags') }}</h2>
+                    <p class="section-hint">{{ t('recipe.add.tags_hint') }}</p>
                 </div>
                 {% if tag_groups %}
                 {% for group in tag_groups %}
@@ -68,11 +68,11 @@
                 </fieldset>
                 {% endfor %}
                 {% else %}
-                <p class="search-placeholder">No tag groups yet. Add them on the Tag groups page.</p>
+                <p class="search-placeholder">{{ t('common.empty.no_tag_groups') }}</p>
                 {% endif %}
             </section>
 
-            <button type="submit" class="btn btn-primary">Add recipe</button>
+            <button type="submit" class="btn btn-primary">{{ t('recipe.add.submit') }}</button>
         </form>
 
     </div>

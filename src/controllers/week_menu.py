@@ -11,6 +11,7 @@ from tortoise.expressions import Q
 
 from src.auth import get_current_user
 from src.catalog import get_or_create_ingredient
+from src.i18n.service import t
 from src.grocery import (
     format_grocery_export,
     format_week_menu_export,
@@ -206,7 +207,12 @@ class WeekMenuController(Controller):
             )
         return {
             "request": request,
-            "days": await build_day_rows(menu, recipes_by_id, start_day),
+            "days": await build_day_rows(
+                menu,
+                recipes_by_id,
+                start_day,
+                day_label_fn=lambda day: t(f"day.{day}"),
+            ),
             "start_day": start_day,
             "day_options": ordered_week_days("monday"),
             "include_public": await load_include_public(user_id),
@@ -257,7 +263,12 @@ class WeekMenuController(Controller):
             template_name="partials/week-menu-days.html",
             context={
                 "request": request,
-                "days": await build_day_rows(menu, recipes_by_id, start_day),
+                "days": await build_day_rows(
+                    menu,
+                    recipes_by_id,
+                    start_day,
+                    day_label_fn=lambda day: t(f"day.{day}"),
+                ),
             },
         )
 
@@ -332,10 +343,7 @@ class WeekMenuController(Controller):
                 ),
             )
             if grocery_items and not pop_grocery_suppress_preserve(request):
-                grocery_message = (
-                    "Your grocery list is preserved and was not regenerated "
-                    "from the week menu."
-                )
+                grocery_message = t("message.week_menu.grocery_preserved")
         else:
             grocery_items = await self._grocery_items_from_week_menu(request)
             await reset_grocery_plan(user_id)
@@ -359,7 +367,12 @@ class WeekMenuController(Controller):
                 line_shop_ids,
             )
         )
-        days = await build_day_rows(menu, recipes_by_id, start_day)
+        days = await build_day_rows(
+            menu,
+            recipes_by_id,
+            start_day,
+            day_label_fn=lambda day: t(f"day.{day}"),
+        )
         units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return {
             "request": request,
@@ -369,7 +382,11 @@ class WeekMenuController(Controller):
             "already_have_items": already_have_items,
             "grocery_groups": grocery_groups,
             "grocery_export_text": format_grocery_export(
-                unassigned_items, to_check_items, grocery_groups
+                unassigned_items,
+                to_check_items,
+                grocery_groups,
+                unassigned_label=t("grocery.label.unassigned"),
+                to_check_label=t("grocery.label.to_check"),
             ),
             "week_menu_export_text": format_week_menu_export(days),
             "shops": shops,
@@ -512,7 +529,7 @@ class WeekMenuController(Controller):
         if all(slot["pinned"] for slot in menu.values()):
             return await self._render_page_with_feedback(
                 request,
-                warnings=["All days are pinned. Unpin at least one day to randomize."],
+                warnings=[t("message.week_menu.all_days_pinned_randomize")],
             )
         form_data = await request.form()
         include_public = self._form_wants_public(dict(form_data))
@@ -644,11 +661,11 @@ class WeekMenuController(Controller):
         action_message: str | None
         reset_form = False
         if not name:
-            action_message = "Enter an ingredient name."
+            action_message = t("message.week_menu.enter_ingredient")
         elif quantity is None:
-            action_message = "Enter a positive amount."
+            action_message = t("message.week_menu.enter_positive_amount")
         elif unit is None:
-            action_message = f"Could not find unit: {unit_abbrev}"
+            action_message = t("message.recipe.unit_not_found_named", unit=unit_abbrev)
         else:
             ingredient, _ = await get_or_create_ingredient(user_id, name)
             await add_items_to_grocery_list(
@@ -662,7 +679,7 @@ class WeekMenuController(Controller):
                     )
                 ],
             )
-            action_message = f"Added {ingredient.name} to your grocery list."
+            action_message = t("message.week_menu.added_grocery", name=ingredient.name)
             reset_form = True
         return await self._grocery_add_response(
             request,
@@ -682,9 +699,7 @@ class WeekMenuController(Controller):
         set_grocery_suppress_preserve(request)
         weekly_items = await weekly_groceries_as_items(user_id)
         if not weekly_items:
-            action_message = (
-                "You have no weekly groceries yet. Add some in Settings first."
-            )
+            action_message = t("message.week_menu.no_weekly_groceries")
         else:
             current_items = (
                 await hydrate_grocery_item_names(
@@ -697,14 +712,20 @@ class WeekMenuController(Controller):
                 weekly_items, current_items
             )
             if not missing_items:
-                action_message = (
-                    "Your weekly groceries are already on the grocery list."
-                )
+                action_message = t("message.week_menu.weekly_already_on_list")
             else:
                 await add_items_to_grocery_list(user_id, missing_items)
                 count = len(missing_items)
-                noun = "grocery" if count == 1 else "groceries"
-                action_message = f"Added {count} weekly {noun} to your grocery list."
+                noun = (
+                    t("message.week_menu.noun_grocery")
+                    if count == 1
+                    else t("message.week_menu.noun_groceries")
+                )
+                action_message = t(
+                    "message.week_menu.added_weekly_groceries",
+                    count=count,
+                    noun=noun,
+                )
         return await self._grocery_add_response(request, action_message=action_message)
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")

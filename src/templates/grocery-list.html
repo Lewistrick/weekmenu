@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Grocery list{% endblock %}
+{% block title %}{{ t('app.title.grocery_list') }}{% endblock %}
 
 {% block content %}
 <div class="content-page">
     <header class="page-header">
-        <h1 class="page-title-main">Grocery list</h1>
-        <p class="page-lead">Sort ingredients into shops on the left, then review your lists on the right.</p>
+        <h1 class="page-title-main">{{ t('app.title.grocery_list') }}</h1>
+        <p class="page-lead">{{ t('grocery.lead') }}</p>
     </header>
 
     {% if grocery_message %}
@@ -23,7 +23,7 @@
     {% include "partials/grocery-add-form.html" %}
 
     <div class="grocery-toolbar">
-        <a href="/week-menu" class="btn btn-secondary">← Back to week menu</a>
+        <a href="/week-menu" class="btn btn-secondary">{{ t('grocery.back_to_week_menu') }}</a>
     </div>
 
     {% include "partials/grocery-list-body.html" %}

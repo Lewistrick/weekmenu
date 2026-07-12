@@ -1,5 +1,5 @@
 {% if recipes %}
-<h2 class="section-title">Search results</h2>
+<h2 class="section-title">{{ t('search.results.title') }}</h2>
 <ul class="search-result-list">
     {% for recipe in recipes %}
     <li>
@@ -11,5 +11,5 @@
     {% endfor %}
 </ul>
 {% else %}
-<p class="search-placeholder">No recipes matched your search.</p>
+<p class="search-placeholder">{{ t('search.results.empty') }}</p>
 {% endif %}

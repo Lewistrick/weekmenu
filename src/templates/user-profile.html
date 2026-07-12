@@ -1,66 +1,66 @@
 {% extends "base.html" %}
 
-{% block title %}Account{% endblock %}
+{% block title %}{{ t('app.title.account') }}{% endblock %}
 
 {% block content %}
 <div class="content-page">
     <header class="page-header">
-        <h1 class="page-title-main">Account</h1>
-        <p class="page-lead">Manage your account details.</p>
+        <h1 class="page-title-main">{{ t('app.title.account') }}</h1>
+        <p class="page-lead">{{ t('profile.lead') }}</p>
     </header>
 
     <section class="recipe-section">
-        <h2 class="section-title">Details</h2>
-        <p class="profile-detail"><strong>Username:</strong> {{ current_user.username }}</p>
+        <h2 class="section-title">{{ t('profile.section.details') }}</h2>
+        <p class="profile-detail"><strong>{{ t('profile.username_label') }}</strong> {{ current_user.username }}</p>
         <form class="profile-form" method="post" action="/profile/email">
-            <label class="field-label" for="email">Email <span class="field-optional">(optional)</span></label>
+            <label class="field-label" for="email">{{ t('auth.field.email') }} <span class="field-optional">{{ t('auth.field.optional') }}</span></label>
             <input class="form-control" id="email" name="email" type="email" value="{{ current_user.email or '' }}">
-            <button class="btn btn-secondary" type="submit">Save email</button>
+            <button class="btn btn-secondary" type="submit">{{ t('profile.action.save_email') }}</button>
         </form>
     </section>
 
     <section class="recipe-section">
-        <h2 class="section-title">Settings</h2>
+        <h2 class="section-title">{{ t('profile.section.settings') }}</h2>
         <form class="profile-form" method="post" action="/profile/settings">
-            <label class="field-label" for="language">Language</label>
+            <label class="field-label" for="language">{{ t('profile.field.language') }}</label>
             <select class="form-control" id="language" name="language">
                 {% for option in language_options %}
                 <option value="{{ option }}" {% if settings.language == option %}selected{% endif %}>{{ option }}</option>
                 {% endfor %}
             </select>
 
-            <label class="field-label" for="servings">Default week-menu servings</label>
+            <label class="field-label" for="servings">{{ t('profile.field.default_servings') }}</label>
             <input class="form-control" id="servings" name="servings" type="number" min="1"
                 value="{{ settings.servings }}" required>
 
-            <button class="btn btn-secondary" type="submit">Save settings</button>
+            <button class="btn btn-secondary" type="submit">{{ t('profile.action.save_settings') }}</button>
         </form>
     </section>
 
     <section class="recipe-section">
-        <h2 class="section-title">Change password</h2>
+        <h2 class="section-title">{{ t('profile.section.change_password') }}</h2>
         <form class="profile-form" method="post" action="/profile/password">
-            <label class="field-label" for="current_password">Current password</label>
+            <label class="field-label" for="current_password">{{ t('profile.field.current_password') }}</label>
             <input class="form-control" id="current_password" name="current_password" type="password"
                 autocomplete="current-password" required>
 
-            <label class="field-label" for="new_password">New password</label>
+            <label class="field-label" for="new_password">{{ t('profile.field.new_password') }}</label>
             <input class="form-control" id="new_password" name="new_password" type="password"
                 autocomplete="new-password" required>
 
-            <label class="field-label" for="new_password_confirm">Confirm new password</label>
+            <label class="field-label" for="new_password_confirm">{{ t('profile.field.confirm_new_password') }}</label>
             <input class="form-control" id="new_password_confirm" name="new_password_confirm" type="password"
                 autocomplete="new-password" required>
 
-            <button class="btn btn-secondary" type="submit">Change password</button>
+            <button class="btn btn-secondary" type="submit">{{ t('profile.action.change_password') }}</button>
         </form>
     </section>
 
     <section class="recipe-section">
-        <h2 class="section-title">Danger zone</h2>
+        <h2 class="section-title">{{ t('profile.section.danger_zone') }}</h2>
         <form class="profile-form" method="post" action="/profile/delete"
-            onsubmit="return confirm('Delete your account and all your recipes? This cannot be undone.');">
-            <button class="btn btn-danger" type="submit">Delete account</button>
+            onsubmit="return confirm('{{ t('profile.confirm.delete_account') }}');">
+            <button class="btn btn-danger" type="submit">{{ t('profile.action.delete_account') }}</button>
         </form>
     </section>
 </div>

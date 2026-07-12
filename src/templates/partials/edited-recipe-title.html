@@ -1,7 +1,7 @@
 <h2 class="recipe-title-display">{{ recipe.name }}</h2>
 <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
     class="btn btn-ghost btn-sm" type="button">
-    Edit title
+    {{ t('recipe.edit.action.edit_title_plain') }}
 </button>
 {% with message_scope="recipe-title" %}
 {% include "partials/flash-messages.html" %}

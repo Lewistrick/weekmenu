@@ -6,6 +6,7 @@ from litestar.response import Template
 from loguru import logger
 
 from src.auth import get_current_user
+from src.i18n.service import t
 from src.models import Ingredient, Shop
 from src.shops import (
     delete_unused_ingredient,
@@ -117,11 +118,11 @@ class ShopController(Controller):
         shop_name = str(form_data.get("shop_name", "")).strip()
         if not shop_name:
             return await self._render_manage_page(
-                request, warnings=["Shop name is required."]
+                request, warnings=[t("message.shops.name_required")]
             )
         if await Shop.filter(owner_id=owner_id, name=shop_name).exists():
             return await self._render_manage_page(
-                request, warnings=["That shop already exists."]
+                request, warnings=[t("message.shops.already_exists")]
             )
         await get_or_create_shop(
             owner_id,
@@ -134,7 +135,9 @@ class ShopController(Controller):
             ),
         )
         logger.info(f"Created shop: {shop_name}")
-        return await self._render_manage_page(request, messages=["Shop added."])
+        return await self._render_manage_page(
+            request, messages=[t("message.shops.added")]
+        )
 
     @post(path="/{shop_id:int}", summary="Rename a shop")
     async def rename_shop(self, request: Request, shop_id: int) -> Template:
@@ -145,7 +148,7 @@ class ShopController(Controller):
         shop_name = str(form_data.get("shop_name", "")).strip()
         if not shop_name:
             return await self._render_manage_page(
-                request, warnings=["Shop name is required."]
+                request, warnings=[t("message.shops.name_required")]
             )
         duplicate = (
             await Shop.filter(owner_id=owner_id, name=shop_name)
@@ -154,7 +157,7 @@ class ShopController(Controller):
         )
         if duplicate is not None:
             return await self._render_manage_page(
-                request, warnings=["That shop name is already in use."]
+                request, warnings=[t("message.shops.name_in_use")]
             )
         shop.name = shop_name
         shop.foreground_color = _parse_color(
@@ -164,14 +167,18 @@ class ShopController(Controller):
             form_data.get("background_color"), fallback=shop.background_color
         )
         await shop.save()
-        return await self._render_manage_page(request, messages=["Shop updated."])
+        return await self._render_manage_page(
+            request, messages=[t("message.shops.updated")]
+        )
 
     @delete(path="/{shop_id:int}", summary="Delete a shop", status_code=200)
     async def delete_shop(self, request: Request, shop_id: int) -> Template:
         """Delete an owned shop."""
         shop = await self._owned_shop(request, shop_id)
         await shop.delete()
-        return await self._render_manage_page(request, messages=["Shop deleted."])
+        return await self._render_manage_page(
+            request, messages=[t("message.shops.deleted")]
+        )
 
     @post(path="/assignments", summary="Assign ingredient to shop")
     async def assign_ingredient(self, request: Request) -> Template:
@@ -193,7 +200,9 @@ class ShopController(Controller):
         await set_ingredient_shop(owner_id, ingredient.id, shop_id)
         if request.headers.get("HX-Request"):
             return await self._render_assignments_partial(request)
-        return await self._render_manage_page(request, messages=["Assignment saved."])
+        return await self._render_manage_page(
+            request, messages=[t("message.shops.assignment_saved")]
+        )
 
     @delete(
         path="/ingredients/{ingredient_id:int}",
@@ -209,4 +218,6 @@ class ShopController(Controller):
         logger.info(f"Deleted unused ingredient: {ingredient_id}")
         if request.headers.get("HX-Request"):
             return await self._render_assignments_partial(request)
-        return await self._render_manage_page(request, messages=["Ingredient deleted."])
+        return await self._render_manage_page(
+            request, messages=[t("message.shops.ingredient_deleted")]
+        )

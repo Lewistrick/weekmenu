@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log in · Weekmenu</title>
+    <title>{{ t('app.title.login') }}</title>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -12,8 +12,8 @@
 <body>
     <main class="auth-page">
         <div class="auth-card">
-            <h1 class="auth-title">Weekmenu</h1>
-            <p class="auth-subtitle">Log in to plan your week.</p>
+            <h1 class="auth-title">{{ t('app.name') }}</h1>
+            <p class="auth-subtitle">{{ t('auth.login.subtitle') }}</p>
 
             {% if errors %}
             <div class="messages">
@@ -26,18 +26,18 @@
             {% endif %}
 
             <form class="auth-form" method="post" action="/login">
-                <label class="field-label" for="username">Username</label>
+                <label class="field-label" for="username">{{ t('auth.field.username') }}</label>
                 <input class="form-control" id="username" name="username" type="text" autocomplete="username"
                     value="{{ username | default('') }}" required autofocus>
 
-                <label class="field-label" for="password">Password</label>
+                <label class="field-label" for="password">{{ t('auth.field.password') }}</label>
                 <input class="form-control" id="password" name="password" type="password"
                     autocomplete="current-password" required>
 
-                <button class="btn btn-primary auth-submit" type="submit">Log in</button>
+                <button class="btn btn-primary auth-submit" type="submit">{{ t('auth.action.login') }}</button>
             </form>
 
-            <p class="auth-switch">No account yet? <a href="/register">Create one</a>.</p>
+            <p class="auth-switch">{{ t('auth.switch.no_account') }} <a href="/register">{{ t('auth.switch.create_one') }}</a>.</p>
         </div>
     </main>
 </body>

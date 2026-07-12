@@ -11,5 +11,5 @@
     {% endfor %}
 </ul>
 {% elif search %}
-<p class="search-placeholder">No recipes matched your search.</p>
+<p class="search-placeholder">{{ t('search.results.empty') }}</p>
 {% endif %}

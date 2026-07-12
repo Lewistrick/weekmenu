@@ -12,7 +12,7 @@
             hx-get="/elements/empty/div/{{ flash_id }}"
             hx-target="#{{ flash_id }}"
             hx-swap="delete"
-            title="Dismiss" aria-label="Dismiss">✕</button>
+            title="{{ t('common.dismiss') }}" aria-label="{{ t('common.dismiss') }}">✕</button>
     </div>
     {% endfor %}
 </div>

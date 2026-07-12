@@ -1,6 +1,6 @@
 <div id="grocery-list-panel" class="grocery-layout">
     <section class="grocery-column grocery-column--left recipe-section">
-        <h2 class="section-title">To sort</h2>
+        <h2 class="section-title">{{ t('grocery.section.to_sort') }}</h2>
         {% if unassigned_items %}
         <ul class="grocery-list">
             {% for item in unassigned_items %}
@@ -8,13 +8,13 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="search-placeholder">Everything is sorted, checked, or already at home.</p>
+        <p class="search-placeholder">{{ t('grocery.to_sort.empty') }}</p>
         {% endif %}
 
         <div class="grocery-subsection-header">
-            <h3 class="grocery-subsection-title">To check</h3>
+            <h3 class="grocery-subsection-title">{{ t('grocery.section.to_check') }}</h3>
             {% if to_check_items %}
-            {% with confirm_id="clear-to-check-confirm", trigger_id="clear-to-check-trigger", confirm_label="Clear list?", confirm_action="/week-menu/grocery-list/to-check/clear", trigger_label="Clear list" %}
+            {% with confirm_id="clear-to-check-confirm", trigger_id="clear-to-check-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action="/week-menu/grocery-list/to-check/clear", trigger_label=t('grocery.clear_list') %}
             {% include "partials/grocery-inline-confirm.html" %}
             {% endwith %}
             {% endif %}
@@ -26,13 +26,13 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="search-placeholder">Nothing marked to check later.</p>
+        <p class="search-placeholder">{{ t('grocery.to_check.empty') }}</p>
         {% endif %}
 
         <div class="grocery-subsection-header">
-            <h3 class="grocery-subsection-title">Already have</h3>
+            <h3 class="grocery-subsection-title">{{ t('grocery.section.already_have') }}</h3>
             {% if already_have_items %}
-            {% with confirm_id="clear-already-have-confirm", trigger_id="clear-already-have-trigger", confirm_label="Clear list?", confirm_action="/week-menu/grocery-list/already-have/clear", trigger_label="Clear list" %}
+            {% with confirm_id="clear-already-have-confirm", trigger_id="clear-already-have-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action="/week-menu/grocery-list/already-have/clear", trigger_label=t('grocery.clear_list') %}
             {% include "partials/grocery-inline-confirm.html" %}
             {% endwith %}
             {% endif %}
@@ -44,12 +44,12 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="search-placeholder">Nothing marked as already at home yet.</p>
+        <p class="search-placeholder">{{ t('grocery.already_have.empty') }}</p>
         {% endif %}
     </section>
 
     <section class="grocery-column grocery-column--right recipe-section">
-        <h2 class="section-title">By shop</h2>
+        <h2 class="section-title">{{ t('grocery.section.by_shop') }}</h2>
         {% if grocery_groups %}
         {% for group in grocery_groups %}
         <div class="grocery-shop-group"
@@ -66,7 +66,7 @@
                     hx-target="#grocery-list-panel" hx-swap="outerHTML" class="grocery-bulk-form">
                     <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all"
                         style="color: {{ group.foreground_color }}; border-color: {{ group.foreground_color }};">
-                        Mark all ✓
+                        {{ t('grocery.action.mark_all') }}
                     </button>
                 </form>
             </div>
@@ -78,7 +78,7 @@
         </div>
         {% endfor %}
         {% else %}
-        <p class="search-placeholder">Assign ingredients to a shop to build your lists here.</p>
+        <p class="search-placeholder">{{ t('grocery.by_shop.empty') }}</p>
         {% endif %}
     </section>
 </div>

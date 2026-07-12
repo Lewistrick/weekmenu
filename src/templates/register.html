@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create account · Weekmenu</title>
+    <title>{{ t('app.title.register') }}</title>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -12,8 +12,8 @@
 <body>
     <main class="auth-page">
         <div class="auth-card">
-            <h1 class="auth-title">Weekmenu</h1>
-            <p class="auth-subtitle">Create your account.</p>
+            <h1 class="auth-title">{{ t('app.name') }}</h1>
+            <p class="auth-subtitle">{{ t('auth.register.subtitle') }}</p>
 
             {% if errors %}
             <div class="messages">
@@ -26,26 +26,26 @@
             {% endif %}
 
             <form class="auth-form" method="post" action="/register">
-                <label class="field-label" for="username">Username</label>
+                <label class="field-label" for="username">{{ t('auth.field.username') }}</label>
                 <input class="form-control" id="username" name="username" type="text" autocomplete="username"
                     value="{{ username | default('') }}" required autofocus>
 
-                <label class="field-label" for="email">Email <span class="field-optional">(optional)</span></label>
+                <label class="field-label" for="email">{{ t('auth.field.email') }} <span class="field-optional">{{ t('auth.field.optional') }}</span></label>
                 <input class="form-control" id="email" name="email" type="email" autocomplete="email"
                     value="{{ email | default('') }}">
 
-                <label class="field-label" for="password">Password</label>
+                <label class="field-label" for="password">{{ t('auth.field.password') }}</label>
                 <input class="form-control" id="password" name="password" type="password"
                     autocomplete="new-password" required>
 
-                <label class="field-label" for="password_confirm">Confirm password</label>
+                <label class="field-label" for="password_confirm">{{ t('auth.field.confirm_password') }}</label>
                 <input class="form-control" id="password_confirm" name="password_confirm" type="password"
                     autocomplete="new-password" required>
 
-                <button class="btn btn-primary auth-submit" type="submit">Create account</button>
+                <button class="btn btn-primary auth-submit" type="submit">{{ t('auth.action.create_account') }}</button>
             </form>
 
-            <p class="auth-switch">Already have an account? <a href="/login">Log in</a>.</p>
+            <p class="auth-switch">{{ t('auth.switch.have_account') }} <a href="/login">{{ t('auth.switch.log_in') }}</a>.</p>
         </div>
     </main>
 </body>

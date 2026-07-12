@@ -153,7 +153,7 @@ async def test_manage_shops_page_shows_delete_for_unused_ingredient(
 
     assert response.status_code == 200
     assert "manage-shop-ingredient-tile" in response.text
-    assert "in 0 recipes" in response.text
+    assert "in 0 recipe(s)" in response.text
     assert 'aria-label="Delete unused ingredient"' in response.text
 
 

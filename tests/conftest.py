@@ -32,6 +32,9 @@ async def init_test_db() -> None:
     except ConfigurationError:
         pass
     await init_database(TEST_DB_CONFIG)
+    from src.i18n.service import seed_english_texts
+
+    await seed_english_texts()
 
 
 async def close_test_db() -> None:

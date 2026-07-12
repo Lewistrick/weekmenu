@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import random
 from enum import StrEnum
+from collections.abc import Callable
 from typing import Any, TypedDict
 
 from litestar import Request
 from loguru import logger
 
 from src.auth import SESSION_USER_KEY
+from src.i18n.service import t
 
 WEEK_DAYS: tuple[str, ...] = (
     "monday",
@@ -654,9 +656,7 @@ def randomize_week_menu(
             }
             and constraint["tag_id"] is None
         ):
-            warnings.append(
-                "Select a tag for each active tag constraint before randomizing."
-            )
+            warnings.append(t("message.week_menu.constraint_select_tag"))
             return menu, warnings
 
     for _attempt in range(30):
@@ -674,9 +674,7 @@ def randomize_week_menu(
                     menu[day]["recipe_id"] = solution[day]
             return menu, warnings
 
-    warnings.append(
-        "Could not build a week menu that satisfies the selected tag constraints."
-    )
+    warnings.append(t("message.week_menu.constraint_unsatisfied"))
     return menu, warnings
 
 
@@ -712,9 +710,13 @@ def _randomize_without_constraints(
 
 
 async def build_day_rows(
-    menu: dict[str, DaySlot], recipes_by_id: dict[int, Any], start_day: str = "monday"
+    menu: dict[str, DaySlot],
+    recipes_by_id: dict[int, Any],
+    start_day: str = "monday",
+    day_label_fn: Callable[[str], str] | None = None,
 ) -> list[dict[str, Any]]:
     """Build template rows for each weekday."""
+    label_for = day_label_fn or (lambda day: DAY_LABELS[day])
     rows: list[dict[str, Any]] = []
     for day in ordered_week_days(start_day):
         slot = menu[day]
@@ -722,7 +724,7 @@ async def build_day_rows(
         rows.append(
             {
                 "day": day,
-                "label": DAY_LABELS[day],
+                "label": label_for(day),
                 "recipe": recipe,
                 "pinned": slot["pinned"],
                 "servings": slot["servings"],

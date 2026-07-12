@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from src.catalog import get_or_create_ingredient
+from src.i18n.service import t
 from src.models import Unit, WeeklyGrocery
 from src.week_menu import GroceryItem, grocery_line_key, parse_grocery_quantity
 
@@ -84,18 +85,23 @@ async def _resolve_ingredient_and_unit(
     """
     clean_name = str(name or "").strip()
     if not clean_name:
-        return None, None, None, "Ingredient name is required."
+        return None, None, None, t("message.weekly_groceries.ingredient_required")
 
     quantity = parse_grocery_quantity(quantity_raw)
     if quantity is None:
-        return None, None, None, "Enter a positive amount."
+        return None, None, None, t("message.weekly_groceries.positive_amount")
 
     clean_unit = str(unit_abbrev or "").strip()
     if not clean_unit:
-        return None, None, None, "A unit is required."
+        return None, None, None, t("message.weekly_groceries.unit_required")
     unit = await Unit.find(clean_unit, owner_id=owner_id)
     if unit is None:
-        return None, None, None, f"Could not find unit: {clean_unit}"
+        return (
+            None,
+            None,
+            None,
+            t("message.weekly_groceries.unit_not_found", unit=clean_unit),
+        )
 
     ingredient, _ = await get_or_create_ingredient(owner_id, clean_name)
     return ingredient.id, quantity, unit.id, None
@@ -125,7 +131,7 @@ async def add_weekly_grocery(
     if await WeeklyGrocery.filter(
         owner_id=owner_id, ingredient_id=ingredient_id, unit_id=unit_id
     ).exists():
-        return False, "That weekly grocery already exists."
+        return False, t("message.weekly_groceries.already_exists")
 
     await WeeklyGrocery.create(
         owner_id=owner_id,
@@ -133,7 +139,7 @@ async def add_weekly_grocery(
         quantity=quantity,
         unit_id=unit_id,
     )
-    return True, "Weekly grocery added."
+    return True, t("message.weekly_groceries.added")
 
 
 async def update_weekly_grocery(
@@ -150,7 +156,7 @@ async def update_weekly_grocery(
     """
     row = await WeeklyGrocery.get_or_none(id=weekly_id, owner_id=owner_id)
     if row is None:
-        return False, "Weekly grocery not found."
+        return False, t("message.weekly_groceries.not_found")
 
     ingredient_id, quantity, unit_id, error = await _resolve_ingredient_and_unit(
         owner_id, name, quantity_raw, unit_abbrev
@@ -167,13 +173,13 @@ async def update_weekly_grocery(
         .exists()
     )
     if duplicate:
-        return False, "That weekly grocery already exists."
+        return False, t("message.weekly_groceries.already_exists")
 
     row.ingredient_id = ingredient_id
     row.quantity = quantity
     row.unit_id = unit_id
     await row.save()
-    return True, "Weekly grocery updated."
+    return True, t("message.weekly_groceries.updated")
 
 
 async def delete_weekly_grocery(owner_id: int, weekly_id: int) -> bool:

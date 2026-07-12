@@ -1,9 +1,9 @@
 <div class="ingredient-input">
-    <input type="text" name="quantity[]" class="form-control" placeholder="Quantity" required>
-    <input type="text" name="unit[]" class="form-control" placeholder="Unit" required>
-    <input type="text" name="ingredient_name[]" class="form-control" placeholder="Name" required>
+    <input type="text" name="quantity[]" class="form-control" placeholder="{{ t('ingredient.placeholder.quantity') }}" required>
+    <input type="text" name="unit[]" class="form-control" placeholder="{{ t('ingredient.placeholder.unit') }}" required>
+    <input type="text" name="ingredient_name[]" class="form-control" placeholder="{{ t('ingredient.placeholder.name') }}" required>
     <button type="button" class="btn btn-ghost btn-sm btn-danger"
         onclick="this.closest('.ingredient-input').remove()">
-        Remove
+        {{ t('ingredient.action.remove_line') }}
     </button>
 </div>

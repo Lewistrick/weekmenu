@@ -1,6 +1,6 @@
 <div class="success-message">
-    <p>Recipe <strong>{{ recipe.name }}</strong> added successfully.</p>
-    <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm">View recipe</a>
+    <p>{{ t('recipe.add.success', recipe_name=recipe.name) }}</p>
+    <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm">{{ t('recipe.add.view_recipe') }}</a>
 </div>
 
 {% with message_scope="add-recipe" %}

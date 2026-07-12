@@ -1,7 +1,7 @@
 <section id="shop-assignments" class="recipe-section">
     <div class="section-heading">
-        <h2 class="section-title">Ingredient assignments</h2>
-        <p class="section-hint">Reassign ingredients here. The grocery list only assigns a shop when none is set yet.</p>
+        <h2 class="section-title">{{ t('shops.assignments.title') }}</h2>
+        <p class="section-hint">{{ t('shops.assignments.hint') }}</p>
     </div>
     {% if assignment_groups %}
     {% for group in assignment_groups %}
@@ -15,7 +15,7 @@
             <span>{{ group.shop.name }}</span>
             {% else %}
             <span class="shop-chip-btn shop-chip-btn--clear shop-chip-btn--preview">—</span>
-            <span>Unassigned</span>
+            <span>{{ t('shops.assignments.unassigned') }}</span>
             {% endif %}
         </h3>
         <div class="manage-shop-grid manage-shop-ingredient-grid">
@@ -26,6 +26,6 @@
     </div>
     {% endfor %}
     {% else %}
-    <p class="search-placeholder">No ingredients yet. Add recipes with ingredients first.</p>
+    <p class="search-placeholder">{{ t('shops.assignments.empty') }}</p>
     {% endif %}
 </section>

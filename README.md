@@ -32,6 +32,12 @@
 - Legacy `user_settings/{user_id}.json` files are imported automatically the first time settings are loaded after upgrading.
 - Settings are editable from `/profile` under the **Settings** section.
 
+### Internationalization (i18n)
+- User-facing UI strings are stored in the `uitext` database table (`language_code`, `key`, `text`) and loaded per request based on the account language setting.
+- English strings are seeded from `src/i18n/catalog_en.py` on startup and in tests.
+- Templates use the Jinja global `t('key')`; controllers use `t()` from `src/i18n.service` for flash messages and errors.
+- When a translation is missing for the selected language, the app falls back to English, then to the key itself.
+
 ### Grocery lists by shop and plaintext export
 - Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.
 - At the top of the grocery list page you can **add your own groceries** that are unrelated to the week menu: enter an ingredient name, an amount, and pick a unit, then click **Add**. Adding an item that matches an existing line (same ingredient and unit) sums the amounts. If no list exists yet, adding an item starts one.
