@@ -7,6 +7,7 @@ from litestar.response import Template
 from src.auth import get_current_user
 from src.i18n.service import t
 from src.ingredient_units import (
+    IngredientUnitConversionResult,
     IngredientUnitPairRow,
     convert_ingredient_unit,
     load_multi_unit_pairs,
@@ -38,7 +39,7 @@ class IngredientUnitMergeController(Controller):
         self,
         request: Request,
         *,
-        messages: list[str] | None = None,
+        conversion_result: IngredientUnitConversionResult | None = None,
         warnings: list[str] | None = None,
     ) -> dict[str, object]:
         """Build template context for the merge-units page."""
@@ -46,7 +47,7 @@ class IngredientUnitMergeController(Controller):
         return {
             "request": request,
             "pairs": await load_multi_unit_pairs(owner_id),
-            "messages": messages or [],
+            "conversion_result": conversion_result,
             "warnings": warnings or [],
         }
 
@@ -54,14 +55,16 @@ class IngredientUnitMergeController(Controller):
         self,
         request: Request,
         *,
-        messages: list[str] | None = None,
+        conversion_result: IngredientUnitConversionResult | None = None,
         warnings: list[str] | None = None,
     ) -> Template:
         """Render the ingredient unit merge page."""
         return Template(
             template_name="manage-ingredient-units.html",
             context=await self._build_context(
-                request, messages=messages, warnings=warnings
+                request,
+                conversion_result=conversion_result,
+                warnings=warnings,
             ),
         )
 
@@ -70,8 +73,7 @@ class IngredientUnitMergeController(Controller):
         request: Request,
         pair: IngredientUnitPairRow,
         *,
-        messages: list[str] | None = None,
-        warnings: list[str] | None = None,
+        conversion_result: IngredientUnitConversionResult | None = None,
     ) -> Template:
         """Render one ingredient/unit pair row."""
         return Template(
@@ -79,8 +81,7 @@ class IngredientUnitMergeController(Controller):
             context={
                 "request": request,
                 "pair": pair,
-                "messages": messages or [],
-                "warnings": warnings or [],
+                "conversion_result": conversion_result,
             },
         )
 
@@ -191,7 +192,7 @@ class IngredientUnitMergeController(Controller):
                 },
             )
 
-        success, message = await convert_ingredient_unit(
+        result = await convert_ingredient_unit(
             owner_id,
             ingredient_id,
             pair.unit_a.id,
@@ -200,7 +201,7 @@ class IngredientUnitMergeController(Controller):
             amount_a=amount_a,
             amount_b=amount_b,
         )
-        if not success:
+        if not result.ok:
             if request.headers.get("HX-Request"):
                 return Template(
                     template_name="partials/ingredient-unit-convert-form.html",
@@ -210,10 +211,10 @@ class IngredientUnitMergeController(Controller):
                         "default_target_unit_id": target_unit_id,
                         "default_amount_a": str(amount_a),
                         "default_amount_b": str(amount_b),
-                        "warnings": [message],
+                        "warnings": [result.error_message],
                     },
                 )
-            return await self._render_page(request, warnings=[message])
+            return await self._render_page(request, warnings=[result.error_message])
 
         if request.headers.get("HX-Request"):
             remaining = await load_multi_unit_pairs(owner_id)
@@ -227,11 +228,11 @@ class IngredientUnitMergeController(Controller):
                     and remaining_pair.unit_b.id == ordered_b
                 ):
                     return await self._render_pair_row(
-                        request, remaining_pair, messages=[message]
+                        request, remaining_pair, conversion_result=result
                     )
             return Template(
                 template_name="partials/ingredient-unit-pair-empty.html",
-                context={"request": request, "messages": [message]},
+                context={"request": request, "conversion_result": result},
             )
 
-        return await self._render_page(request, messages=[message])
+        return await self._render_page(request, conversion_result=result)

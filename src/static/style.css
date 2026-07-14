@@ -1328,6 +1328,19 @@ div.recipe-detail {
     margin-top: 0.85rem;
 }
 
+.ingredient-unit-conversion-message {
+    margin-bottom: 0.65rem;
+}
+
+.ingredient-unit-conversion-message .recipe-id-link {
+    color: #8ec8ff;
+    text-decoration: underline;
+}
+
+.ingredient-unit-conversion-message .recipe-id-link:hover {
+    color: #b8dcff;
+}
+
 @media (max-width: 640px) {
     .ingredient-unit-pair-summary {
         flex-direction: column;

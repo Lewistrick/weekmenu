@@ -413,7 +413,8 @@ TEXTS: dict[str, str] = {
     "message.ingredient_units.invalid_target_unit": "Select one of the listed units to keep.",
     "message.ingredient_units.invalid_amounts": "Enter a positive amount on both sides.",
     "message.ingredient_units.nothing_to_convert": "Nothing uses the selected unit anymore.",
-    "message.ingredient_units.converted": "Converted {count} line(s) to the selected unit.",
+    "message.ingredient_units.recipes_edited": "Edited {count} recipe(s) to use unit {new_unit} instead of {old_unit}:",
+    "message.ingredient_units.lists_updated": "Updated {count} grocery list line(s).",
     # Weekly groceries
     "message.weekly_groceries.ingredient_required": "Ingredient name is required.",
     "message.weekly_groceries.positive_amount": "Enter a positive amount.",

@@ -135,7 +135,8 @@ async def test_convert_units_updates_recipes(
     )
 
     assert response.status_code == 200
-    assert "Converted" in response.text
+    assert "Edited" in response.text
+    assert f'href="/recipes/view/{recipe_a.id}"' in response.text
 
     gram_line = await RecipeIngredient.get_or_none(
         recipe_id=recipe_a.id, ingredient_id=apple.id, unit_id=grams.id
@@ -198,7 +199,7 @@ async def test_convert_units_updates_weekly_grocery_and_grocery_list(
     )
 
     assert response.status_code == 200
-    assert "Converted" in response.text
+    assert "Updated" in response.text
     assert (
         await WeeklyGrocery.filter(ingredient_id=apple.id, unit_id=grams.id).exists()
         is False
