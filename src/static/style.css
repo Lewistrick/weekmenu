@@ -1235,6 +1235,86 @@ div.recipe-detail {
     flex: 1 1 7rem;
 }
 
+.ingredient-unit-pair-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.ingredient-unit-pair-row {
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #3d3d3d;
+}
+
+.ingredient-unit-pair-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem 1rem;
+}
+
+.ingredient-unit-pair-name {
+    font-weight: 600;
+    min-width: 8rem;
+}
+
+.ingredient-unit-pair-units {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 1 1 auto;
+}
+
+.ingredient-unit-pair-separator {
+    color: #aaa;
+}
+
+.unit-chip {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background-color: #2f2f2f;
+    border: 1px solid #666;
+}
+
+.ingredient-unit-target-fieldset {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.ingredient-unit-target-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+}
+
+.ingredient-unit-conversion-input {
+    margin-top: 0.75rem;
+}
+
+.ingredient-unit-factor-input {
+    margin-top: 0.35rem;
+}
+
+.ingredient-unit-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+}
+
+@media (max-width: 640px) {
+    .ingredient-unit-pair-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 .grocery-item-name {
     font-weight: 600;
     color: #e8e8e8;

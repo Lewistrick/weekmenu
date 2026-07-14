@@ -36,6 +36,7 @@
 - User-facing UI strings are stored in the `uitext` database table (`language_code`, `key`, `text`) and loaded per request based on the account language setting.
 - English strings are seeded from `src/i18n/catalog_en.py` on startup and in tests.
 - Dutch strings are seeded from `src/i18n/catalog_nl.py` (regenerate from `translations.xlsx` with `uv run python scripts/build_catalog_nl.py`).
+- Language-independent icons (nav emojis, action buttons, etc.) live in `src/i18n/icons.py` and are added by `t()` at render time, not stored in the database.
 - Templates use the Jinja global `t('key')`; controllers use `t()` from `src/i18n.service` for flash messages and errors.
 - When a translation is missing for the selected language, the app falls back to English, then to the key itself.
 
@@ -64,6 +65,7 @@
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
 - Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Manage units at `/units/manage` (⚙️ Settings → 📏 Units): edit abbreviation, singular, and plural labels, add new units, or delete unused ones. Units missing a singular or plural label show a warning.
+- Merge ingredient units at `/ingredients/merge-units/manage` (⚙️ Settings → 🔀 Merge ingredient units): find ingredients that appear with more than one unit, then convert all uses to a single unit with a conversion factor (for example, 1 piece = 200 grams).
 - Multiple units may share the same abbreviation when their singular or plural labels differ.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
 

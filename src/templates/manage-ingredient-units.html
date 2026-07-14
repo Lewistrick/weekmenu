@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.merge_ingredient_units') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.merge_ingredient_units') }}</h1>
+        <p class="page-lead">{{ t('ingredient_units.lead') }}</p>
+    </header>
+
+    {% with message_scope="ingredient_units" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% with warning_scope="ingredient_units" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">{{ t('ingredient_units.section.pairs') }}</h2>
+        </div>
+        {% if pairs %}
+        <div class="ingredient-unit-pair-list">
+            {% for pair in pairs %}
+            {% include "partials/ingredient-unit-pair-row.html" %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="search-placeholder">{{ t('ingredient_units.empty') }}</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

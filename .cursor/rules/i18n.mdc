@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+When editing or creating a page, don't add the plaintext, but make a change in the i18n database table

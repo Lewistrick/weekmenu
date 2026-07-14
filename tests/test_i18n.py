@@ -46,6 +46,41 @@ async def test_seed_dutch_texts_populates_database(
 
 
 @pytest.mark.asyncio
+async def test_database_texts_exclude_icons(test_client: AsyncTestClient) -> None:
+    """Seeded database rows should store text without hardcoded icons."""
+    clear_translation_cache()
+    await seed_english_texts()
+
+    row = await UIText.get(language_code=DEFAULT_LANGUAGE_CODE, key="nav.week_menu")
+    assert row.text == "Week menu"
+
+    mark_all = await UIText.get(
+        language_code=DEFAULT_LANGUAGE_CODE, key="grocery.action.mark_all"
+    )
+    assert mark_all.text == "Mark all"
+
+
+@pytest.mark.asyncio
+async def test_t_applies_icons_for_configured_keys(
+    test_client: AsyncTestClient,
+) -> None:
+    """t() should add language-independent icons at render time."""
+    clear_translation_cache()
+    await seed_english_texts()
+    catalog = await load_catalog(DEFAULT_LANGUAGE_CODE)
+
+    from src.i18n import service as i18n_service
+
+    i18n_service._current_catalog.set(catalog)
+    i18n_service._fallback_catalog.set(catalog)
+
+    assert t("nav.week_menu").startswith("🗓")
+    assert "Week menu" in t("nav.week_menu")
+    assert t("grocery.action.mark_all").endswith("✓")
+    assert "Mark all" in t("grocery.action.mark_all")
+
+
+@pytest.mark.asyncio
 async def test_t_uses_dutch_catalog_when_loaded(test_client: AsyncTestClient) -> None:
     """t() should return Dutch strings when the Dutch catalog is active."""
     clear_translation_cache()

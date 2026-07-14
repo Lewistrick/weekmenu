@@ -1,0 +1,17 @@
+<div class="ingredient-unit-pair-row" id="{{ pair.row_id }}">
+    <div class="ingredient-unit-pair-summary">
+        <span class="ingredient-unit-pair-name">{{ pair.ingredient_name }}</span>
+        <span class="ingredient-unit-pair-units">
+            <span class="unit-chip">{{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})</span>
+            <span class="ingredient-unit-pair-separator">{{ t('ingredient_units.and') }}</span>
+            <span class="unit-chip">{{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})</span>
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm"
+            hx-get="/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}/edit"
+            hx-target="#{{ pair.row_id }}" hx-swap="outerHTML"
+            title="{{ t('ingredient_units.aria.convert') }}"
+            aria-label="{{ t('ingredient_units.aria.convert') }}">
+            {{ t('ingredient_units.action.convert') }}
+        </button>
+    </div>
+</div>

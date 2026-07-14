@@ -6,6 +6,7 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 from src.i18n.catalog_en import TEXTS
+from src.i18n.icons import apply_icons, strip_icons
 
 if TYPE_CHECKING:
     from litestar import Request
@@ -87,7 +88,7 @@ async def seed_english_texts() -> None:
 
     for key, text in TEXTS.items():
         await UIText.update_or_create(
-            defaults={"text": text},
+            defaults={"text": strip_icons(key, text)},
             language_code=DEFAULT_LANGUAGE_CODE,
             key=key,
         )
@@ -101,7 +102,7 @@ async def seed_dutch_texts() -> None:
 
     for key, text in NL_TEXTS.items():
         await UIText.update_or_create(
-            defaults={"text": text},
+            defaults={"text": strip_icons(key, text)},
             language_code=DUTCH_LANGUAGE_CODE,
             key=key,
         )
@@ -160,7 +161,7 @@ def t(key: str, **kwargs: object) -> str:
 
     if kwargs:
         try:
-            return text.format(**kwargs)
+            text = text.format(**kwargs)
         except (KeyError, ValueError):
-            return text
-    return text
+            pass
+    return apply_icons(key, text)

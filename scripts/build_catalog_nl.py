@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 import pandas as pd
 
 from src.i18n.catalog_en import TEXTS as EN_TEXTS
+from src.i18n.icons import strip_icons
 
 XLSX = ROOT / "translations.xlsx"
 OUT = ROOT / "src" / "i18n" / "catalog_nl.py"
@@ -312,15 +313,9 @@ AUTO_NL: dict[str, str] = {
 }
 
 
-def _fix_emoji_prefix(dutch: str, english: str) -> str:
-    """Restore emoji prefixes corrupted as ? in spreadsheet exports."""
-    if not re.match(r"^\?+", dutch):
-        return dutch
-    match = re.match(r"^(\S+\s+)", english)
-    if not match:
-        return dutch
-    rest = re.sub(r"^\?+\s*", "", dutch)
-    return f"{match.group(1)}{rest}"
+def _clean_spreadsheet_text(text: str) -> str:
+    """Remove corrupted emoji placeholders from spreadsheet exports."""
+    return re.sub(r"^\?+\s*", "", text)
 
 
 def is_empty(val: object) -> bool:
@@ -343,9 +338,10 @@ def build_texts() -> dict[str, str]:
         if is_empty(row["Dutch"]):
             if key not in AUTO_NL:
                 raise KeyError(f"Missing Dutch for key: {key}")
-            texts[key] = _fix_emoji_prefix(AUTO_NL[key], EN_TEXTS[key])
+            raw = AUTO_NL[key]
         else:
-            texts[key] = _fix_emoji_prefix(str(row["Dutch"]).strip(), EN_TEXTS[key])
+            raw = str(row["Dutch"]).strip()
+        texts[key] = strip_icons(key, _clean_spreadsheet_text(raw))
 
     missing_keys = set(EN_TEXTS) - set(texts)
     extra_keys = set(texts) - set(EN_TEXTS)

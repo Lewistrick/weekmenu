@@ -1,0 +1,364 @@
+"""Detect and convert ingredients that use multiple measurement units."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from itertools import combinations
+from typing import cast
+
+from src.i18n.service import t
+from src.models import (
+    GroceryListItem,
+    Ingredient,
+    RecipeIngredient,
+    Unit,
+    WeeklyGrocery,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class UnitSummary:
+    """A unit label for display on the merge-units page."""
+
+    id: int
+    abbrev: str
+    label: str
+
+
+@dataclass(frozen=True, slots=True)
+class IngredientUnitPairRow:
+    """One ingredient shown with two distinct units used across lists."""
+
+    ingredient_id: int
+    ingredient_name: str
+    unit_a: UnitSummary
+    unit_b: UnitSummary
+
+    @property
+    def row_id(self) -> str:
+        """Stable DOM id for HTMX row targeting."""
+        return f"merge-pair-{self.ingredient_id}-{self.unit_a.id}-{self.unit_b.id}"
+
+
+def _unit_label(unit: Unit) -> str:
+    """Return the best display label for a unit."""
+    if unit.single:
+        return unit.single
+    return unit.abbrev
+
+
+def _unit_summary(unit: Unit) -> UnitSummary:
+    """Build a display summary for a unit row."""
+    return UnitSummary(id=unit.id, abbrev=unit.abbrev, label=_unit_label(unit))
+
+
+def _as_int_list(values: object) -> list[int]:
+    """Coerce ORM flat values_list results to integers for type checking."""
+    result: list[int] = []
+    for value in cast(list[object], values):
+        if value is None:
+            continue
+        result.append(int(cast(int, value)))
+    return result
+
+
+async def _collect_unit_ids(owner_id: int, ingredient_id: int) -> set[int]:
+    """Return all unit ids used for an ingredient across recipes and lists."""
+    unit_ids: set[int] = set()
+
+    unit_ids.update(
+        _as_int_list(
+            await RecipeIngredient.filter(
+                ingredient_id=ingredient_id,
+                recipe__owner_id=owner_id,
+            ).values_list("unit_id", flat=True)
+        )
+    )
+
+    unit_ids.update(
+        _as_int_list(
+            await WeeklyGrocery.filter(
+                owner_id=owner_id,
+                ingredient_id=ingredient_id,
+            ).values_list("unit_id", flat=True)
+        )
+    )
+
+    unit_ids.update(
+        _as_int_list(
+            await GroceryListItem.filter(
+                user_id=owner_id,
+                ingredient_id=ingredient_id,
+            ).values_list("unit_id", flat=True)
+        )
+    )
+
+    return unit_ids
+
+
+async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
+    """List ingredient/unit pairs where an ingredient uses more than one unit.
+
+    Args:
+        owner_id: The logged-in user's id.
+
+    Returns:
+        Sorted rows with one entry per unordered unit pair per ingredient.
+    """
+    ingredient_ids = set(
+        _as_int_list(
+            await RecipeIngredient.filter(recipe__owner_id=owner_id).values_list(
+                "ingredient_id",
+                flat=True,
+            )
+        )
+    )
+    ingredient_ids.update(
+        _as_int_list(
+            await WeeklyGrocery.filter(owner_id=owner_id).values_list(
+                "ingredient_id",
+                flat=True,
+            )
+        )
+    )
+    ingredient_ids.update(
+        _as_int_list(
+            await GroceryListItem.filter(user_id=owner_id).values_list(
+                "ingredient_id",
+                flat=True,
+            )
+        )
+    )
+
+    rows: list[IngredientUnitPairRow] = []
+    for ingredient_id in ingredient_ids:
+        unit_ids = await _collect_unit_ids(owner_id, ingredient_id)
+        if len(unit_ids) < 2:
+            continue
+
+        ingredient = await Ingredient.get_or_none(id=ingredient_id, owner_id=owner_id)
+        if ingredient is None:
+            continue
+
+        units = await Unit.filter(id__in=unit_ids, owner_id=owner_id).order_by("abbrev")
+        unit_summaries = [_unit_summary(unit) for unit in units]
+        for unit_a, unit_b in combinations(unit_summaries, 2):
+            rows.append(
+                IngredientUnitPairRow(
+                    ingredient_id=ingredient.id,
+                    ingredient_name=ingredient.name,
+                    unit_a=unit_a,
+                    unit_b=unit_b,
+                )
+            )
+
+    rows.sort(
+        key=lambda row: (
+            row.ingredient_name.lower(),
+            row.unit_a.abbrev,
+            row.unit_b.abbrev,
+        )
+    )
+    return rows
+
+
+async def _get_pair_row(
+    owner_id: int,
+    ingredient_id: int,
+    unit_a_id: int,
+    unit_b_id: int,
+) -> IngredientUnitPairRow | None:
+    """Return a pair row when the ingredient still uses both units."""
+    if unit_a_id == unit_b_id:
+        return None
+
+    ingredient = await Ingredient.get_or_none(id=ingredient_id, owner_id=owner_id)
+    if ingredient is None:
+        return None
+
+    unit_a = await Unit.get_or_none(id=unit_a_id, owner_id=owner_id)
+    unit_b = await Unit.get_or_none(id=unit_b_id, owner_id=owner_id)
+    if unit_a is None or unit_b is None:
+        return None
+
+    unit_ids = await _collect_unit_ids(owner_id, ingredient_id)
+    if unit_a_id not in unit_ids or unit_b_id not in unit_ids:
+        return None
+
+    first, second = sorted((unit_a, unit_b), key=lambda unit: unit.id)
+    return IngredientUnitPairRow(
+        ingredient_id=ingredient.id,
+        ingredient_name=ingredient.name,
+        unit_a=_unit_summary(first),
+        unit_b=_unit_summary(second),
+    )
+
+
+async def _convert_recipe_ingredients(
+    owner_id: int,
+    ingredient_id: int,
+    source_unit_id: int,
+    target_unit_id: int,
+    factor: float,
+) -> int:
+    """Convert recipe ingredient lines from source unit to target unit."""
+    converted = 0
+    source_rows = await RecipeIngredient.filter(
+        ingredient_id=ingredient_id,
+        unit_id=source_unit_id,
+        recipe__owner_id=owner_id,
+    ).select_related("recipe")
+    for row in source_rows:
+        new_quantity = row.quantity / factor
+        recipe_id = row.recipe.id
+        existing = await RecipeIngredient.get_or_none(
+            recipe_id=recipe_id,
+            ingredient_id=ingredient_id,
+            unit_id=target_unit_id,
+        )
+        if existing is not None:
+            existing.quantity += new_quantity
+            await existing.save()
+            await row.delete()
+        else:
+            row.unit_id = target_unit_id
+            row.quantity = new_quantity
+            await row.save()
+        converted += 1
+    return converted
+
+
+async def _convert_weekly_groceries(
+    owner_id: int,
+    ingredient_id: int,
+    source_unit_id: int,
+    target_unit_id: int,
+    factor: float,
+) -> int:
+    """Convert weekly grocery lines from source unit to target unit."""
+    converted = 0
+    source_rows = await WeeklyGrocery.filter(
+        owner_id=owner_id,
+        ingredient_id=ingredient_id,
+        unit_id=source_unit_id,
+    )
+    for row in source_rows:
+        new_quantity = row.quantity / factor
+        existing = await WeeklyGrocery.get_or_none(
+            owner_id=owner_id,
+            ingredient_id=ingredient_id,
+            unit_id=target_unit_id,
+        )
+        if existing is not None:
+            existing.quantity += new_quantity
+            await existing.save()
+            await row.delete()
+        else:
+            row.unit_id = target_unit_id
+            row.quantity = new_quantity
+            await row.save()
+        converted += 1
+    return converted
+
+
+async def _convert_grocery_list_items(
+    owner_id: int,
+    ingredient_id: int,
+    source_unit_id: int,
+    target_unit_id: int,
+    factor: float,
+) -> int:
+    """Convert grocery list lines from source unit to target unit."""
+    converted = 0
+    source_rows = await GroceryListItem.filter(
+        user_id=owner_id,
+        ingredient_id=ingredient_id,
+        unit_id=source_unit_id,
+    )
+    for row in source_rows:
+        new_quantity = row.quantity / factor
+        existing = await GroceryListItem.get_or_none(
+            user_id=owner_id,
+            ingredient_id=ingredient_id,
+            unit_id=target_unit_id,
+        )
+        if existing is not None:
+            existing.quantity += new_quantity
+            await existing.save()
+            await row.delete()
+        else:
+            row.unit_id = target_unit_id
+            row.quantity = new_quantity
+            await row.save()
+        converted += 1
+    return converted
+
+
+async def convert_ingredient_unit(
+    owner_id: int,
+    ingredient_id: int,
+    unit_a_id: int,
+    unit_b_id: int,
+    *,
+    target_unit_id: int,
+    factor: float,
+) -> tuple[bool, str]:
+    """Convert one unit to another for an ingredient across recipes and lists.
+
+    The conversion is defined as ``1 target = factor source``. All quantities
+    stored in the source unit are divided by ``factor`` to obtain target-unit
+    quantities. When a recipe or list already contains the target unit, amounts
+    are merged.
+
+    Args:
+        owner_id: The logged-in user's id.
+        ingredient_id: Ingredient to update.
+        unit_a_id: First unit id from the selected pair.
+        unit_b_id: Second unit id from the selected pair.
+        target_unit_id: Unit to keep after conversion.
+        factor: How many source-unit amounts equal one target unit.
+
+    Returns:
+        A success flag and user-facing message.
+    """
+    pair = await _get_pair_row(owner_id, ingredient_id, unit_a_id, unit_b_id)
+    if pair is None:
+        return False, t("message.ingredient_units.not_found")
+
+    pair_unit_ids = {pair.unit_a.id, pair.unit_b.id}
+    if target_unit_id not in pair_unit_ids:
+        return False, t("message.ingredient_units.invalid_target_unit")
+
+    source_unit_id = (
+        pair.unit_b.id if target_unit_id == pair.unit_a.id else pair.unit_a.id
+    )
+    if factor <= 0:
+        return False, t("message.ingredient_units.invalid_factor")
+
+    recipe_count = await _convert_recipe_ingredients(
+        owner_id,
+        ingredient_id,
+        source_unit_id,
+        target_unit_id,
+        factor,
+    )
+    weekly_count = await _convert_weekly_groceries(
+        owner_id,
+        ingredient_id,
+        source_unit_id,
+        target_unit_id,
+        factor,
+    )
+    grocery_count = await _convert_grocery_list_items(
+        owner_id,
+        ingredient_id,
+        source_unit_id,
+        target_unit_id,
+        factor,
+    )
+
+    total = recipe_count + weekly_count + grocery_count
+    if total == 0:
+        return False, t("message.ingredient_units.nothing_to_convert")
+
+    return True, t("message.ingredient_units.converted", count=total)
