@@ -35,6 +35,7 @@
 ### Internationalization (i18n)
 - User-facing UI strings are stored in the `uitext` database table (`language_code`, `key`, `text`) and loaded per request based on the account language setting.
 - English strings are seeded from `src/i18n/catalog_en.py` on startup and in tests.
+- Dutch strings are seeded from `src/i18n/catalog_nl.py` (regenerate from `translations.xlsx` with `uv run python scripts/build_catalog_nl.py`).
 - Templates use the Jinja global `t('key')`; controllers use `t()` from `src/i18n.service` for flash messages and errors.
 - When a translation is missing for the selected language, the app falls back to English, then to the key itself.
 

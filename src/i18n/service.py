@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from litestar import Request
 
 DEFAULT_LANGUAGE_CODE = "en"
+DUTCH_LANGUAGE_CODE = "nl"
 
 LANGUAGE_OPTIONS: tuple[str, ...] = (
     "🇬🇧 English",
@@ -88,6 +89,20 @@ async def seed_english_texts() -> None:
         await UIText.update_or_create(
             defaults={"text": text},
             language_code=DEFAULT_LANGUAGE_CODE,
+            key=key,
+        )
+    clear_translation_cache()
+
+
+async def seed_dutch_texts() -> None:
+    """Upsert Dutch UI strings from ``catalog_nl.TEXTS`` into the database."""
+    from src.i18n.catalog_nl import TEXTS as NL_TEXTS
+    from src.models import UIText
+
+    for key, text in NL_TEXTS.items():
+        await UIText.update_or_create(
+            defaults={"text": text},
+            language_code=DUTCH_LANGUAGE_CODE,
             key=key,
         )
     clear_translation_cache()

@@ -7,6 +7,7 @@ from src.i18n.service import (
     clear_translation_cache,
     language_code_from_option,
     load_i18n_context,
+    seed_dutch_texts,
     seed_english_texts,
     t,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "clear_translation_cache",
     "language_code_from_option",
     "load_i18n_context",
+    "seed_dutch_texts",
     "seed_english_texts",
     "t",
 ]

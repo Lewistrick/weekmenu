@@ -29,7 +29,7 @@ from src.database import (
     ensure_not_using_production_db_in_tests,
     init_database,
 )
-from src.i18n.service import load_i18n_context, seed_english_texts, t
+from src.i18n.service import load_i18n_context, seed_dutch_texts, seed_english_texts, t
 from src.template_utils import render_markdown
 
 DEBUG = True
@@ -115,6 +115,7 @@ async def init_db() -> None:
     ensure_not_using_production_db_in_tests()
     await init_database(db_config.TORTOISE_CONFIG)
     await seed_english_texts()
+    await seed_dutch_texts()
 
 
 async def close_db() -> None:

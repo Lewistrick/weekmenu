@@ -5,8 +5,10 @@ from litestar.testing import AsyncTestClient
 
 from src.i18n.service import (
     DEFAULT_LANGUAGE_CODE,
+    DUTCH_LANGUAGE_CODE,
     clear_translation_cache,
     load_catalog,
+    seed_dutch_texts,
     seed_english_texts,
     t,
 )
@@ -29,19 +31,54 @@ async def test_seed_english_texts_populates_database(
 
 
 @pytest.mark.asyncio
+async def test_seed_dutch_texts_populates_database(
+    test_client: AsyncTestClient,
+) -> None:
+    """Seeding should upsert Dutch strings into the uitext table."""
+    clear_translation_cache()
+    await seed_dutch_texts()
+
+    count = await UIText.filter(language_code=DUTCH_LANGUAGE_CODE).count()
+    assert count > 0
+
+    row = await UIText.get(language_code=DUTCH_LANGUAGE_CODE, key="home.lead")
+    assert "Welkom" in row.text
+
+
+@pytest.mark.asyncio
+async def test_t_uses_dutch_catalog_when_loaded(test_client: AsyncTestClient) -> None:
+    """t() should return Dutch strings when the Dutch catalog is active."""
+    clear_translation_cache()
+    await seed_english_texts()
+    await seed_dutch_texts()
+
+    dutch = await load_catalog(DUTCH_LANGUAGE_CODE)
+    english = await load_catalog(DEFAULT_LANGUAGE_CODE)
+
+    from src.i18n import service as i18n_service
+
+    i18n_service._current_catalog.set(dutch)
+    i18n_service._fallback_catalog.set(english)
+
+    assert t("home.lead").startswith("Welkom")
+    assert t("auth.login.subtitle") == "Log in om je week te plannen."
+
+
+@pytest.mark.asyncio
 async def test_t_falls_back_to_english_catalog(test_client: AsyncTestClient) -> None:
     """Unknown keys in a sparse catalog should fall back to English."""
     clear_translation_cache()
     await seed_english_texts()
 
-    dutch = await load_catalog("nl")
-    assert "app.name" not in dutch
+    sparse: dict[str, str] = {"home.lead": "Alleen deze regel"}
+    english = await load_catalog(DEFAULT_LANGUAGE_CODE)
 
     from src.i18n import service as i18n_service
 
-    i18n_service._current_catalog.set(dutch)
-    i18n_service._fallback_catalog.set(await load_catalog(DEFAULT_LANGUAGE_CODE))
+    i18n_service._current_catalog.set(sparse)
+    i18n_service._fallback_catalog.set(english)
 
+    assert t("home.lead") == "Alleen deze regel"
     assert t("app.name") == "Weekmenu"
 
 
