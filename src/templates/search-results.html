@@ -3,10 +3,10 @@
 <ul class="search-result-list">
     {% for recipe in recipes %}
     <li>
-        <button hx-get="/recipes/view/{{ recipe.id }}" hx-target="body" class="search-result-item" type="button">
+        <a href="/recipes/view/{{ recipe.id }}" class="search-result-item">
             <span class="search-result-id">#{{ recipe.id }}</span>
             <span class="search-result-name">{{ recipe.name }}</span>
-        </button>
+        </a>
     </li>
     {% endfor %}
 </ul>

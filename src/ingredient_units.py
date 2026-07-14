@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import cast
 
+from loguru import logger
+
 from src.i18n.service import t
 from src.models import (
     GroceryListItem,
@@ -79,8 +81,21 @@ def _as_int_list(values: object) -> list[int]:
     return result
 
 
-async def _collect_unit_ids(owner_id: int, ingredient_id: int) -> set[int]:
-    """Return all unit ids used for an ingredient across recipes and lists."""
+async def _collect_unit_ids(
+    owner_id: int,
+    ingredient_id: int,
+    *,
+    include_grocery_list: bool = True,
+) -> set[int]:
+    """Return unit ids used for an ingredient across recipes and lists.
+
+    Args:
+        owner_id: The logged-in user's id.
+        ingredient_id: Ingredient to inspect.
+        include_grocery_list: When ``False``, ignore persisted grocery list
+            lines. Used when listing merge candidates so stale list state does
+            not surface units that are not used in recipes or weekly groceries.
+    """
     unit_ids: set[int] = set()
 
     unit_ids.update(
@@ -101,20 +116,24 @@ async def _collect_unit_ids(owner_id: int, ingredient_id: int) -> set[int]:
         )
     )
 
-    unit_ids.update(
-        _as_int_list(
-            await GroceryListItem.filter(
-                user_id=owner_id,
-                ingredient_id=ingredient_id,
-            ).values_list("unit_id", flat=True)
+    if include_grocery_list:
+        unit_ids.update(
+            _as_int_list(
+                await GroceryListItem.filter(
+                    user_id=owner_id,
+                    ingredient_id=ingredient_id,
+                ).values_list("unit_id", flat=True)
+            )
         )
-    )
 
     return unit_ids
 
 
 async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
     """List ingredient/unit pairs where an ingredient uses more than one unit.
+
+    Only units that appear in recipes or weekly groceries count. Grocery list
+    lines are ignored because they do not cause duplicate grocery generation.
 
     Args:
         owner_id: The logged-in user's id.
@@ -138,18 +157,12 @@ async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
             )
         )
     )
-    ingredient_ids.update(
-        _as_int_list(
-            await GroceryListItem.filter(user_id=owner_id).values_list(
-                "ingredient_id",
-                flat=True,
-            )
-        )
-    )
 
     rows: list[IngredientUnitPairRow] = []
     for ingredient_id in ingredient_ids:
-        unit_ids = await _collect_unit_ids(owner_id, ingredient_id)
+        unit_ids = await _collect_unit_ids(
+            owner_id, ingredient_id, include_grocery_list=False
+        )
         if len(unit_ids) < 2:
             continue
 
@@ -182,6 +195,47 @@ async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
     return rows
 
 
+async def log_pair_usage_for_edit(owner_id: int, pair: IngredientUnitPairRow) -> None:
+    """Log recipe usages per unit when opening the inline conversion form.
+
+    Args:
+        owner_id: The logged-in user's id.
+        pair: Ingredient/unit pair being edited.
+    """
+    logger.debug(
+        "Merge units edit for ingredient {} (id={})",
+        pair.ingredient_name,
+        pair.ingredient_id,
+    )
+    for unit in (pair.unit_a, pair.unit_b):
+        unit_name = f"{unit.label} ({unit.abbrev})"
+        recipe_rows = await RecipeIngredient.filter(
+            ingredient_id=pair.ingredient_id,
+            unit_id=unit.id,
+            recipe__owner_id=owner_id,
+        ).select_related("recipe")
+        if not recipe_rows:
+            logger.debug("{} - (no recipes)", unit_name)
+        for row in recipe_rows:
+            logger.debug(
+                "{} - /recipes/view/{} - {}",
+                unit_name,
+                row.recipe.id,
+                row.recipe.name,
+            )
+        weekly_rows = await WeeklyGrocery.filter(
+            owner_id=owner_id,
+            ingredient_id=pair.ingredient_id,
+            unit_id=unit.id,
+        )
+        for weekly_row in weekly_rows:
+            logger.debug(
+                "{} - weekly grocery - quantity {}",
+                unit_name,
+                weekly_row.quantity,
+            )
+
+
 async def _get_pair_row(
     owner_id: int,
     ingredient_id: int,
@@ -201,7 +255,9 @@ async def _get_pair_row(
     if unit_a is None or unit_b is None:
         return None
 
-    unit_ids = await _collect_unit_ids(owner_id, ingredient_id)
+    unit_ids = await _collect_unit_ids(
+        owner_id, ingredient_id, include_grocery_list=False
+    )
     if unit_a_id not in unit_ids or unit_b_id not in unit_ids:
         return None
 

@@ -11,6 +11,7 @@ from src.ingredient_units import (
     IngredientUnitPairRow,
     convert_ingredient_unit,
     load_multi_unit_pairs,
+    log_pair_usage_for_edit,
 )
 
 
@@ -125,6 +126,7 @@ class IngredientUnitMergeController(Controller):
         pair = await self._get_pair_or_404(
             owner_id, ingredient_id, unit_a_id, unit_b_id
         )
+        await log_pair_usage_for_edit(owner_id, pair)
         return Template(
             template_name="partials/ingredient-unit-convert-form.html",
             context={

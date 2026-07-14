@@ -314,7 +314,7 @@ TEXTS: dict[str, str] = {
     "units.aria.plural_for": "Meervoud voor {abbrev}",
     "units.empty": "Nog geen eenheden.",
     # ingredient_units
-    "ingredient_units.lead": "Vind ingrediënten die in meer dan één eenheid voorkomen in recepten, wekelijkse boodschappen of boodschappenlijsten. Zet ze om naar één eenheid met een conversiefactor.",
+    "ingredient_units.lead": "Vind ingrediënten die in meer dan één eenheid voorkomen in recepten of wekelijkse boodschappen. Zet ze om naar één eenheid met een conversiefactor.",
     "ingredient_units.section.pairs": "Ingrediënten met meerdere eenheden",
     "ingredient_units.empty": "Geen ingrediënten gebruiken meer dan één eenheid.",
     "ingredient_units.and": "en",

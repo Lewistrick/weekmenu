@@ -318,7 +318,7 @@ TEXTS: dict[str, str] = {
     "units.aria.plural_for": "Plural label for {abbrev}",
     "units.empty": "No units yet.",
     # Ingredient unit merge
-    "ingredient_units.lead": "Find ingredients that appear with more than one unit across your recipes, weekly groceries, and grocery lists. Convert them to a single unit using a conversion factor.",
+    "ingredient_units.lead": "Find ingredients that appear with more than one unit in your recipes or weekly groceries. Convert them to a single unit with a conversion factor.",
     "ingredient_units.section.pairs": "Ingredients with multiple units",
     "ingredient_units.empty": "No ingredients use more than one unit.",
     "ingredient_units.and": "and",
