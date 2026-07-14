@@ -1349,6 +1349,45 @@ div.recipe-detail {
     }
 }
 
+.ingredient-merge-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ingredient-merge-selectors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+}
+
+.ingredient-merge-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ingredient-merge-message {
+    margin-bottom: 0.65rem;
+}
+
+.ingredient-merge-message .recipe-id-link {
+    color: #8ec8ff;
+    text-decoration: underline;
+}
+
+.ingredient-merge-message .recipe-id-link:hover {
+    color: #b8dcff;
+}
+
+.ingredient-merge-search-results {
+    margin-top: 0.5rem;
+}
+
+.ingredient-merge-search .search-result-id {
+    margin-left: auto;
+}
+
 .grocery-item-name {
     font-weight: 600;
     color: #e8e8e8;

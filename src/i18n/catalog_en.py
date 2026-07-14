@@ -19,6 +19,7 @@ TEXTS: dict[str, str] = {
     "app.title.weekly_groceries": "Weekly groceries",
     "app.title.units": "Units",
     "app.title.merge_ingredient_units": "Merge ingredient units",
+    "app.title.merge_ingredients": "Merge ingredients",
     # Navigation
     "nav.week_menu": "Week menu",
     "nav.grocery_list": "Grocery list",
@@ -34,6 +35,7 @@ TEXTS: dict[str, str] = {
     "nav.weekly_groceries": "Weekly groceries",
     "nav.units": "Units",
     "nav.merge_ingredient_units": "Merge ingredient units",
+    "nav.merge_ingredients": "Merge ingredients",
     "nav.account": "Account",
     "nav.logout": "Log out",
     # Home
@@ -50,6 +52,7 @@ TEXTS: dict[str, str] = {
     "home.weekly_groceries.desc": "Keep recurring staples to add to any grocery list in one click.",
     "home.units.desc": "Edit abbreviations and singular or plural labels for measurements.",
     "home.merge_ingredient_units.desc": "Convert recipes that use different units for the same ingredient.",
+    "home.merge_ingredients.desc": "Combine duplicate ingredients such as oil and olive oil under one name.",
     "home.account.desc": "Manage your account: email, password, and more.",
     # Auth
     "auth.login.subtitle": "Log in to plan your week.",
@@ -329,6 +332,16 @@ TEXTS: dict[str, str] = {
     "ingredient_units.form.conversion": "Conversion",
     "ingredient_units.form.submit": "Apply conversion",
     "ingredient_units.form.cancel": "Cancel",
+    # Ingredient merge
+    "ingredient_merge.lead": "Combine two ingredients that mean the same thing. The merge-into ingredient keeps its name; the other is removed.",
+    "ingredient_merge.section.merge": "Merge ingredients",
+    "ingredient_merge.form.hint": "Search for the ingredient to remove and the ingredient whose name you want to keep. Click a suggestion to select it. Recipe lines with the same unit are combined.",
+    "ingredient_merge.form.source": "Merge from (remove)",
+    "ingredient_merge.form.target": "Merge into (keep name)",
+    "ingredient_merge.form.search_placeholder": "Search ingredients…",
+    "ingredient_merge.form.submit": "Merge ingredients",
+    "ingredient_merge.recipe_count": "{count} recipe(s)",
+    "ingredient_merge.empty": "No ingredients yet. Add recipes with ingredients first.",
     # Controller / flash messages — auth
     "message.auth.invalid_credentials": "Invalid username or password.",
     "message.auth.username_required": "Username is required.",
@@ -415,6 +428,11 @@ TEXTS: dict[str, str] = {
     "message.ingredient_units.nothing_to_convert": "Nothing uses the selected unit anymore.",
     "message.ingredient_units.recipes_edited": "Edited {count} recipe(s) to use unit {new_unit} instead of {old_unit}:",
     "message.ingredient_units.lists_updated": "Updated {count} grocery list line(s).",
+    "message.ingredient_merge.not_found": "Ingredient not found.",
+    "message.ingredient_merge.same_ingredient": "Choose two different ingredients.",
+    "message.ingredient_merge.invalid_selection": "Select both ingredients before merging.",
+    "message.ingredient_merge.completed": "Merged {source_name} into {target_name}.",
+    "message.ingredient_merge.recipes_edited": "Merged {source_name} into {target_name} in {count} recipe(s):",
     # Weekly groceries
     "message.weekly_groceries.ingredient_required": "Ingredient name is required.",
     "message.weekly_groceries.positive_amount": "Enter a positive amount.",

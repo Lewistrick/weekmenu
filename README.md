@@ -66,6 +66,7 @@
 - Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Manage units at `/units/manage` (⚙️ Settings → 📏 Units): edit abbreviation, singular, and plural labels, add new units, or delete unused ones. Units missing a singular or plural label show a warning.
 - Merge ingredient units at `/ingredients/merge-units/manage` (⚙️ Settings → 🔀 Merge ingredient units): find ingredients that appear with more than one unit, then convert all uses to a single unit by entering a ratio on both sides (for example, `200 gram = 1 piece`).
+- Merge ingredients at `/ingredients/merge/manage` (⚙️ Settings → 🔗 Merge ingredients): combine duplicate ingredients such as oil and olive oil. Pick which name to keep; recipe lines with the same unit are summed, and the other ingredient is removed.
 - Multiple units may share the same abbreviation when their singular or plural labels differ.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
 

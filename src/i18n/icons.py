@@ -17,6 +17,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "nav.weekly_groceries": "🧺 ",
     "nav.units": "📏 ",
     "nav.merge_ingredient_units": "🔀 ",
+    "nav.merge_ingredients": "🔗 ",
     "nav.account": "👤 ",
     "nav.logout": "🚪 ",
     "recipe.edit.back_to_view": "← ",

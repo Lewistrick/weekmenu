@@ -17,6 +17,7 @@ import src.db_config as db_config
 from src.auth import SESSION_USER_KEY, get_current_user
 from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
+from src.controllers.ingredient_merge import IngredientMergeController
 from src.controllers.ingredient_units import IngredientUnitMergeController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
@@ -141,6 +142,7 @@ app = Litestar(
         RecipeController,
         IngredientController,
         IngredientUnitMergeController,
+        IngredientMergeController,
         TagController,
         UnitController,
         ShopController,
