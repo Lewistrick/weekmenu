@@ -1294,11 +1294,31 @@ div.recipe-detail {
 }
 
 .ingredient-unit-conversion-input {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
 }
 
-.ingredient-unit-factor-input {
+.ingredient-unit-ratio-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
     margin-top: 0.35rem;
+}
+
+.ingredient-unit-amount-input {
+    width: 5rem;
+    min-width: 0;
+    flex: 0 0 5rem;
+}
+
+.ingredient-unit-ratio-label {
+    min-width: 6.5rem;
+    white-space: nowrap;
+}
+
+.ingredient-unit-ratio-equals {
+    color: #aaa;
+    padding: 0 0.15rem;
 }
 
 .ingredient-unit-form-actions {

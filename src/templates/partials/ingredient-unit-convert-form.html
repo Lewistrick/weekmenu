@@ -10,14 +10,7 @@
     <form class="inline-form ingredient-unit-convert-form"
         hx-post="/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}"
         hx-target="#{{ pair.row_id }}" hx-swap="outerHTML">
-        <div class="ingredient-unit-pair-summary">
-            <span class="ingredient-unit-pair-name">{{ pair.ingredient_name }}</span>
-            <span class="ingredient-unit-pair-units">
-                <span class="unit-chip">{{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})</span>
-                <span class="ingredient-unit-pair-separator">{{ t('ingredient_units.and') }}</span>
-                <span class="unit-chip">{{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})</span>
-            </span>
-        </div>
+        <div class="ingredient-unit-pair-name">{{ pair.ingredient_name }}</div>
 
         <fieldset class="ingredient-unit-target-fieldset">
             <legend class="field-label">{{ t('ingredient_units.form.keep_unit') }}</legend>
@@ -35,31 +28,17 @@
 
         <div class="ingredient-unit-conversion-input">
             <span class="field-label">{{ t('ingredient_units.form.conversion') }}</span>
-            <div class="ingredient-input ingredient-unit-factor-input">
-                <span>1</span>
-                <span class="ingredient-unit-target-label"
-                    data-unit-a="{{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})"
-                    data-unit-b="{{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})">
-                    {% if default_target_unit_id == pair.unit_a.id %}
-                    {{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})
-                    {% else %}
-                    {{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})
-                    {% endif %}
-                </span>
-                <span>=</span>
-                <input type="number" name="factor" class="form-control" min="0" step="any" required
-                    aria-label="{{ t('ingredient_units.aria.factor') }}" />
-                <span class="ingredient-unit-source-label"
-                    data-unit-a="{{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})"
-                    data-unit-b="{{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})">
-                    {% if default_target_unit_id == pair.unit_a.id %}
-                    {{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})
-                    {% else %}
-                    {{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})
-                    {% endif %}
-                </span>
+            <div class="ingredient-unit-ratio-input">
+                <input type="number" name="amount_a" class="form-control ingredient-unit-amount-input"
+                    min="0" step="any" required value="{{ default_amount_a | default('1') }}"
+                    aria-label="{{ t('ingredient_units.aria.amount_for', unit=pair.unit_a.label) }}" />
+                <span class="ingredient-unit-ratio-label">{{ pair.unit_a.label }} ({{ pair.unit_a.abbrev }})</span>
+                <span class="ingredient-unit-ratio-equals">=</span>
+                <input type="number" name="amount_b" class="form-control ingredient-unit-amount-input"
+                    min="0" step="any" required value="{{ default_amount_b | default('1') }}"
+                    aria-label="{{ t('ingredient_units.aria.amount_for', unit=pair.unit_b.label) }}" />
+                <span class="ingredient-unit-ratio-label">{{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})</span>
             </div>
-            <p class="section-hint">{{ t('ingredient_units.form.conversion_hint') }}</p>
         </div>
 
         <div class="ingredient-unit-form-actions">
@@ -72,25 +51,3 @@
         </div>
     </form>
 </div>
-
-<script>
-    (() => {
-        const row = document.currentScript?.closest(".ingredient-unit-pair-row--editing");
-        if (!row) return;
-        const targetLabel = row.querySelector(".ingredient-unit-target-label");
-        const sourceLabel = row.querySelector(".ingredient-unit-source-label");
-        const radios = row.querySelectorAll('input[name="target_unit_id"]');
-        if (!targetLabel || !sourceLabel || radios.length !== 2) return;
-
-        const unitA = targetLabel.dataset.unitA;
-        const unitB = targetLabel.dataset.unitB;
-        const updateLabels = () => {
-            const selected = row.querySelector('input[name="target_unit_id"]:checked');
-            if (!selected) return;
-            const keepA = selected.value === radios[0].value;
-            targetLabel.textContent = keepA ? unitA : unitB;
-            sourceLabel.textContent = keepA ? unitB : unitA;
-        };
-        radios.forEach((radio) => radio.addEventListener("change", updateLabels));
-    })();
-</script>

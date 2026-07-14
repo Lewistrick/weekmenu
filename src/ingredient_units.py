@@ -143,12 +143,15 @@ async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
         units = await Unit.filter(id__in=unit_ids, owner_id=owner_id).order_by("abbrev")
         unit_summaries = [_unit_summary(unit) for unit in units]
         for unit_a, unit_b in combinations(unit_summaries, 2):
+            first, second = (
+                (unit_a, unit_b) if unit_a.id < unit_b.id else (unit_b, unit_a)
+            )
             rows.append(
                 IngredientUnitPairRow(
                     ingredient_id=ingredient.id,
                     ingredient_name=ingredient.name,
-                    unit_a=unit_a,
-                    unit_b=unit_b,
+                    unit_a=first,
+                    unit_b=second,
                 )
             )
 
@@ -199,7 +202,7 @@ async def _convert_recipe_ingredients(
     ingredient_id: int,
     source_unit_id: int,
     target_unit_id: int,
-    factor: float,
+    multiplier: float,
 ) -> int:
     """Convert recipe ingredient lines from source unit to target unit."""
     converted = 0
@@ -209,7 +212,7 @@ async def _convert_recipe_ingredients(
         recipe__owner_id=owner_id,
     ).select_related("recipe")
     for row in source_rows:
-        new_quantity = row.quantity / factor
+        new_quantity = row.quantity * multiplier
         recipe_id = row.recipe.id
         existing = await RecipeIngredient.get_or_none(
             recipe_id=recipe_id,
@@ -233,7 +236,7 @@ async def _convert_weekly_groceries(
     ingredient_id: int,
     source_unit_id: int,
     target_unit_id: int,
-    factor: float,
+    multiplier: float,
 ) -> int:
     """Convert weekly grocery lines from source unit to target unit."""
     converted = 0
@@ -243,7 +246,7 @@ async def _convert_weekly_groceries(
         unit_id=source_unit_id,
     )
     for row in source_rows:
-        new_quantity = row.quantity / factor
+        new_quantity = row.quantity * multiplier
         existing = await WeeklyGrocery.get_or_none(
             owner_id=owner_id,
             ingredient_id=ingredient_id,
@@ -266,7 +269,7 @@ async def _convert_grocery_list_items(
     ingredient_id: int,
     source_unit_id: int,
     target_unit_id: int,
-    factor: float,
+    multiplier: float,
 ) -> int:
     """Convert grocery list lines from source unit to target unit."""
     converted = 0
@@ -276,7 +279,7 @@ async def _convert_grocery_list_items(
         unit_id=source_unit_id,
     )
     for row in source_rows:
-        new_quantity = row.quantity / factor
+        new_quantity = row.quantity * multiplier
         existing = await GroceryListItem.get_or_none(
             user_id=owner_id,
             ingredient_id=ingredient_id,
@@ -294,6 +297,25 @@ async def _convert_grocery_list_items(
     return converted
 
 
+def _conversion_multiplier(
+    pair: IngredientUnitPairRow,
+    *,
+    source_unit_id: int,
+    target_unit_id: int,
+    amount_a: float,
+    amount_b: float,
+) -> float:
+    """Return the quantity multiplier from source unit to target unit.
+
+    The ratio is defined as ``amount_a [unit_a] = amount_b [unit_b]``.
+    """
+    if source_unit_id == pair.unit_a.id and target_unit_id == pair.unit_b.id:
+        return amount_b / amount_a
+    if source_unit_id == pair.unit_b.id and target_unit_id == pair.unit_a.id:
+        return amount_a / amount_b
+    raise ValueError("source and target units do not match the selected pair")
+
+
 async def convert_ingredient_unit(
     owner_id: int,
     ingredient_id: int,
@@ -301,14 +323,15 @@ async def convert_ingredient_unit(
     unit_b_id: int,
     *,
     target_unit_id: int,
-    factor: float,
+    amount_a: float,
+    amount_b: float,
 ) -> tuple[bool, str]:
     """Convert one unit to another for an ingredient across recipes and lists.
 
-    The conversion is defined as ``1 target = factor source``. All quantities
-    stored in the source unit are divided by ``factor`` to obtain target-unit
-    quantities. When a recipe or list already contains the target unit, amounts
-    are merged.
+    The conversion is defined as ``amount_a [unit_a] = amount_b [unit_b]``.
+    Quantities in the source unit are multiplied by the derived ratio to obtain
+    target-unit quantities. When a recipe or list already contains the target
+    unit, amounts are merged.
 
     Args:
         owner_id: The logged-in user's id.
@@ -316,7 +339,8 @@ async def convert_ingredient_unit(
         unit_a_id: First unit id from the selected pair.
         unit_b_id: Second unit id from the selected pair.
         target_unit_id: Unit to keep after conversion.
-        factor: How many source-unit amounts equal one target unit.
+        amount_a: Amount for ``unit_a`` in the conversion ratio.
+        amount_b: Amount for ``unit_b`` in the conversion ratio.
 
     Returns:
         A success flag and user-facing message.
@@ -332,29 +356,40 @@ async def convert_ingredient_unit(
     source_unit_id = (
         pair.unit_b.id if target_unit_id == pair.unit_a.id else pair.unit_a.id
     )
-    if factor <= 0:
-        return False, t("message.ingredient_units.invalid_factor")
+    if amount_a <= 0 or amount_b <= 0:
+        return False, t("message.ingredient_units.invalid_amounts")
+
+    try:
+        multiplier = _conversion_multiplier(
+            pair,
+            source_unit_id=source_unit_id,
+            target_unit_id=target_unit_id,
+            amount_a=amount_a,
+            amount_b=amount_b,
+        )
+    except ValueError:
+        return False, t("message.ingredient_units.invalid_target_unit")
 
     recipe_count = await _convert_recipe_ingredients(
         owner_id,
         ingredient_id,
         source_unit_id,
         target_unit_id,
-        factor,
+        multiplier,
     )
     weekly_count = await _convert_weekly_groceries(
         owner_id,
         ingredient_id,
         source_unit_id,
         target_unit_id,
-        factor,
+        multiplier,
     )
     grocery_count = await _convert_grocery_list_items(
         owner_id,
         ingredient_id,
         source_unit_id,
         target_unit_id,
-        factor,
+        multiplier,
     )
 
     total = recipe_count + weekly_count + grocery_count

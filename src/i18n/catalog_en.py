@@ -324,10 +324,9 @@ TEXTS: dict[str, str] = {
     "ingredient_units.and": "and",
     "ingredient_units.action.convert": "Convert",
     "ingredient_units.aria.convert": "Convert units",
-    "ingredient_units.aria.factor": "Conversion factor",
+    "ingredient_units.aria.amount_for": "Amount for {unit}",
     "ingredient_units.form.keep_unit": "Keep this unit everywhere",
     "ingredient_units.form.conversion": "Conversion",
-    "ingredient_units.form.conversion_hint": "Example: if you keep pieces, enter how many grams one piece equals (1 piece = 200 grams).",
     "ingredient_units.form.submit": "Apply conversion",
     "ingredient_units.form.cancel": "Cancel",
     # Controller / flash messages — auth
@@ -412,7 +411,7 @@ TEXTS: dict[str, str] = {
     "message.units.deleted": "Unit deleted.",
     "message.ingredient_units.not_found": "Ingredient or unit pair not found.",
     "message.ingredient_units.invalid_target_unit": "Select one of the listed units to keep.",
-    "message.ingredient_units.invalid_factor": "Enter a positive conversion factor.",
+    "message.ingredient_units.invalid_amounts": "Enter a positive amount on both sides.",
     "message.ingredient_units.nothing_to_convert": "Nothing uses the selected unit anymore.",
     "message.ingredient_units.converted": "Converted {count} line(s) to the selected unit.",
     # Weekly groceries

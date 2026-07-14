@@ -130,6 +130,8 @@ class IngredientUnitMergeController(Controller):
                 "request": request,
                 "pair": pair,
                 "default_target_unit_id": pair.unit_b.id,
+                "default_amount_a": "1",
+                "default_amount_b": "1",
             },
         )
 
@@ -171,12 +173,22 @@ class IngredientUnitMergeController(Controller):
 
         try:
             target_unit_id = int(str(form_data.get("target_unit_id", "")).strip())
-            factor = float(str(form_data.get("factor", "")).strip())
+            amount_a = float(str(form_data.get("amount_a", "")).strip())
+            amount_b = float(str(form_data.get("amount_b", "")).strip())
         except ValueError:
-            return await self._render_pair_row(
-                request,
-                pair,
-                warnings=[t("message.ingredient_units.invalid_factor")],
+            return Template(
+                template_name="partials/ingredient-unit-convert-form.html",
+                context={
+                    "request": request,
+                    "pair": pair,
+                    "default_target_unit_id": int(
+                        str(form_data.get("target_unit_id", pair.unit_b.id)).strip()
+                        or pair.unit_b.id
+                    ),
+                    "default_amount_a": str(form_data.get("amount_a", "1")),
+                    "default_amount_b": str(form_data.get("amount_b", "1")),
+                    "warnings": [t("message.ingredient_units.invalid_amounts")],
+                },
             )
 
         success, message = await convert_ingredient_unit(
@@ -185,7 +197,8 @@ class IngredientUnitMergeController(Controller):
             pair.unit_a.id,
             pair.unit_b.id,
             target_unit_id=target_unit_id,
-            factor=factor,
+            amount_a=amount_a,
+            amount_b=amount_b,
         )
         if not success:
             if request.headers.get("HX-Request"):
@@ -195,6 +208,8 @@ class IngredientUnitMergeController(Controller):
                         "request": request,
                         "pair": pair,
                         "default_target_unit_id": target_unit_id,
+                        "default_amount_a": str(amount_a),
+                        "default_amount_b": str(amount_b),
                         "warnings": [message],
                     },
                 )

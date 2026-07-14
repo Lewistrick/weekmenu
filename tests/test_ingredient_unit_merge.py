@@ -122,9 +122,15 @@ async def test_convert_units_updates_recipes(
         recipe=recipe_b, ingredient=apple, quantity=1, unit=pieces
     )
 
+    ordered_a, ordered_b = (grams, pieces) if grams.id < pieces.id else (pieces, grams)
+
     response = await test_client.post(
-        f"/ingredients/merge-units/{apple.id}/{grams.id}/{pieces.id}",
-        data={"target_unit_id": str(pieces.id), "factor": "200"},
+        f"/ingredients/merge-units/{apple.id}/{ordered_a.id}/{ordered_b.id}",
+        data={
+            "target_unit_id": str(pieces.id),
+            "amount_a": "200" if ordered_a.id == grams.id else "1",
+            "amount_b": "1" if ordered_b.id == pieces.id else "200",
+        },
         headers={"HX-Request": "true"},
     )
 
@@ -180,9 +186,15 @@ async def test_convert_units_updates_weekly_grocery_and_grocery_list(
         quantity=400,
     )
 
+    ordered_a, ordered_b = (grams, pieces) if grams.id < pieces.id else (pieces, grams)
+
     response = await test_client.post(
-        f"/ingredients/merge-units/{apple.id}/{grams.id}/{pieces.id}",
-        data={"target_unit_id": str(pieces.id), "factor": "200"},
+        f"/ingredients/merge-units/{apple.id}/{ordered_a.id}/{ordered_b.id}",
+        data={
+            "target_unit_id": str(pieces.id),
+            "amount_a": "200" if ordered_a.id == grams.id else "1",
+            "amount_b": "1" if ordered_b.id == pieces.id else "200",
+        },
     )
 
     assert response.status_code == 200
@@ -204,6 +216,57 @@ async def test_convert_units_updates_weekly_grocery_and_grocery_list(
         user_id=default_user.id, ingredient_id=apple.id, unit_id=pieces.id
     )
     assert grocery.quantity == pytest.approx(2.0)
+
+
+@pytest.mark.asyncio
+async def test_edit_form_works_when_abbrev_order_differs_from_id_order(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Edit links should work when abbrev sort order differs from unit id order."""
+    grams, pieces = await _units_for_user(default_user)
+    # "el" sorts before "g" by abbrev, but g typically has a lower unit id.
+    assert grams.id < pieces.id or grams.abbrev < pieces.abbrev
+
+    vinegar = await Ingredient.create(owner=default_user, name="azijn")
+    recipe_a = await Recipe.create(
+        name="Vinegar ml",
+        description="",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    recipe_b = await Recipe.create(
+        name="Vinegar el",
+        description="",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_a, ingredient=vinegar, quantity=15, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe_b, ingredient=vinegar, quantity=1, unit=pieces
+    )
+
+    pairs = await load_multi_unit_pairs(default_user.id)
+    assert len(pairs) == 1
+    pair = pairs[0]
+    assert pair.unit_a.id < pair.unit_b.id
+
+    response = await test_client.get(
+        f"/ingredients/merge-units/{vinegar.id}/{pair.unit_a.id}/{pair.unit_b.id}/edit",
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert 'name="amount_a"' in response.text
+    assert 'name="amount_b"' in response.text
 
 
 @pytest.mark.asyncio
@@ -237,5 +300,6 @@ async def test_edit_form_shows_inline_conversion_fields(
 
     assert response.status_code == 200
     assert 'name="target_unit_id"' in response.text
-    assert 'name="factor"' in response.text
+    assert 'name="amount_a"' in response.text
+    assert 'name="amount_b"' in response.text
     assert "Keep this unit everywhere" in response.text
