@@ -90,6 +90,36 @@ async def test_lists_ingredient_with_multiple_units(
 
 
 @pytest.mark.asyncio
+async def test_ignores_grocery_list_only_unit(
+    default_user: User,
+) -> None:
+    """A unit that only appears on the grocery list should not create a pair."""
+    grams, pieces = await _units_for_user(default_user)
+    cheddar = await Ingredient.create(owner=default_user, name="cheddar")
+    recipe = await Recipe.create(
+        name="Cheddar toast",
+        description="",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=cheddar, quantity=2, unit=pieces
+    )
+    await GroceryListItem.create(
+        user_id=default_user.id,
+        ingredient_id=cheddar.id,
+        unit_id=grams.id,
+        quantity=100,
+    )
+
+    pairs = await load_multi_unit_pairs(default_user.id)
+    assert pairs == []
+
+
+@pytest.mark.asyncio
 async def test_convert_units_updates_recipes(
     test_client: AsyncTestClient,
     default_user: User,
@@ -135,7 +165,8 @@ async def test_convert_units_updates_recipes(
     )
 
     assert response.status_code == 200
-    assert "Converted" in response.text
+    assert "Edited" in response.text
+    assert f'href="/recipes/view/{recipe_a.id}"' in response.text
 
     gram_line = await RecipeIngredient.get_or_none(
         recipe_id=recipe_a.id, ingredient_id=apple.id, unit_id=grams.id
@@ -198,7 +229,7 @@ async def test_convert_units_updates_weekly_grocery_and_grocery_list(
     )
 
     assert response.status_code == 200
-    assert "Converted" in response.text
+    assert "Updated" in response.text
     assert (
         await WeeklyGrocery.filter(ingredient_id=apple.id, unit_id=grams.id).exists()
         is False

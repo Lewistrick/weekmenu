@@ -1,0 +1,14 @@
+{% if merge_result and merge_result.ok %}
+<div class="flash-banner single-message ingredient-merge-message">
+    <span class="flash-banner-text">
+        {% if merge_result.recipe_ids %}
+        {{ t('message.ingredient_merge.recipes_edited', count=merge_result.recipe_ids|length, source_name=merge_result.source_name, target_name=merge_result.target_name) }}
+        {% for recipe_id in merge_result.recipe_ids -%}
+        <a href="/recipes/view/{{ recipe_id }}" class="recipe-id-link">{{ recipe_id }}</a>{% if not loop.last %}, {% endif %}
+        {%- endfor %}
+        {% else %}
+        {{ t('message.ingredient_merge.completed', source_name=merge_result.source_name, target_name=merge_result.target_name) }}
+        {% endif %}
+    </span>
+</div>
+{% endif %}

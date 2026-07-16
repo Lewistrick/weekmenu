@@ -95,3 +95,8 @@ async def test_search_recipe_endpoint_returns_matches(
     assert response.status_code == 200
     assert searchable_recipes["by_description"].name in response.text
     assert searchable_recipes["by_name"].name not in response.text
+    assert (
+        f'href="/recipes/view/{searchable_recipes["by_description"].id}"'
+        in response.text
+    )
+    assert "hx-get" not in response.text

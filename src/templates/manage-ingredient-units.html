@@ -9,12 +9,10 @@
         <p class="page-lead">{{ t('ingredient_units.lead') }}</p>
     </header>
 
-    {% with message_scope="ingredient_units" %}
-    {% include "partials/flash-messages.html" %}
-    {% endwith %}
     {% with warning_scope="ingredient_units" %}
     {% include "partials/flash-warnings.html" %}
     {% endwith %}
+    {% include "partials/ingredient-unit-conversion-message.html" %}
 
     <section class="recipe-section">
         <div class="section-heading">

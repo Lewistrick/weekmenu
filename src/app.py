@@ -1,5 +1,6 @@
 """Litestar application entry point and global middleware."""
 
+import os
 from pathlib import Path
 from typing import cast
 
@@ -17,6 +18,7 @@ import src.db_config as db_config
 from src.auth import SESSION_USER_KEY, get_current_user
 from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
+from src.controllers.ingredient_merge import IngredientMergeController
 from src.controllers.ingredient_units import IngredientUnitMergeController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
@@ -33,8 +35,11 @@ from src.database import (
 from src.i18n.service import load_i18n_context, seed_dutch_texts, seed_english_texts, t
 from src.template_utils import render_markdown
 
-DEBUG = True
-SESSION_SECRET = b"weekmenu-session-secret-key-32b!"
+DEBUG = os.environ.get("DEBUG", "true").lower() in ("1", "true", "yes")
+SESSION_SECRET = os.environ.get(
+    "SESSION_SECRET",
+    "weekmenu-session-secret-key-32b!",
+).encode()
 session_config = CookieBackendConfig(secret=SESSION_SECRET)
 FAVICON_PATH = Path("src/static/favicon.svg")
 PUBLIC_PATH_PREFIXES = ("/login", "/register", "/static", "/schema", "/favicon.ico")
@@ -141,6 +146,7 @@ app = Litestar(
         RecipeController,
         IngredientController,
         IngredientUnitMergeController,
+        IngredientMergeController,
         TagController,
         UnitController,
         ShopController,

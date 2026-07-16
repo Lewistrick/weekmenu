@@ -1,0 +1,16 @@
+{% if conversion_result and conversion_result.recipe_ids %}
+<div class="flash-banner single-message ingredient-unit-conversion-message">
+    <span class="flash-banner-text">
+        {{ t('message.ingredient_units.recipes_edited', count=conversion_result.recipe_ids|length, new_unit=conversion_result.target_unit_label, old_unit=conversion_result.source_unit_label) }}
+        {% for recipe_id in conversion_result.recipe_ids -%}
+        <a href="/recipes/view/{{ recipe_id }}" class="recipe-id-link">{{ recipe_id }}</a>{% if not loop.last %}, {% endif %}
+        {%- endfor %}
+    </span>
+</div>
+{% elif conversion_result and conversion_result.list_lines_converted %}
+<div class="flash-banner single-message ingredient-unit-conversion-message">
+    <span class="flash-banner-text">
+        {{ t('message.ingredient_units.lists_updated', count=conversion_result.list_lines_converted) }}
+    </span>
+</div>
+{% endif %}

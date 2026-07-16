@@ -7,6 +7,16 @@
 - To open the app on other devices on your home network, bind to all interfaces:
   `uv run litestar --app src.app:app run -r --host 0.0.0.0 --port 8000`
 
+### Docker (local)
+- Copy `.env.example` to `.env` and set a strong `SESSION_SECRET`.
+- Start the app: `docker compose up --build`
+- Open [http://localhost:8000](http://localhost:8000) (or the port set in `APP_PORT`).
+- The SQLite database is stored in a Docker volume (`sqlite-data`) mounted at `src/recipes.sqlite3`.
+- Aerich migrations run automatically when the app container starts.
+- PostgreSQL is included but disabled by default. To start it alongside the app (for future use):
+  `docker compose --profile postgres up --build`
+  The app still uses SQLite until `DATABASE_URL` is wired in `src/db_config.py`.
+
 ### Accounts and login
 - The app requires an account. Visiting any page while logged out redirects to the login page.
 - Create an account at `/register` with a username, a password (min. 6 characters), and an optional email address. Registering logs you in automatically.
@@ -66,6 +76,7 @@
 - Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Manage units at `/units/manage` (⚙️ Settings → 📏 Units): edit abbreviation, singular, and plural labels, add new units, or delete unused ones. Units missing a singular or plural label show a warning.
 - Merge ingredient units at `/ingredients/merge-units/manage` (⚙️ Settings → 🔀 Merge ingredient units): find ingredients that appear with more than one unit, then convert all uses to a single unit by entering a ratio on both sides (for example, `200 gram = 1 piece`).
+- Merge ingredients at `/ingredients/merge/manage` (⚙️ Settings → 🔗 Merge ingredients): combine duplicate ingredients such as oil and olive oil. Pick which name to keep; recipe lines with the same unit are summed, and the other ingredient is removed.
 - Multiple units may share the same abbreviation when their singular or plural labels differ.
 - When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
 

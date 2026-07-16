@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import cast
 
+from loguru import logger
+
 from src.i18n.service import t
 from src.models import (
     GroceryListItem,
@@ -40,6 +42,23 @@ class IngredientUnitPairRow:
         return f"merge-pair-{self.ingredient_id}-{self.unit_a.id}-{self.unit_b.id}"
 
 
+@dataclass(frozen=True)
+class IngredientUnitConversionResult:
+    """Outcome of converting one ingredient unit to another."""
+
+    ok: bool
+    error_message: str = ""
+    recipe_ids: tuple[int, ...] = ()
+    source_unit_label: str = ""
+    target_unit_label: str = ""
+    list_lines_converted: int = 0
+
+
+def _unit_display_label(unit: Unit) -> str:
+    """Return a unit label for user-facing messages."""
+    return f"{_unit_label(unit)} ({unit.abbrev})"
+
+
 def _unit_label(unit: Unit) -> str:
     """Return the best display label for a unit."""
     if unit.single:
@@ -62,8 +81,21 @@ def _as_int_list(values: object) -> list[int]:
     return result
 
 
-async def _collect_unit_ids(owner_id: int, ingredient_id: int) -> set[int]:
-    """Return all unit ids used for an ingredient across recipes and lists."""
+async def _collect_unit_ids(
+    owner_id: int,
+    ingredient_id: int,
+    *,
+    include_grocery_list: bool = True,
+) -> set[int]:
+    """Return unit ids used for an ingredient across recipes and lists.
+
+    Args:
+        owner_id: The logged-in user's id.
+        ingredient_id: Ingredient to inspect.
+        include_grocery_list: When ``False``, ignore persisted grocery list
+            lines. Used when listing merge candidates so stale list state does
+            not surface units that are not used in recipes or weekly groceries.
+    """
     unit_ids: set[int] = set()
 
     unit_ids.update(
@@ -84,20 +116,24 @@ async def _collect_unit_ids(owner_id: int, ingredient_id: int) -> set[int]:
         )
     )
 
-    unit_ids.update(
-        _as_int_list(
-            await GroceryListItem.filter(
-                user_id=owner_id,
-                ingredient_id=ingredient_id,
-            ).values_list("unit_id", flat=True)
+    if include_grocery_list:
+        unit_ids.update(
+            _as_int_list(
+                await GroceryListItem.filter(
+                    user_id=owner_id,
+                    ingredient_id=ingredient_id,
+                ).values_list("unit_id", flat=True)
+            )
         )
-    )
 
     return unit_ids
 
 
 async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
     """List ingredient/unit pairs where an ingredient uses more than one unit.
+
+    Only units that appear in recipes or weekly groceries count. Grocery list
+    lines are ignored because they do not cause duplicate grocery generation.
 
     Args:
         owner_id: The logged-in user's id.
@@ -121,18 +157,12 @@ async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
             )
         )
     )
-    ingredient_ids.update(
-        _as_int_list(
-            await GroceryListItem.filter(user_id=owner_id).values_list(
-                "ingredient_id",
-                flat=True,
-            )
-        )
-    )
 
     rows: list[IngredientUnitPairRow] = []
     for ingredient_id in ingredient_ids:
-        unit_ids = await _collect_unit_ids(owner_id, ingredient_id)
+        unit_ids = await _collect_unit_ids(
+            owner_id, ingredient_id, include_grocery_list=False
+        )
         if len(unit_ids) < 2:
             continue
 
@@ -165,6 +195,47 @@ async def load_multi_unit_pairs(owner_id: int) -> list[IngredientUnitPairRow]:
     return rows
 
 
+async def log_pair_usage_for_edit(owner_id: int, pair: IngredientUnitPairRow) -> None:
+    """Log recipe usages per unit when opening the inline conversion form.
+
+    Args:
+        owner_id: The logged-in user's id.
+        pair: Ingredient/unit pair being edited.
+    """
+    logger.debug(
+        "Merge units edit for ingredient {} (id={})",
+        pair.ingredient_name,
+        pair.ingredient_id,
+    )
+    for unit in (pair.unit_a, pair.unit_b):
+        unit_name = f"{unit.label} ({unit.abbrev})"
+        recipe_rows = await RecipeIngredient.filter(
+            ingredient_id=pair.ingredient_id,
+            unit_id=unit.id,
+            recipe__owner_id=owner_id,
+        ).select_related("recipe")
+        if not recipe_rows:
+            logger.debug("{} - (no recipes)", unit_name)
+        for row in recipe_rows:
+            logger.debug(
+                "{} - /recipes/view/{} - {}",
+                unit_name,
+                row.recipe.id,
+                row.recipe.name,
+            )
+        weekly_rows = await WeeklyGrocery.filter(
+            owner_id=owner_id,
+            ingredient_id=pair.ingredient_id,
+            unit_id=unit.id,
+        )
+        for weekly_row in weekly_rows:
+            logger.debug(
+                "{} - weekly grocery - quantity {}",
+                unit_name,
+                weekly_row.quantity,
+            )
+
+
 async def _get_pair_row(
     owner_id: int,
     ingredient_id: int,
@@ -184,7 +255,9 @@ async def _get_pair_row(
     if unit_a is None or unit_b is None:
         return None
 
-    unit_ids = await _collect_unit_ids(owner_id, ingredient_id)
+    unit_ids = await _collect_unit_ids(
+        owner_id, ingredient_id, include_grocery_list=False
+    )
     if unit_a_id not in unit_ids or unit_b_id not in unit_ids:
         return None
 
@@ -203,9 +276,9 @@ async def _convert_recipe_ingredients(
     source_unit_id: int,
     target_unit_id: int,
     multiplier: float,
-) -> int:
+) -> list[int]:
     """Convert recipe ingredient lines from source unit to target unit."""
-    converted = 0
+    recipe_ids: set[int] = set()
     source_rows = await RecipeIngredient.filter(
         ingredient_id=ingredient_id,
         unit_id=source_unit_id,
@@ -227,8 +300,8 @@ async def _convert_recipe_ingredients(
             row.unit_id = target_unit_id
             row.quantity = new_quantity
             await row.save()
-        converted += 1
-    return converted
+        recipe_ids.add(recipe_id)
+    return sorted(recipe_ids)
 
 
 async def _convert_weekly_groceries(
@@ -325,7 +398,7 @@ async def convert_ingredient_unit(
     target_unit_id: int,
     amount_a: float,
     amount_b: float,
-) -> tuple[bool, str]:
+) -> IngredientUnitConversionResult:
     """Convert one unit to another for an ingredient across recipes and lists.
 
     The conversion is defined as ``amount_a [unit_a] = amount_b [unit_b]``.
@@ -343,21 +416,30 @@ async def convert_ingredient_unit(
         amount_b: Amount for ``unit_b`` in the conversion ratio.
 
     Returns:
-        A success flag and user-facing message.
+        A structured result with edited recipe ids and unit labels on success.
     """
     pair = await _get_pair_row(owner_id, ingredient_id, unit_a_id, unit_b_id)
     if pair is None:
-        return False, t("message.ingredient_units.not_found")
+        return IngredientUnitConversionResult(
+            ok=False,
+            error_message=t("message.ingredient_units.not_found"),
+        )
 
     pair_unit_ids = {pair.unit_a.id, pair.unit_b.id}
     if target_unit_id not in pair_unit_ids:
-        return False, t("message.ingredient_units.invalid_target_unit")
+        return IngredientUnitConversionResult(
+            ok=False,
+            error_message=t("message.ingredient_units.invalid_target_unit"),
+        )
 
     source_unit_id = (
         pair.unit_b.id if target_unit_id == pair.unit_a.id else pair.unit_a.id
     )
     if amount_a <= 0 or amount_b <= 0:
-        return False, t("message.ingredient_units.invalid_amounts")
+        return IngredientUnitConversionResult(
+            ok=False,
+            error_message=t("message.ingredient_units.invalid_amounts"),
+        )
 
     try:
         multiplier = _conversion_multiplier(
@@ -368,9 +450,20 @@ async def convert_ingredient_unit(
             amount_b=amount_b,
         )
     except ValueError:
-        return False, t("message.ingredient_units.invalid_target_unit")
+        return IngredientUnitConversionResult(
+            ok=False,
+            error_message=t("message.ingredient_units.invalid_target_unit"),
+        )
 
-    recipe_count = await _convert_recipe_ingredients(
+    source_unit = await Unit.get_or_none(id=source_unit_id, owner_id=owner_id)
+    target_unit = await Unit.get_or_none(id=target_unit_id, owner_id=owner_id)
+    if source_unit is None or target_unit is None:
+        return IngredientUnitConversionResult(
+            ok=False,
+            error_message=t("message.ingredient_units.not_found"),
+        )
+
+    recipe_ids = await _convert_recipe_ingredients(
         owner_id,
         ingredient_id,
         source_unit_id,
@@ -392,8 +485,17 @@ async def convert_ingredient_unit(
         multiplier,
     )
 
-    total = recipe_count + weekly_count + grocery_count
-    if total == 0:
-        return False, t("message.ingredient_units.nothing_to_convert")
+    list_lines_converted = weekly_count + grocery_count
+    if not recipe_ids and list_lines_converted == 0:
+        return IngredientUnitConversionResult(
+            ok=False,
+            error_message=t("message.ingredient_units.nothing_to_convert"),
+        )
 
-    return True, t("message.ingredient_units.converted", count=total)
+    return IngredientUnitConversionResult(
+        ok=True,
+        recipe_ids=tuple(recipe_ids),
+        source_unit_label=_unit_display_label(source_unit),
+        target_unit_label=_unit_display_label(target_unit),
+        list_lines_converted=list_lines_converted,
+    )

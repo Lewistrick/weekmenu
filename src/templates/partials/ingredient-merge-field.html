@@ -1,0 +1,12 @@
+<div class="form-group ingredient-merge-search">
+    <label class="field-label" for="{{ field_prefix }}-search">{{ t(label_key) }}</label>
+    <input type="search" id="{{ field_prefix }}-search" class="form-control" name="search"
+        value="{{ selected_name or '' }}" placeholder="{{ t('ingredient_merge.form.search_placeholder') }}"
+        autocomplete="off" hx-get="/ingredients/merge/search" hx-vals='{"field": "{{ field_role }}"}'
+        hx-trigger="keyup changed delay:200ms" hx-target="#{{ field_prefix }}-results" hx-swap="innerHTML"
+        {% if swap_oob %}hx-swap-oob="true"{% endif %}>
+    <input type="hidden" id="{{ field_prefix }}-id" name="{{ field_role }}_ingredient_id"
+        value="{{ selected_id or '' }}" required {% if swap_oob %}hx-swap-oob="true"{% endif %}>
+    <div id="{{ field_prefix }}-results" class="ingredient-merge-search-results"
+        {% if swap_oob %}hx-swap-oob="innerHTML"{% endif %}></div>
+</div>

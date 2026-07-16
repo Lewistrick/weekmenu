@@ -295,6 +295,7 @@ div.recipe-detail {
     background-color: #444;
     color: #e8e8e8;
     text-align: left;
+    text-decoration: none;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
@@ -1328,11 +1329,63 @@ div.recipe-detail {
     margin-top: 0.85rem;
 }
 
+.ingredient-unit-conversion-message {
+    margin-bottom: 0.65rem;
+}
+
+.ingredient-unit-conversion-message .recipe-id-link {
+    color: #8ec8ff;
+    text-decoration: underline;
+}
+
+.ingredient-unit-conversion-message .recipe-id-link:hover {
+    color: #b8dcff;
+}
+
 @media (max-width: 640px) {
     .ingredient-unit-pair-summary {
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+.ingredient-merge-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ingredient-merge-selectors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+}
+
+.ingredient-merge-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ingredient-merge-message {
+    margin-bottom: 0.65rem;
+}
+
+.ingredient-merge-message .recipe-id-link {
+    color: #8ec8ff;
+    text-decoration: underline;
+}
+
+.ingredient-merge-message .recipe-id-link:hover {
+    color: #b8dcff;
+}
+
+.ingredient-merge-search-results {
+    margin-top: 0.5rem;
+}
+
+.ingredient-merge-search .search-result-id {
+    margin-left: auto;
 }
 
 .grocery-item-name {

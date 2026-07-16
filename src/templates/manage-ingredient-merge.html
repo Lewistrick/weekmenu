@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.merge_ingredients') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.merge_ingredients') }}</h1>
+        <p class="page-lead">{{ t('ingredient_merge.lead') }}</p>
+    </header>
+
+    {% with warning_scope="ingredient_merge" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
+    {% include "partials/ingredient-merge-message.html" %}
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">{{ t('ingredient_merge.section.merge') }}</h2>
+            <p class="section-hint">{{ t('ingredient_merge.form.hint') }}</p>
+        </div>
+        {% if ingredients %}
+        <form method="post" action="/ingredients/merge" class="ingredient-merge-form">
+            <div class="ingredient-merge-selectors">
+                {% with field_prefix="source-ingredient", field_role="source", label_key="ingredient_merge.form.source", selected_id=selected_source_id, selected_name=selected_source_name %}
+                {% include "partials/ingredient-merge-field.html" %}
+                {% endwith %}
+                {% with field_prefix="target-ingredient", field_role="target", label_key="ingredient_merge.form.target", selected_id=selected_target_id, selected_name=selected_target_name %}
+                {% include "partials/ingredient-merge-field.html" %}
+                {% endwith %}
+            </div>
+            <div class="ingredient-merge-form-actions">
+                <button type="submit" class="btn btn-primary">{{ t('ingredient_merge.form.submit') }}</button>
+            </div>
+        </form>
+        {% else %}
+        <p class="search-placeholder">{{ t('ingredient_merge.empty') }}</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
