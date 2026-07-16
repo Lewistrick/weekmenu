@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.i18n.service import t
 from src.models import (
     GroceryListItem,
     Unit,
@@ -9,14 +10,13 @@ from src.models import (
     WeekMenuSlot,
     WeekMenuTagConstraint,
 )
-from src.i18n.service import t
 from src.week_menu import (
     DEFAULT_SERVINGS,
+    WEEK_DAYS,
+    DaySlot,
     GroceryItem,
     TagConstraintMode,
     TagGroupConstraint,
-    WEEK_DAYS,
-    DaySlot,
     _normalize_constraint,
     empty_week_menu,
     grocery_line_key,
@@ -157,7 +157,9 @@ async def save_tag_constraints(
     """Persist tag constraints to the database."""
     existing = {
         row.category.id: row
-        for row in await WeekMenuTagConstraint.filter(user_id=user_id)
+        for row in await WeekMenuTagConstraint.filter(user_id=user_id).select_related(
+            "category"
+        )
     }
     seen_category_ids: set[int] = set()
     for constraint in constraints:

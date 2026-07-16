@@ -6,7 +6,8 @@ import re
 import pytest
 from litestar.testing import AsyncTestClient
 
-from src.models import Recipe, RecipeTag, Tag, TagCategory, User
+from src.models import Recipe, RecipeTag, Tag, TagCategory, User, WeekMenuTagConstraint
+from src.plan_store import load_tag_constraints, save_tag_constraints
 from src.user_settings import UserSettings, save_user_settings
 from src.week_menu import (
     TagConstraintMode,
@@ -658,6 +659,41 @@ async def test_week_menu_shows_tag_constraint_options(
     assert "Tag constraints" in response.text
     assert "carb_type" in response.text
     assert "Vary across week" in response.text
+
+
+@pytest.mark.asyncio
+async def test_save_tag_constraints_updates_existing_rows(
+    default_user: User,
+    carb_tags: tuple[TagCategory, Tag, Tag, Tag],
+) -> None:
+    """Saving constraints twice should update existing rows without errors."""
+    category, potato, _, _ = carb_tags
+    first = [
+        TagGroupConstraint(
+            category_id=category.id,
+            mode=TagConstraintMode.UNIFORM,
+            tag_id=potato.id,
+            minimum_count=1,
+        )
+    ]
+    second = [
+        TagGroupConstraint(
+            category_id=category.id,
+            mode=TagConstraintMode.MINIMUM,
+            tag_id=potato.id,
+            minimum_count=3,
+        )
+    ]
+
+    await save_tag_constraints(default_user.id, first)
+    await save_tag_constraints(default_user.id, second)
+
+    rows = await WeekMenuTagConstraint.filter(user_id=default_user.id)
+    assert len(rows) == 1
+    assert rows[0].mode == TagConstraintMode.MINIMUM
+    assert rows[0].minimum_count == 3
+    loaded = await load_tag_constraints(default_user.id, [category.id])
+    assert loaded == second
 
 
 def _constraint_row_html(page_html: str, category_name: str) -> str:

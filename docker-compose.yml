@@ -1,0 +1,35 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    volumes:
+      # Persist the SQLite database across container restarts.
+      - sqlite-data:/app/src/recipes.sqlite3
+    restart: unless-stopped
+
+  # PostgreSQL is prepared for a future switch from SQLite. The app still uses
+  # SQLite until DATABASE_URL is wired in src/db_config.py.
+  #
+  # Enable with: docker compose --profile postgres up
+  postgres:
+    profiles: [postgres]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-weekmenu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-weekmenu}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-weekmenu} -d ${POSTGRES_DB:-weekmenu}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:
+  pg-data:

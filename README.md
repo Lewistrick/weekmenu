@@ -7,6 +7,16 @@
 - To open the app on other devices on your home network, bind to all interfaces:
   `uv run litestar --app src.app:app run -r --host 0.0.0.0 --port 8000`
 
+### Docker (local)
+- Copy `.env.example` to `.env` and set a strong `SESSION_SECRET`.
+- Start the app: `docker compose up --build`
+- Open [http://localhost:8000](http://localhost:8000) (or the port set in `APP_PORT`).
+- The SQLite database is stored in a Docker volume (`sqlite-data`) mounted at `src/recipes.sqlite3`.
+- Aerich migrations run automatically when the app container starts.
+- PostgreSQL is included but disabled by default. To start it alongside the app (for future use):
+  `docker compose --profile postgres up --build`
+  The app still uses SQLite until `DATABASE_URL` is wired in `src/db_config.py`.
+
 ### Accounts and login
 - The app requires an account. Visiting any page while logged out redirects to the login page.
 - Create an account at `/register` with a username, a password (min. 6 characters), and an optional email address. Registering logs you in automatically.

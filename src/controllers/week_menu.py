@@ -11,12 +11,12 @@ from tortoise.expressions import Q
 
 from src.auth import get_current_user
 from src.catalog import get_or_create_ingredient
-from src.i18n.service import t
 from src.grocery import (
     format_grocery_export,
     format_week_menu_export,
     split_grocery_lists,
 )
+from src.i18n.service import t
 from src.models import (
     Ingredient,
     Recipe,
@@ -26,7 +26,6 @@ from src.models import (
     TagCategory,
     Unit,
 )
-from src.shops import load_ingredient_shop_ids, load_shops, set_ingredient_shop
 from src.plan_store import (
     add_items_to_grocery_list,
     empty_already_have_list,
@@ -35,8 +34,8 @@ from src.plan_store import (
     has_grocery_list_items,
     is_grocery_list_initialized,
     load_already_have_line_keys,
-    load_grocery_list,
     load_grocery_line_shops,
+    load_grocery_list,
     load_include_public,
     load_start_day,
     load_tag_constraints,
@@ -57,23 +56,24 @@ from src.plan_store import (
     unmark_to_check_line,
     update_grocery_line,
 )
+from src.shops import load_ingredient_shop_ids, load_shops, set_ingredient_shop
 from src.user_settings import load_user_settings
 from src.week_menu import (
     GroceryItem,
     TagGroupConstraint,
     build_day_rows,
     build_grocery_list,
+    hydrate_grocery_item_names,
     is_valid_day,
+    merge_grocery_items,
     move_day,
     normalize_servings,
     ordered_week_days,
-    parse_tag_constraints_from_form,
-    randomize_week_menu,
-    hydrate_grocery_item_names,
-    merge_grocery_items,
     parse_grocery_quantity,
+    parse_tag_constraints_from_form,
     pop_grocery_action_flash,
     pop_grocery_suppress_preserve,
+    randomize_week_menu,
     scale_ingredient_quantity,
     set_day_recipe,
     set_day_servings,
@@ -500,10 +500,13 @@ class WeekMenuController(Controller):
     @post(path="/constraints", summary="Save week menu tag constraints")
     async def save_constraints(self, request: Request) -> Template:
         """Persist tag constraint options and re-render the week menu."""
+        logger.debug("Updating week menu constraints")
         user_id = await self._viewer_id(request)
         form_data = await request.form()
         category_ids = await self._category_ids(user_id)
+        logger.debug(f"{form_data=} {category_ids=}")
         constraints = parse_tag_constraints_from_form(dict(form_data), category_ids)
+        logger.info("Parsed tag constraints")
         await save_tag_constraints(user_id, constraints)
         logger.info("Week menu tag constraints updated")
         return await self._render_page(request)
