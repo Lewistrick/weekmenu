@@ -173,10 +173,11 @@ async def update_weekly_grocery(
     if duplicate:
         return False, t("message.weekly_groceries.already_exists")
 
-    row.ingredient_id = ingredient_id
-    row.quantity = quantity
-    row.unit_id = unit_id
-    await row.save()
+    await WeeklyGrocery.filter(id=row.id).update(
+        ingredient_id=ingredient_id,
+        quantity=quantity,
+        unit_id=unit_id,
+    )
     return True, t("message.weekly_groceries.updated")
 
 

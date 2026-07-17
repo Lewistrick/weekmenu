@@ -94,27 +94,29 @@ async def test_import_remaps_catalog_into_importers_account(
     copy_id = int(response.headers["location"].rstrip("/").split("/")[-1])
 
     copy_ingredients = await RecipeIngredient.filter(recipe_id=copy_id).select_related(
-        "ingredient", "unit"
+        "ingredient__owner", "unit__owner"
     )
     assert len(copy_ingredients) == 1
     line = copy_ingredients[0]
     assert line.ingredient.name == "potatoes"
-    assert line.ingredient.owner_id == default_user.id
-    assert line.ingredient_id != potatoes.id
+    assert line.ingredient.owner.id == default_user.id
+    assert line.ingredient.id != potatoes.id
     assert line.unit.abbrev == "g"
-    assert line.unit.owner_id == default_user.id
-    assert line.unit_id != unit.id
+    assert line.unit.owner.id == default_user.id
+    assert line.unit.id != unit.id
 
     copy_tag_ids = await RecipeTag.filter(recipe_id=copy_id).values_list(
         "tag_id", flat=True
     )
     assert len(copy_tag_ids) == 1
-    imported_tag = await Tag.get(id=copy_tag_ids[0]).select_related("category")
+    imported_tag = await Tag.get(id=copy_tag_ids[0]).select_related(
+        "category__owner", "owner"
+    )
     assert imported_tag.name == "summer"
-    assert imported_tag.owner_id == default_user.id
+    assert imported_tag.owner.id == default_user.id
     assert imported_tag.id != summer.id
     assert imported_tag.category.name == "season"
-    assert imported_tag.category.owner_id == default_user.id
+    assert imported_tag.category.owner.id == default_user.id
 
 
 @pytest.mark.asyncio

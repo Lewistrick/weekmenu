@@ -295,9 +295,10 @@ async def _convert_recipe_ingredients(
             await existing.save()
             await row.delete()
         else:
-            row.unit_id = target_unit_id
-            row.quantity = new_quantity
-            await row.save()
+            await RecipeIngredient.filter(id=row.id).update(
+                unit_id=target_unit_id,
+                quantity=new_quantity,
+            )
         recipe_ids.add(recipe_id)
     return sorted(recipe_ids)
 
@@ -328,9 +329,10 @@ async def _convert_weekly_groceries(
             await existing.save()
             await row.delete()
         else:
-            row.unit_id = target_unit_id
-            row.quantity = new_quantity
-            await row.save()
+            await WeeklyGrocery.filter(id=row.id).update(
+                unit_id=target_unit_id,
+                quantity=new_quantity,
+            )
         converted += 1
     return converted
 
@@ -361,9 +363,10 @@ async def _convert_grocery_list_items(
             await existing.save()
             await row.delete()
         else:
-            row.unit_id = target_unit_id
-            row.quantity = new_quantity
-            await row.save()
+            await GroceryListItem.filter(id=row.id).update(
+                unit_id=target_unit_id,
+                quantity=new_quantity,
+            )
         converted += 1
     return converted
 

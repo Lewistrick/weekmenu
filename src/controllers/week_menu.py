@@ -153,11 +153,11 @@ class WeekMenuController(Controller):
             return {}
 
         rows = await RecipeTag.filter(recipe_id__in=recipe_ids).select_related(
-            "tag", "recipe"
+            "tag__category", "recipe"
         )
         tag_map: dict[int, dict[int, set[int]]] = defaultdict(lambda: defaultdict(set))
         for recipe_tag in rows:
-            tag_map[recipe_tag.recipe.id][recipe_tag.tag.category_id].add(
+            tag_map[recipe_tag.recipe.id][recipe_tag.tag.category.id].add(
                 recipe_tag.tag.id
             )
         return {

@@ -108,8 +108,7 @@ async def set_ingredient_shop(
         )
         return
 
-    mapping.shop_id = shop_id
-    await mapping.save()
+    await UserIngredientShop.filter(id=mapping.id).update(shop_id=shop_id)
 
 
 async def load_ingredient_recipe_counts(owner_id: int) -> dict[int, int]:

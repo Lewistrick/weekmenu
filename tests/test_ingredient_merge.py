@@ -88,8 +88,8 @@ async def test_merge_ingredients_reassigns_recipes(
     assert "Merged oil into olive oil in 1 recipe(s):" in response.text
     assert f"/recipes/view/{recipe.id}" in response.text
     assert await Ingredient.filter(id=oil.id).exists() is False
-    row = await RecipeIngredient.get(recipe_id=recipe.id)
-    assert row.ingredient_id == olive_oil.id
+    row = await RecipeIngredient.get(recipe_id=recipe.id).select_related("ingredient")
+    assert row.ingredient.id == olive_oil.id
     assert row.quantity == 2
 
 
@@ -118,9 +118,11 @@ async def test_merge_ingredients_sums_same_unit_on_recipe(
     result = await merge_ingredients(default_user.id, oil.id, olive_oil.id)
 
     assert result.ok is True
-    rows = await RecipeIngredient.filter(recipe_id=recipe.id)
+    rows = await RecipeIngredient.filter(recipe_id=recipe.id).select_related(
+        "ingredient"
+    )
     assert len(rows) == 1
-    assert rows[0].ingredient_id == olive_oil.id
+    assert rows[0].ingredient.id == olive_oil.id
     assert rows[0].quantity == 4
 
 
@@ -152,9 +154,11 @@ async def test_merge_ingredients_keeps_different_units_separate(
     result = await merge_ingredients(default_user.id, oil.id, olive_oil.id)
 
     assert result.ok is True
-    rows = await RecipeIngredient.filter(recipe_id=recipe.id).order_by("unit_id")
+    rows = await RecipeIngredient.filter(recipe_id=recipe.id).select_related(
+        "ingredient"
+    ).order_by("unit_id")
     assert len(rows) == 2
-    assert {row.ingredient_id for row in rows} == {olive_oil.id}
+    assert {row.ingredient.id for row in rows} == {olive_oil.id}
     quantities = sorted(row.quantity for row in rows)
     assert quantities == [5, 10]
 
@@ -177,10 +181,14 @@ async def test_merge_ingredients_updates_weekly_and_grocery_lists(
     result = await merge_ingredients(default_user.id, oil.id, olive_oil.id)
 
     assert result.ok is True
-    weekly = await WeeklyGrocery.get(owner_id=default_user.id)
-    assert weekly.ingredient_id == olive_oil.id
-    grocery = await GroceryListItem.get(user_id=default_user.id)
-    assert grocery.ingredient_id == olive_oil.id
+    weekly = await WeeklyGrocery.get(owner_id=default_user.id).select_related(
+        "ingredient"
+    )
+    assert weekly.ingredient.id == olive_oil.id
+    grocery = await GroceryListItem.get(user_id=default_user.id).select_related(
+        "ingredient"
+    )
+    assert grocery.ingredient.id == olive_oil.id
 
 
 @pytest.mark.asyncio
@@ -201,8 +209,10 @@ async def test_merge_ingredients_keeps_target_shop_assignment(
 
     assert result.ok is True
     assert await UserIngredientShop.filter(ingredient_id=oil.id).exists() is False
-    mapping = await UserIngredientShop.get(ingredient_id=olive_oil.id)
-    assert mapping.shop_id == target_shop.id
+    mapping = await UserIngredientShop.get(ingredient_id=olive_oil.id).select_related(
+        "shop"
+    )
+    assert mapping.shop is not None and mapping.shop.id == target_shop.id
 
 
 @pytest.mark.asyncio

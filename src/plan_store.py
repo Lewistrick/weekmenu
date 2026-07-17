@@ -114,10 +114,11 @@ async def save_week_menu(user_id: int, menu: dict[str, DaySlot]) -> None:
                 servings=slot["servings"],
             )
             continue
-        row.recipe_id = slot["recipe_id"]
-        row.pinned = slot["pinned"]
-        row.servings = slot["servings"]
-        await row.save()
+        await WeekMenuSlot.filter(id=row.id).update(
+            recipe_id=slot["recipe_id"],
+            pinned=slot["pinned"],
+            servings=slot["servings"],
+        )
 
 
 async def load_tag_constraints(
@@ -178,10 +179,11 @@ async def save_tag_constraints(
                 minimum_count=constraint["minimum_count"],
             )
             continue
-        row.mode = constraint["mode"]
-        row.tag_id = constraint["tag_id"]
-        row.minimum_count = constraint["minimum_count"]
-        await row.save()
+        await WeekMenuTagConstraint.filter(id=row.id).update(
+            mode=constraint["mode"],
+            tag_id=constraint["tag_id"],
+            minimum_count=constraint["minimum_count"],
+        )
 
     for category_id, row in existing.items():
         if category_id not in seen_category_ids:
@@ -391,9 +393,10 @@ async def set_grocery_line_shop(
     row = await _get_grocery_row(user_id, ingredient_id, unit)
     if row is None:
         return
-    row.shop_id = shop_id
-    row.status = GROCERY_STATUS_ACTIVE
-    await row.save()
+    await GroceryListItem.filter(id=row.id).update(
+        shop_id=shop_id,
+        status=GROCERY_STATUS_ACTIVE,
+    )
 
 
 async def clear_grocery_line_shops(user_id: int) -> None:
@@ -419,9 +422,10 @@ async def remove_grocery_line_state(user_id: int, line_keys: set[str]) -> None:
     for row in rows:
         key = grocery_line_key(row.ingredient.id, row.unit.abbrev if row.unit else "")
         if key in line_keys:
-            row.status = GROCERY_STATUS_ACTIVE
-            row.shop_id = None
-            await row.save()
+            await GroceryListItem.filter(id=row.id).update(
+                status=GROCERY_STATUS_ACTIVE,
+                shop_id=None,
+            )
 
 
 async def find_grocery_line_in_store(
