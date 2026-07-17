@@ -139,8 +139,8 @@ async def test_first_account_claims_restored_recipes(
 
     new_user = await User.get_by_username("firstowner")
     assert new_user is not None
-    recipe = await Recipe.get(name="Legacy dish")
-    assert recipe.owner_id == new_user.id
+    recipe = await Recipe.get(name="Legacy dish").select_related("owner")
+    assert recipe.owner.id == new_user.id
     assert await User.get_by_username("_legacy") is None
 
 

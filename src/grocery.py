@@ -1,7 +1,5 @@
 """Grocery list grouping and plaintext export helpers."""
 
-from __future__ import annotations
-
 from collections import defaultdict
 from typing import Any, TypedDict
 

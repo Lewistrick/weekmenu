@@ -1,7 +1,5 @@
 """Merge duplicate ingredients that differ only by name."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from loguru import logger
@@ -157,8 +155,9 @@ async def _merge_recipe_ingredients(
             await matching_unit.save()
             await row.delete()
         else:
-            row.ingredient_id = target_ingredient_id
-            await row.save()
+            await RecipeIngredient.filter(id=row.id).update(
+                ingredient_id=target_ingredient_id
+            )
         edited_recipe_ids.add(recipe_id)
     return sorted(edited_recipe_ids)
 
@@ -186,8 +185,9 @@ async def _merge_weekly_groceries(
             await matching_unit.save()
             await row.delete()
         else:
-            row.ingredient_id = target_ingredient_id
-            await row.save()
+            await WeeklyGrocery.filter(id=row.id).update(
+                ingredient_id=target_ingredient_id
+            )
 
 
 async def _merge_grocery_list_items(
@@ -213,8 +213,9 @@ async def _merge_grocery_list_items(
             await matching_unit.save()
             await row.delete()
         else:
-            row.ingredient_id = target_ingredient_id
-            await row.save()
+            await GroceryListItem.filter(id=row.id).update(
+                ingredient_id=target_ingredient_id
+            )
 
 
 async def _merge_shop_assignments(
@@ -235,8 +236,9 @@ async def _merge_shop_assignments(
         ingredient_id=target_ingredient_id,
     )
     if target_mapping is None:
-        source_mapping.ingredient_id = target_ingredient_id
-        await source_mapping.save()
+        await UserIngredientShop.filter(id=source_mapping.id).update(
+            ingredient_id=target_ingredient_id
+        )
         return
 
     await source_mapping.delete()

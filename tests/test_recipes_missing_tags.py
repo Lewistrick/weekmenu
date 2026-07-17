@@ -154,7 +154,7 @@ async def test_save_last_missing_group_deletes_recipe_row(
 
     assert response.status_code in {200, 201}
     assert response.headers.get("hx-reswap") is None
-    assert "hx-swap-oob=\"delete\"" in response.text
+    assert 'hx-swap-oob="delete"' in response.text
 
 
 @pytest.mark.asyncio

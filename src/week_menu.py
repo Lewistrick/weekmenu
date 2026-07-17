@@ -1,7 +1,5 @@
 """Week menu planning state and helpers."""
 
-from __future__ import annotations
-
 import random
 from enum import StrEnum
 from collections.abc import Callable
@@ -12,6 +10,7 @@ from loguru import logger
 
 from src.auth import SESSION_USER_KEY
 from src.i18n.service import t
+from src.models import Ingredient
 
 WEEK_DAYS: tuple[str, ...] = (
     "monday",
@@ -311,8 +310,6 @@ async def hydrate_grocery_item_names(
     missing_ids = {item["ingredient_id"] for item in items if not item["name"].strip()}
     if not missing_ids:
         return items
-
-    from src.models import Ingredient
 
     names = {
         row["id"]: row["name"]

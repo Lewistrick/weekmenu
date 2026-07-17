@@ -146,11 +146,13 @@ async def test_import_public_recipe_creates_private_copy_with_creator(
     assert response.status_code == 302
     copy_id = int(response.headers["location"].rstrip("/").split("/")[-1])
 
-    copy = await Recipe.get(id=copy_id)
-    assert copy.owner_id == default_user.id
+    copy = await Recipe.get(id=copy_id).select_related(
+        "owner", "imported_from", "creator"
+    )
+    assert copy.owner.id == default_user.id
     assert copy.private is True
-    assert copy.imported_from_id == source.id
-    assert copy.creator_id == other.id
+    assert copy.imported_from is not None and copy.imported_from.id == source.id
+    assert copy.creator is not None and copy.creator.id == other.id
 
     page = await test_client.get(f"/recipes/view/{copy_id}")
     assert page.status_code == 200

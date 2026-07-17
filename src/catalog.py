@@ -1,8 +1,6 @@
 """Per-user catalog helpers: default units and recipe import remapping."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+import hashlib
 
 from loguru import logger
 
@@ -14,12 +12,8 @@ from src.models import (
     Tag,
     TagCategory,
     Unit,
+    User,
 )
-
-if TYPE_CHECKING:
-    from src.models import User
-
-import hashlib
 
 DEFAULT_UNITS: tuple[tuple[str, str | None, str | None], ...] = (
     ("g", "gram", "grams"),
@@ -97,9 +91,7 @@ async def get_or_create_tag_category(
     existing = await TagCategory.filter(owner_id=owner_id, name=normalized).first()
     if existing is not None:
         return existing, False
-    resolved_background, resolved_foreground = _default_tag_category_colors(
-        normalized
-    )
+    resolved_background, resolved_foreground = _default_tag_category_colors(normalized)
     return (
         await TagCategory.create(
             owner_id=owner_id,

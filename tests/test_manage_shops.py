@@ -8,6 +8,7 @@ from src.shops import (
     delete_unused_ingredient,
     ingredient_assignment_groups,
     load_ingredient_recipe_counts,
+    load_shops,
     set_ingredient_shop,
 )
 
@@ -102,8 +103,6 @@ async def test_ingredient_assignment_groups_orders_unassigned_first(
     assigned = await Ingredient.create(owner=default_user, name="salt")
     await Ingredient.create(owner=default_user, name="pepper")
     await set_ingredient_shop(default_user.id, assigned.id, first_shop.id)
-
-    from src.shops import load_shops
 
     shops = await load_shops(default_user.id)
     groups = await ingredient_assignment_groups(default_user.id, shops)

@@ -1,20 +1,14 @@
 """Build Dutch catalog from translations.xlsx with auto-fill for missing rows."""
 
-from __future__ import annotations
-
-import json
 import re
-import sys
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 import pandas as pd
 
 from src.i18n.catalog_en import TEXTS as EN_TEXTS
 from src.i18n.icons import strip_icons
 
+ROOT = Path(__file__).resolve().parents[1]
 XLSX = ROOT / "translations.xlsx"
 OUT = ROOT / "src" / "i18n" / "catalog_nl.py"
 

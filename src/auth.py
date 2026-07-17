@@ -5,8 +5,6 @@ run application: passwords are hashed with bcrypt and the logged-in user id is
 stored in the signed cookie session.
 """
 
-from __future__ import annotations
-
 import bcrypt
 from litestar import Request
 

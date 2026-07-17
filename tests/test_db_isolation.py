@@ -15,9 +15,9 @@ def test_autouse_uses_in_memory_database() -> None:
 def test_app_startup_uses_test_database_hooks() -> None:
     """Litestar startup hooks should point at the test database helpers."""
     assert len(app.on_startup) == 1
-    assert app.on_startup[0].__name__ == "init_test_db"
+    assert getattr(app.on_startup[0], "__name__") == "init_test_db"
     assert len(app.on_shutdown) == 1
-    assert app.on_shutdown[0].__name__ == "close_test_db"
+    assert getattr(app.on_shutdown[0], "__name__") == "close_test_db"
 
 
 @pytest.mark.asyncio
@@ -51,5 +51,5 @@ async def test_module_init_db_patch_does_not_replace_startup_handlers(
     monkeypatch.setattr("src.app.init_db", tracked_init_db)
 
     assert len(app.on_startup) == 1
-    assert app.on_startup[0].__name__ == "init_test_db"
+    assert getattr(app.on_startup[0], "__name__") == "init_test_db"
     assert calls == []
