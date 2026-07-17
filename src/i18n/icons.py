@@ -36,9 +36,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "weekly_groceries.back_to_grocery_list": "🛒 ",
 }
 
-KEY_SUFFIX_ICONS: dict[str, str] = {
-    "grocery.action.mark_all": " ✓",
-}
+KEY_SUFFIX_ICONS: dict[str, str] = {}
 
 
 def apply_icons(key: str, text: str) -> str:

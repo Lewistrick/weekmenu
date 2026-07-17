@@ -62,7 +62,7 @@
 - Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
 - Copy grouped plaintext for messaging under the grocery columns (ingredients by shop).
 - Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
-- Each shop section has a **Mark all ✓** button. The to-check and already-have lists each have a **🗑 Clear list** button (amber warning style) with inline confirmation; clearing either list removes those groceries from the plan entirely.
+- Each shop section has a **✓ Check all** button (shop text color, with inline confirmation). The to-check and already-have lists each have a **🗑 Clear list** button with inline confirmation; clearing either list removes those groceries from the plan entirely.
 - Copy the week menu to the clipboard from the footer **📋 Copy week menu** button (`{day} - {recipe}` per line, empty days omitted). The same plaintext is available via `GET /week-menu/export`.
 
 ### Weekly groceries

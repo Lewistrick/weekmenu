@@ -1,5 +1,5 @@
 <div class="grocery-inline-confirm-wrap">
-    <button type="button" class="btn btn-sm grocery-inline-confirm-trigger grocery-clear-list-trigger"
+    <button type="button" class="btn btn-sm grocery-inline-confirm-trigger {{ trigger_class | default('grocery-clear-list-trigger') }}"
         id="{{ trigger_id }}" data-confirm-id="{{ confirm_id }}"
         title="{{ trigger_label }}" aria-label="{{ trigger_label }}">
         <span class="grocery-clear-list-icon" aria-hidden="true">{{ trigger_icon | default("🗑") }}</span>
