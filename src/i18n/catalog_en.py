@@ -211,6 +211,8 @@ TEXTS: dict[str, str] = {
     "week_menu.constraints.title": "Week menu randomizer options",
     "week_menu.constraints.hint": "Optional rules for randomize. Pinned days count toward constraints.",
     "week_menu.constraints.manage_button": "Manage constraints",
+    "week_menu.constraints.save": "Save options",
+    "week_menu.constraints.aria.save": "Save randomizer options",
     "week_menu.constraints.none_active": "No active constraints.",
     "week_menu.constraint.ignore": "Ignore",
     "week_menu.constraint.same_tag": "Same tag everywhere",

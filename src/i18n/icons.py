@@ -31,6 +31,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "recipe.view.action.add_to_week_menu": "🗓️ ",
     "week_menu.action.randomize": "🎲 ",
     "week_menu.constraints.manage_button": "🎛️ ",
+    "week_menu.constraints.save": "💾 ",
     "grocery.back_to_week_menu": "← ",
     "grocery.action.add_weekly_groceries": "🧺 ",
     "grocery.generate.replace": "🔄 ",

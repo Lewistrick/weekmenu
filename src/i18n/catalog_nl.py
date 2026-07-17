@@ -207,6 +207,8 @@ TEXTS: dict[str, str] = {
     "week_menu.constraints.title": "Weekmenu-randomiseringsopties",
     "week_menu.constraints.hint": "Optionele regels voor randomiseren. Vastgezette dagen tellen mee voor beperkingen.",
     "week_menu.constraints.manage_button": "Beheer beperkingen",
+    "week_menu.constraints.save": "Opties opslaan",
+    "week_menu.constraints.aria.save": "Randomiseringsopties opslaan",
     "week_menu.constraints.none_active": "Geen actieve beperkingen.",
     "week_menu.constraint.ignore": "Negeren",
     "week_menu.constraint.same_tag": "Overal dezelfde tag",

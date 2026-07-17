@@ -358,30 +358,8 @@ div.recipe-detail {
     font-size: 0.8rem;
 }
 
-.manage-tag-color-inputs {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.manage-tag-color-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.manage-tag-color-label {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #d8d8d8;
-}
-
-.manage-tag-color-input {
-    width: 100%;
-    max-width: 12rem;
-    padding: 0.2rem;
-    height: 2.5rem;
+.manage-tag-form--create .manage-tag-form-row .form-control {
+    flex: 1;
 }
 
 .tag-options {
@@ -423,13 +401,9 @@ div.recipe-detail {
     gap: 0.5rem;
 }
 
-.manage-tag-form .form-control {
+.manage-tag-form .form-control:not(.manage-shop-color-input) {
     flex: 1;
     min-width: 0;
-}
-
-.manage-tag-form--create .manage-tag-form-row .form-control {
-    flex: 1;
 }
 
 .manage-tag-label {
@@ -561,6 +535,12 @@ div.recipe-detail {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
+}
+
+.week-menu-constraints-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.35rem;
 }
 
 .week-menu-constraint-row {
@@ -900,14 +880,12 @@ div.recipe-detail {
 
 .grocery-check-all-trigger {
     color: var(--shop-fg, #ffffff);
-    border: 1px solid var(--shop-fg, #ffffff);
     background-color: transparent;
 }
 
 .grocery-check-all-trigger:hover {
     background-color: transparent !important;
     color: var(--shop-fg, #ffffff);
-    border-color: var(--shop-fg, #ffffff);
 }
 
 .shop-chip-btn--warn {
@@ -1766,6 +1744,18 @@ div.recipe-detail {
     background-color: rgba(255, 255, 255, 0.06);
     border-color: #888;
     color: #fff;
+}
+
+.btn.grocery-check-all-trigger {
+    color: var(--shop-fg, #ffffff);
+    border-color: var(--shop-fg, #ffffff);
+    background-color: transparent;
+}
+
+.btn.grocery-check-all-trigger:hover {
+    background-color: transparent;
+    color: var(--shop-fg, #ffffff);
+    border-color: var(--shop-fg, #ffffff);
 }
 
 .btn-danger {

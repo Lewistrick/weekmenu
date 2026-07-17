@@ -25,27 +25,23 @@
                     ➕
                 </button>
             </div>
-            <div class="manage-tag-color-inputs">
-                <div class="manage-tag-color-field">
-                    <label class="manage-tag-color-label" for="group-bg-new">{{ t('common.background') }}</label>
-                    <input
-                        id="group-bg-new"
-                        name="background_color"
-                        class="form-control manage-tag-color-input"
-                        type="color"
-                        value="#2563eb"
-                    >
-                </div>
-                <div class="manage-tag-color-field">
-                    <label class="manage-tag-color-label" for="group-fg-new">{{ t('common.text') }}</label>
-                    <input
-                        id="group-fg-new"
-                        name="foreground_color"
-                        class="form-control manage-tag-color-input"
-                        type="color"
-                        value="#ffffff"
-                    >
-                </div>
+            <div class="manage-shop-tile-colors">
+                <label class="manage-shop-color-label" for="group-bg-new">{{ t('common.background') }}</label>
+                <input
+                    id="group-bg-new"
+                    name="background_color"
+                    class="form-control manage-shop-color-input"
+                    type="color"
+                    value="#2563eb"
+                >
+                <label class="manage-shop-color-label" for="group-fg-new">{{ t('common.text') }}</label>
+                <input
+                    id="group-fg-new"
+                    name="foreground_color"
+                    class="form-control manage-shop-color-input"
+                    type="color"
+                    value="#ffffff"
+                >
             </div>
         </form>
     </section>
@@ -66,15 +62,11 @@
                     <label class="manage-tag-label" for="group-name-{{ group.category.id }}">{{ t('tags.field.group_name') }}</label>
                     <input id="group-name-{{ group.category.id }}" name="group_name" class="form-control" value="{{ group.category.name }}" required>
                 </div>
-                <div class="manage-tag-color-inputs">
-                    <div class="manage-tag-color-field">
-                        <label class="manage-tag-color-label" for="group-bg-{{ group.category.id }}">{{ t('common.background') }}</label>
-                        <input id="group-bg-{{ group.category.id }}" name="background_color" class="form-control manage-tag-color-input" type="color" value="{{ group.category.background_color }}">
-                    </div>
-                    <div class="manage-tag-color-field">
-                        <label class="manage-tag-color-label" for="group-fg-{{ group.category.id }}">{{ t('common.text') }}</label>
-                        <input id="group-fg-{{ group.category.id }}" name="foreground_color" class="form-control manage-tag-color-input" type="color" value="{{ group.category.foreground_color }}">
-                    </div>
+                <div class="manage-shop-tile-colors">
+                    <label class="manage-shop-color-label" for="group-bg-{{ group.category.id }}">{{ t('common.background') }}</label>
+                    <input id="group-bg-{{ group.category.id }}" name="background_color" class="form-control manage-shop-color-input" type="color" value="{{ group.category.background_color }}">
+                    <label class="manage-shop-color-label" for="group-fg-{{ group.category.id }}">{{ t('common.text') }}</label>
+                    <input id="group-fg-{{ group.category.id }}" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="{{ group.category.foreground_color }}">
                 </div>
                 <div class="manage-tag-form-actions">
                     <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.save_group') }}" aria-label="{{ t('tags.aria.save_group') }}">💾</button>

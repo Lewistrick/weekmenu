@@ -20,7 +20,6 @@
         <form
             class="week-menu-constraints-form"
             hx-post="/week-menu/constraints"
-            hx-trigger="change"
             hx-target="#week-menu-constraints-root"
             hx-swap="outerHTML"
         >
@@ -74,8 +73,38 @@
                 </div>
             </div>
             {% endfor %}
+            <div class="week-menu-constraints-form-actions">
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-sm"
+                    title="{{ t('week_menu.constraints.aria.save') }}"
+                    aria-label="{{ t('week_menu.constraints.aria.save') }}"
+                >{{ t('week_menu.constraints.save') }}</button>
+            </div>
         </form>
     </section>
     {% endif %}
 </div>
+<script>
+    function updateConstraintRowVisibility(row) {
+        const mode = row.querySelector(".week-menu-constraint-mode")?.value ?? "off";
+        row.dataset.constraintMode = mode;
+        const tagField = row.querySelector(".week-menu-constraint-tag-field");
+        const minField = row.querySelector(".week-menu-constraint-min-field");
+        if (tagField) {
+            tagField.classList.toggle("is-hidden", mode !== "uniform" && mode !== "minimum");
+        }
+        if (minField) {
+            minField.classList.toggle("is-hidden", mode !== "minimum");
+        }
+    }
+
+    document.querySelectorAll(".week-menu-constraint-row").forEach((row) => {
+        const modeSelect = row.querySelector(".week-menu-constraint-mode");
+        if (!modeSelect) {
+            return;
+        }
+        modeSelect.addEventListener("change", () => updateConstraintRowVisibility(row));
+    });
+</script>
 
