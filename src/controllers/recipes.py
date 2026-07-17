@@ -7,7 +7,7 @@ from litestar import Controller, Request, delete, get, post, put
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import NotFoundException
 from litestar.params import Body
-from litestar.response import Redirect, Template
+from litestar.response import Redirect, Response, Template
 from loguru import logger
 from pydantic import BaseModel
 from tortoise.contrib.pydantic import pydantic_model_creator
@@ -176,6 +176,87 @@ class RecipeController(Controller):
                 )
 
         return missing_rows
+
+    @staticmethod
+    async def _missing_tags_row(
+        owner_id: int, recipe_id: int
+    ) -> dict[str, Any] | None:
+        """Return one missing-tags row, or None when the recipe is fully tagged.
+
+        Args:
+            owner_id: Recipe owner whose tag groups should be checked.
+            recipe_id: Recipe to inspect.
+
+        Returns:
+            Row data when tag groups are still missing, otherwise ``None``.
+        """
+        recipe = await Recipe.filter(owner_id=owner_id, id=recipe_id).first()
+        if recipe is None:
+            return None
+
+        categories = await TagCategory.filter(owner_id=owner_id).order_by("name")
+        if not categories:
+            return None
+
+        tagged_category_ids = set(
+            await RecipeTag.filter(recipe_id=recipe.id).values_list(
+                "tag__category_id", flat=True
+            )
+        )
+        missing_groups = [
+            category
+            for category in categories
+            if category.id not in tagged_category_ids
+        ]
+        if not missing_groups:
+            return None
+
+        return {"recipe": recipe, "missing_groups": missing_groups}
+
+    @staticmethod
+    async def _set_recipe_tags_for_category(
+        recipe_id: int,
+        category_id: int,
+        tag_ids: list[int],
+        owner_id: int,
+    ) -> None:
+        """Replace a recipe's tags within one tag group.
+
+        Args:
+            recipe_id: Recipe to update.
+            category_id: Tag group whose tags should be replaced.
+            tag_ids: Submitted tag ids for the group.
+            owner_id: Owner used to validate tag ids.
+        """
+        valid_tag_ids = set(
+            await Tag.filter(
+                id__in=tag_ids, owner_id=owner_id, category_id=category_id
+            ).values_list("id", flat=True)
+        )
+        existing_tag_ids = await RecipeTag.filter(
+            recipe_id=recipe_id, tag__category_id=category_id
+        ).values_list("tag_id", flat=True)
+        if existing_tag_ids:
+            await RecipeTag.filter(
+                recipe_id=recipe_id, tag_id__in=existing_tag_ids
+            ).delete()
+        for tag_id in valid_tag_ids:
+            await RecipeTag.create(recipe_id=recipe_id, tag_id=tag_id)
+
+    async def _render_missing_tags_row_or_delete(
+        self, request: Request, recipe_id: int
+    ) -> Template | Response:
+        """Render one missing-tags row, or delete it when tagging is complete."""
+        user_id = await self._current_user_id(request)
+        row = await self._missing_tags_row(user_id, recipe_id)
+        if row is None:
+            return Response(
+                content="", status_code=200, headers={"HX-Reswap": "delete"}
+            )
+        return Template(
+            template_name="partials/recipes-missing-tags-row.html",
+            context={"request": request, "row": row},
+        )
 
     @get(path="/add", summary="Get the page to add a new recipe")
     async def add_recipe_page(self, request: Request) -> Template:
@@ -348,6 +429,83 @@ class RecipeController(Controller):
             },
         )
 
+    @get(
+        path="/missing-tags/{recipe_id:int}/row",
+        summary="Refresh one recipe on the missing-tags page",
+    )
+    async def missing_tags_row(self, request: Request, recipe_id: int) -> Template | Response:
+        """Return one recipe row for the missing-tags page."""
+        await self._get_owned_recipe(request, recipe_id)
+        return await self._render_missing_tags_row_or_delete(request, recipe_id)
+
+    @get(
+        path="/missing-tags/{recipe_id:int}/groups/{category_id:int}/edit",
+        summary="Edit tags for one group on the missing-tags page",
+    )
+    async def missing_tags_group_editor(
+        self, request: Request, recipe_id: int, category_id: int
+    ) -> Template:
+        """Return an inline editor for one missing tag group."""
+        user_id = await self._current_user_id(request)
+        await self._get_owned_recipe(request, recipe_id)
+        category = await TagCategory.filter(
+            owner_id=user_id, id=category_id
+        ).first()
+        if category is None:
+            raise NotFoundException()
+
+        row = await self._missing_tags_row(user_id, recipe_id)
+        if row is None or not any(
+            group.id == category_id for group in row["missing_groups"]
+        ):
+            raise NotFoundException()
+
+        tags = await Tag.filter(owner_id=user_id, category_id=category_id).order_by(
+            "name"
+        )
+        selected_tag_ids = set(
+            await RecipeTag.filter(
+                recipe_id=recipe_id, tag__category_id=category_id
+            ).values_list("tag_id", flat=True)
+        )
+        return Template(
+            template_name="partials/recipes-missing-tags-group-editor.html",
+            context={
+                "request": request,
+                "recipe": row["recipe"],
+                "category": category,
+                "tags": tags,
+                "selected_tag_ids": selected_tag_ids,
+            },
+        )
+
+    @post(
+        path="/missing-tags/{recipe_id:int}/groups/{category_id:int}",
+        summary="Save tags for one group on the missing-tags page",
+    )
+    async def save_missing_tags_group(
+        self, request: Request, recipe_id: int, category_id: int
+    ) -> Template | Response:
+        """Save selected tags for one group and refresh the recipe row."""
+        user_id = await self._current_user_id(request)
+        await self._get_owned_recipe(request, recipe_id)
+        category = await TagCategory.filter(
+            owner_id=user_id, id=category_id
+        ).first()
+        if category is None:
+            raise NotFoundException()
+
+        form_data = await request.form()
+        submitted_tag_ids = (
+            [int(tag_id) for tag_id in form_data.getall("tag_ids[]")]
+            if "tag_ids[]" in form_data
+            else []
+        )
+        await self._set_recipe_tags_for_category(
+            recipe_id, category_id, submitted_tag_ids, user_id
+        )
+        return await self._render_missing_tags_row_or_delete(request, recipe_id)
+
     @post(path="/{recipe_id:int}/add-to-week-menu", summary="Add recipe to week menu")
     async def add_to_week_menu(self, request: Request, recipe_id: int) -> Template:
         """Assign recipe to first unpinned day or return warning when all are pinned."""
@@ -358,7 +516,6 @@ class RecipeController(Controller):
         if recipe is None:
             raise NotFoundException()
 
-        source = str((await request.form()).get("source", "view"))
         menu = await load_week_menu(user_id)
         start_day = await load_start_day(user_id)
         assigned_day = assign_recipe_to_unpinned_day(
@@ -373,17 +530,6 @@ class RecipeController(Controller):
             await save_week_menu(user_id, menu)
             messages.append(
                 t("message.recipe.added_to_week_menu", day=t(f"day.{assigned_day}"))
-            )
-
-        if source == "missing-tags":
-            return Template(
-                template_name="recipes-missing-tags.html",
-                context={
-                    "request": request,
-                    "rows": await self._recipes_missing_any_tag_group(user_id),
-                    "messages": messages,
-                    "warnings": warnings,
-                },
             )
 
         await recipe.fetch_related("owner", "creator")

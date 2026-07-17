@@ -10,33 +10,9 @@
     </header>
 
     {% if rows %}
-    <div class="week-menu-panel">
+    <div class="recipes-missing-tags-list">
         {% for row in rows %}
-        <article class="week-menu-day">
-            <header class="week-menu-day-header">
-                <h2 class="week-menu-day-title">#{{ row.recipe.id }} {{ row.recipe.name }}</h2>
-                <div class="week-menu-day-actions">
-                    <button type="button" hx-get="/recipes/view/{{ row.recipe.id }}" hx-target="body" hx-swap="innerHTML"
-                        class="btn btn-sm icon-btn icon-action-btn" title="{{ t('recipes_missing_tags.aria.view') }}"
-                        aria-label="{{ t('recipes_missing_tags.aria.view') }}">👁️</button>
-                    <button type="button" hx-get="/recipes/edit/{{ row.recipe.id }}" hx-target="body" hx-swap="innerHTML"
-                        class="btn btn-sm icon-btn icon-action-btn" title="{{ t('recipes_missing_tags.aria.edit') }}"
-                        aria-label="{{ t('recipes_missing_tags.aria.edit') }}">✏️</button>
-                    <form method="post" action="/recipes/{{ row.recipe.id }}/add-to-week-menu">
-                        <input type="hidden" name="source" value="missing-tags">
-                        <button type="submit" class="btn btn-sm icon-btn icon-action-btn" title="{{ t('recipes_missing_tags.aria.add_to_week_menu') }}" aria-label="{{ t('recipes_missing_tags.aria.add_to_week_menu') }}">🗓️</button>
-                    </form>
-                </div>
-            </header>
-            <p class="section-hint">{{ t('recipes_missing_tags.missing_groups') }}
-                {% for group in row.missing_groups %}
-                <span class="tag-group-chip tag-group-chip--small"
-                    style="--tag-bg: {{ group.background_color }}; --tag-fg: {{ group.foreground_color }};">
-                    {{ group.name }}
-                </span>
-                {% endfor %}
-            </p>
-        </article>
+        {% include "partials/recipes-missing-tags-row.html" %}
         {% endfor %}
     </div>
     {% else %}

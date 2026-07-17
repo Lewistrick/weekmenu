@@ -84,6 +84,7 @@
 ### What will it be able to do
 - Compose your own cookbook
 - Organize recipes with tag groups and values (for example: season, carb type, diet)
+- Find recipes missing tags at `/recipes/missing-tags` (🍽️ Recipes → 🏷️ Missing tags): open a recipe by name, click a missing tag group, pick tags with checkboxes, then save or cancel inline
 - Create a random week menu, giving you a random recipe for each day of the week
     - Optional tag constraints when randomizing: same tag for every day, vary tags across the week, or at least N days with a chosen tag
     - Reorder meals by moving a day's recipe up or down the week

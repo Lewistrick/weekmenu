@@ -376,6 +376,84 @@ div.recipe-detail {
     font-size: 0.9rem;
 }
 
+.recipes-missing-tags-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recipes-missing-tags-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #353535;
+}
+
+.recipes-missing-tags-recipe-link {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f2f2f2;
+    text-decoration: none;
+}
+
+.recipes-missing-tags-recipe-link:hover {
+    color: #5a9fd4;
+    text-decoration: underline;
+}
+
+.recipes-missing-tags-groups {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.recipes-missing-tags-groups-label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #b5b5b5;
+}
+
+.missing-tags-group-slot {
+    display: inline-flex;
+    align-items: center;
+}
+
+.missing-tags-group-trigger {
+    display: inline-flex;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.missing-tags-group-trigger:hover .tag-group-chip {
+    filter: brightness(1.08);
+}
+
+.missing-tags-group-editor {
+    flex: 1 1 100%;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #666;
+    border-radius: 8px;
+    background-color: #3d3d3d;
+}
+
+.missing-tags-group-editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.missing-tags-group-editor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
 .manage-tag-form {
     display: flex;
     flex-direction: column;

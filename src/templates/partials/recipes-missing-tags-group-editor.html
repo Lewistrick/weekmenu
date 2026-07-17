@@ -1,0 +1,38 @@
+<div id="missing-tags-slot-{{ recipe.id }}-{{ category.id }}" class="missing-tags-group-slot missing-tags-group-editor">
+    <form
+        class="missing-tags-group-editor-form"
+        hx-post="/recipes/missing-tags/{{ recipe.id }}/groups/{{ category.id }}"
+        hx-target="#recipes-missing-tags-row-{{ recipe.id }}"
+        hx-swap="outerHTML"
+    >
+        <span class="tag-group-chip tag-group-chip--small"
+            style="--tag-bg: {{ category.background_color }}; --tag-fg: {{ category.foreground_color }};">
+            {{ category.name }}
+        </span>
+        <div class="tag-options">
+            {% for tag in tags %}
+            <label class="tag-option">
+                <input type="checkbox" name="tag_ids[]" value="{{ tag.id }}" {% if tag.id in selected_tag_ids %}checked{% endif %}>
+                <span>{{ tag.name }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <div class="missing-tags-group-editor-actions">
+            <button
+                type="submit"
+                class="btn btn-primary btn-sm"
+                title="{{ t('recipes_missing_tags.aria.save') }}"
+                aria-label="{{ t('recipes_missing_tags.aria.save') }}"
+            >{{ t('recipes_missing_tags.action.save') }}</button>
+            <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                hx-get="/recipes/missing-tags/{{ recipe.id }}/row"
+                hx-target="#recipes-missing-tags-row-{{ recipe.id }}"
+                hx-swap="outerHTML"
+                title="{{ t('recipes_missing_tags.aria.cancel') }}"
+                aria-label="{{ t('recipes_missing_tags.aria.cancel') }}"
+            >{{ t('recipes_missing_tags.action.cancel') }}</button>
+        </div>
+    </form>
+</div>
