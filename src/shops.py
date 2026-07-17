@@ -1,7 +1,5 @@
 """Per-user shop helpers and ingredient-to-shop assignments."""
 
-from __future__ import annotations
-
 from collections import defaultdict
 from typing import TypedDict
 

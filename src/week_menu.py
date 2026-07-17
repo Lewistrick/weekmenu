@@ -1,7 +1,5 @@
 """Week menu planning state and helpers."""
 
-from __future__ import annotations
-
 import random
 from enum import StrEnum
 from collections.abc import Callable

@@ -981,9 +981,7 @@ class WeekMenuController(Controller):
         menu = await load_week_menu(user_id, default_servings=default_servings)
         start_day = await load_start_day(user_id)
         recipe_ids = [
-            slot["recipe_id"]
-            for slot in menu.values()
-            if slot["recipe_id"] is not None
+            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
         ]
         recipes_by_id = await self._recipes_by_id(recipe_ids)
         days = await build_day_rows(

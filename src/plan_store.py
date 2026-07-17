@@ -1,7 +1,5 @@
 """Database persistence for week menus, grocery lists, and user preferences."""
 
-from __future__ import annotations
-
 from src.i18n.service import t
 from src.models import (
     GroceryListItem,

@@ -1,7 +1,5 @@
 """Per-user unit catalog helpers."""
 
-from __future__ import annotations
-
 from typing import TypedDict
 
 from src.i18n.service import t

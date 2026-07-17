@@ -1,7 +1,5 @@
 """Detect and convert ingredients that use multiple measurement units."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from itertools import combinations
 from typing import cast

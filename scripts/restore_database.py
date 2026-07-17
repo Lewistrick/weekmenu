@@ -1,19 +1,12 @@
 """Restore recipe data from a legacy SQLite backup into the current schema."""
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import sqlite3
-import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-import src.db_config as db_config  # noqa: E402
-from src.database import close_database, init_database  # noqa: E402
+import src.db_config as db_config
+from src.database import close_database, init_database
 
 DEFAULT_SHOP_FOREGROUND = "#ffffff"
 DEFAULT_SHOP_BACKGROUND = "#2563eb"

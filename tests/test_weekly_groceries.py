@@ -130,9 +130,12 @@ async def test_navigation_links_to_weekly_groceries(
     assert "Back to week menu" not in grocery.text
     assert 'class="content-divider"' in grocery.text
     assert 'class="grocery-add-weekly-form"' in grocery.text
-    assert "/shops/manage" not in grocery.text.split("grocery-add-form", 1)[1].split(
-        "grocery-list-body", 1
-    )[0]
+    assert (
+        "/shops/manage"
+        not in grocery.text.split("grocery-add-form", 1)[1].split(
+            "grocery-list-body", 1
+        )[0]
+    )
 
 
 @pytest.mark.asyncio

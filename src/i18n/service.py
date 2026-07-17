@@ -1,15 +1,10 @@
 """UI translation loading, lookup, and request-scoped context."""
 
-from __future__ import annotations
-
 from contextvars import ContextVar
-from typing import TYPE_CHECKING
+from litestar import Request
 
 from src.i18n.catalog_en import TEXTS
 from src.i18n.icons import apply_icons, strip_icons
-
-if TYPE_CHECKING:
-    from litestar import Request
 
 DEFAULT_LANGUAGE_CODE = "en"
 DUTCH_LANGUAGE_CODE = "nl"

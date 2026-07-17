@@ -1,7 +1,5 @@
 """Language-independent UI icons keyed by translation key."""
 
-from __future__ import annotations
-
 KEY_PREFIX_ICONS: dict[str, str] = {
     "nav.week_menu": "🗓️ ",
     "nav.grocery_list": "🛒 ",

@@ -5,8 +5,6 @@ week menu. They can be managed on a settings page and added to any grocery list
 in one action.
 """
 
-from __future__ import annotations
-
 from typing import Any, TypedDict
 
 from src.catalog import get_or_create_ingredient

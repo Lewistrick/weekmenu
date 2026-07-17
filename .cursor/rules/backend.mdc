@@ -5,3 +5,11 @@ alwaysApply: true
 The backend is in Litestar, a modern Python API library.
 
 This library uses controllers to group pages and functionality around database classes. They can be found in src/controllers.
+
+### Python style for this project
+- Target modern Python (3.14+). Do **not** add legacy compatibility shims such as `from __future__ import annotations` or `typing.TYPE_CHECKING` blocks used only to hide imports from older runtimes.
+- Prefer ordinary top-level imports. Put all imports together at the top of the file (stdlib, third-party, then local `src.*`), not mid-file after constants or helpers.
+- Deferred/lazy imports inside functions are allowed only when needed to break a real circular import; do not use them as a general style.
+- Keep the `src` package prefix for local imports (`from src.models import ...`, `import src.db_config as db_config`). The app is started as `src.app:app` with uv; project root is on `sys.path`, so `src` is the package.
+- Do **not** add `sys.path.insert` (or similar path hacks) in scripts or the app. Run scripts with `uv run` from the project root so imports resolve normally.
+- Package management is uv only (`uv run`, `uv add`). Do not use bare `python`/`pip` for dependency or app commands.

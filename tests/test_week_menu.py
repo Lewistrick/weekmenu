@@ -758,7 +758,16 @@ async def test_randomize_with_vary_constraint(
     tagged_carb_recipes: tuple[list[Recipe], TagCategory, Tag, Tag, Tag],
 ) -> None:
     """Randomizing with vary mode should avoid repeating carb tags."""
-    _recipes, category, potato, rice, pasta = tagged_carb_recipes
+    recipes, category, potato, rice, pasta = tagged_carb_recipes
+    recipe_tags = {
+        recipes[0].id: potato.id,
+        recipes[1].id: rice.id,
+        recipes[2].id: pasta.id,
+        recipes[3].id: potato.id,
+        recipes[4].id: rice.id,
+        recipes[5].id: pasta.id,
+        recipes[6].id: rice.id,
+    }
     for day in ["wednesday", "thursday", "friday", "saturday", "sunday"]:
         await test_client.post(f"/week-menu/{day}/pin")
     await test_client.post(
@@ -778,7 +787,12 @@ async def test_randomize_with_vary_constraint(
     for day in ["monday", "tuesday"]:
         day_marker = f'id="week-menu-day-{day}"'
         assert day_marker in response.text
-    for tag in (potato, rice, pasta):
-        if tag.name in response.text:
-            assigned_tag_ids.append(tag.id)
-    assert len({potato.id, rice.id, pasta.id} & set(assigned_tag_ids)) >= 2
+        day_html = response.text.split(day_marker, 1)[1].split(
+            'id="week-menu-day-', 1
+        )[0]
+        for recipe in recipes:
+            if recipe.name in day_html:
+                assigned_tag_ids.append(recipe_tags[recipe.id])
+                break
+    assert len(assigned_tag_ids) == 2
+    assert len(set(assigned_tag_ids)) == 2

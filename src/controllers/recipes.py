@@ -178,9 +178,7 @@ class RecipeController(Controller):
         return missing_rows
 
     @staticmethod
-    async def _missing_tags_row(
-        owner_id: int, recipe_id: int
-    ) -> dict[str, Any] | None:
+    async def _missing_tags_row(owner_id: int, recipe_id: int) -> dict[str, Any] | None:
         """Return one missing-tags row, or None when the recipe is fully tagged.
 
         Args:
@@ -456,7 +454,9 @@ class RecipeController(Controller):
         path="/missing-tags/{recipe_id:int}/row",
         summary="Refresh one recipe on the missing-tags page",
     )
-    async def missing_tags_row(self, request: Request, recipe_id: int) -> Template | Response:
+    async def missing_tags_row(
+        self, request: Request, recipe_id: int
+    ) -> Template | Response:
         """Return one recipe row for the missing-tags page."""
         await self._get_owned_recipe(request, recipe_id)
         return await self._render_missing_tags_row_or_delete(request, recipe_id)
@@ -471,9 +471,7 @@ class RecipeController(Controller):
         """Return an inline editor for one missing tag group."""
         user_id = await self._current_user_id(request)
         await self._get_owned_recipe(request, recipe_id)
-        category = await TagCategory.filter(
-            owner_id=user_id, id=category_id
-        ).first()
+        category = await TagCategory.filter(owner_id=user_id, id=category_id).first()
         if category is None:
             raise NotFoundException()
 
@@ -512,9 +510,7 @@ class RecipeController(Controller):
         """Save selected tags for one group and refresh the recipe row."""
         user_id = await self._current_user_id(request)
         await self._get_owned_recipe(request, recipe_id)
-        category = await TagCategory.filter(
-            owner_id=user_id, id=category_id
-        ).first()
+        category = await TagCategory.filter(owner_id=user_id, id=category_id).first()
         if category is None:
             raise NotFoundException()
 

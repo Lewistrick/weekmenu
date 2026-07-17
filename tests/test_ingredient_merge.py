@@ -283,7 +283,7 @@ async def test_log_ingredient_usages_writes_recipe_lines(
     )
     await RecipeIngredient.create(recipe=recipe, ingredient=oil, quantity=2, unit=grams)
 
-    with patch("src.ingredient_merge.logger") as mock_logger:
+    with patch("ingredient_merge.logger") as mock_logger:
         await log_ingredient_usages(default_user.id, oil.id, "source")
 
     logged_messages = " ".join(str(call) for call in mock_logger.debug.call_args_list)

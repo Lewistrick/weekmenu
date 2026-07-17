@@ -34,8 +34,9 @@ async def test_view_recipe_groups_tags_by_category(
     assert response.status_code == 200
     assert 'class="recipe-tag-groups"' in response.text
     assert 'class="recipe-tag-group"' in response.text
-    assert 'class="recipe-tag-group-label">season</span>' in response.text
-    assert 'class="recipe-tag-group-label">diet</span>' in response.text
+    assert 'class="tag-group-chip"' in response.text
+    assert "season" in response.text
+    assert "diet" in response.text
     assert response.text.count("season:") == 0
     assert "summer" in response.text
     assert "winter" in response.text

@@ -13,7 +13,6 @@ async def test_test_client_uses_isolated_database(
 ) -> None:
     """The test fixture should point the app at an in-memory database."""
     import src.db_config as db_config_module
-
     assert (
         db_config_module.TORTOISE_CONFIG["connections"]["default"]
         == "sqlite://:memory:"

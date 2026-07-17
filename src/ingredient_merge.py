@@ -1,7 +1,5 @@
 """Merge duplicate ingredients that differ only by name."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from loguru import logger
