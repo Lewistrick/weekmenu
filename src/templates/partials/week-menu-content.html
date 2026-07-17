@@ -107,9 +107,25 @@
 
     <div class="week-menu-footer-actions">
         {% include "partials/grocery-generate-actions.html" %}
+        <button type="button" class="btn btn-action btn-action--export"
+            title="{{ t('week_menu.action.copy.aria') }}"
+            aria-label="{{ t('week_menu.action.copy.aria') }}"
+            onclick="copyWeekMenuExport()">
+            <span class="btn-action-icon" aria-hidden="true">📋</span>
+            <span>{{ t('week_menu.action.copy') }}</span>
+        </button>
     </div>
 </div>
 <script>
+    async function copyWeekMenuExport() {
+        const response = await fetch("/week-menu/export");
+        if (!response.ok) {
+            return;
+        }
+        const text = await response.text();
+        await navigator.clipboard.writeText(text);
+    }
+
     document.querySelectorAll(".grocery-generate-trigger").forEach((trigger) => {
         trigger.addEventListener("click", () => {
             const confirm = document.getElementById(trigger.dataset.confirmId);

@@ -200,6 +200,8 @@ TEXTS: dict[str, str] = {
     "week_menu.lead": "Plan maaltijden voor de week. Pin recepten op dagen die je bevallen, of zoek zelf naar recepten.",
     "week_menu.start_week_on": "Start week op",
     "week_menu.action.randomize": "Week randomiseren",
+    "week_menu.action.copy": "Weekmenu kopiëren",
+    "week_menu.action.copy.aria": "Weekmenu naar klembord kopiëren",
     "week_menu.constraints.title": "Tagbeperkingen",
     "week_menu.constraints.hint": "Optionele regels voor randomiseren. Vastgezette dagen tellen mee voor beperkingen.",
     "week_menu.constraint.ignore": "Negeren",
