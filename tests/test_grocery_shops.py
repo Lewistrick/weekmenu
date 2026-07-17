@@ -459,7 +459,10 @@ async def test_week_menu_page_has_generate_grocery_action(
     assert "Generate grocery list" in response.text
     assert "btn-action--export" in response.text
     assert "Copy week menu" in response.text
-    assert "copyWeekMenuExport()" in response.text
+    assert "copyWeekMenuExport(this)" in response.text
+    assert "week-menu-copy-messages" in response.text
+    assert "copyTextToClipboard" in response.text
+    assert "Week menu copied to clipboard." in response.text
     assert "grocery-generate-form" in response.text
 
 

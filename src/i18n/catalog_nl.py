@@ -378,6 +378,7 @@ TEXTS: dict[str, str] = {
     "message.recipe.new_ingredient": "Hé, {name} kende ik nog niet!",
     "message.recipe.ingredient_not_added": "Ingrediënt niet toegevoegd: {name} (eenheid niet gevonden: {unit})",
     "message.week_menu.grocery_preserved": "Je boodschappenlijst is bewaard en niet opnieuw gegenereerd vanuit het weekmenu.",
+    "message.week_menu.copied": "Weekmenu gekopieerd naar het klembord.",
     "message.week_menu.all_days_pinned_randomize": "Alle dagen zijn vastgezet. Maak minstens één dag los om te randomiseren.",
     "message.week_menu.enter_ingredient": "Voer een ingrediëntnaam in.",
     "message.week_menu.enter_positive_amount": "Voer een positieve hoeveelheid in.",

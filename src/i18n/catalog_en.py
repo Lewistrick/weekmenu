@@ -384,6 +384,7 @@ TEXTS: dict[str, str] = {
     "message.recipe.ingredient_not_added": "Ingredient not added: {name} (could not find unit: {unit})",
     # Week menu
     "message.week_menu.grocery_preserved": "Your grocery list is preserved and was not regenerated from the week menu.",
+    "message.week_menu.copied": "Week menu copied to clipboard.",
     "message.week_menu.all_days_pinned_randomize": "All days are pinned. Unpin at least one day to randomize.",
     "message.week_menu.enter_ingredient": "Enter an ingredient name.",
     "message.week_menu.enter_positive_amount": "Enter a positive amount.",
