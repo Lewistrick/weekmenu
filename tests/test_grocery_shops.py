@@ -280,7 +280,7 @@ async def test_grocery_list_preserves_existing_plan(
 
     second = await test_client.get("/week-menu/grocery-list")
     assert second.status_code == 200
-    assert "grocery-notice" in second.text
+    assert "grocery-notice" not in second.text
     assert "pasta" in second.text
 
 

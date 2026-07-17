@@ -375,7 +375,6 @@ class WeekMenuController(Controller):
         """Build shared grocery-list page context."""
         user_id = await self._viewer_id(request)
 
-        grocery_message: str | None = None
         if preserve_existing and await is_grocery_list_initialized(user_id):
             grocery_items = await prune_orphaned_grocery_lines(
                 user_id,
@@ -383,8 +382,7 @@ class WeekMenuController(Controller):
                     user_id, await load_grocery_list(user_id)
                 ),
             )
-            if grocery_items and not pop_grocery_suppress_preserve(request):
-                grocery_message = t("message.week_menu.grocery_preserved")
+            pop_grocery_suppress_preserve(request)
         else:
             grocery_items = await self._grocery_items_from_week_menu(request)
             await reset_grocery_plan(user_id)
@@ -428,7 +426,6 @@ class WeekMenuController(Controller):
             "already_have_line_keys": already_have_line_keys,
             "to_check_line_keys": to_check_line_keys,
             "units": units,
-            "grocery_message": grocery_message,
             "grocery_action_message": action_message,
             "grocery_add_reset_form": grocery_add_reset_form,
         }

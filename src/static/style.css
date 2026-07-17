@@ -849,19 +849,14 @@ div.recipe-detail {
     margin-bottom: 1rem;
 }
 
-.grocery-notice {
-    margin-bottom: 1rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid #5a9fd4;
-    border-radius: 8px;
-    background-color: rgba(90, 159, 212, 0.12);
-    color: #d8ebfa;
+.grocery-add-weekly-form {
+    margin-top: 0.65rem;
 }
 
-.grocery-notice--action {
-    border-color: #22c55e;
-    background-color: rgba(34, 197, 94, 0.12);
-    color: #d1fae5;
+.content-divider {
+    margin: 0 0 1rem;
+    border: none;
+    border-top: 1px solid #555;
 }
 
 .grocery-subsection-header {
