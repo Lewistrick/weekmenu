@@ -154,9 +154,11 @@ async def test_merge_ingredients_keeps_different_units_separate(
     result = await merge_ingredients(default_user.id, oil.id, olive_oil.id)
 
     assert result.ok is True
-    rows = await RecipeIngredient.filter(recipe_id=recipe.id).select_related(
-        "ingredient"
-    ).order_by("unit_id")
+    rows = (
+        await RecipeIngredient.filter(recipe_id=recipe.id)
+        .select_related("ingredient")
+        .order_by("unit_id")
+    )
     assert len(rows) == 2
     assert {row.ingredient.id for row in rows} == {olive_oil.id}
     quantities = sorted(row.quantity for row in rows)

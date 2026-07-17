@@ -1,0 +1,21 @@
+{% if node.children %}
+<section class="form-panel translations-group" data-group-path="{{ node.path }}" data-depth="{{ node.depth }}">
+    <h2 class="section-title translations-group-heading">{{ node.name }}</h2>
+    <div class="translations-group-body">
+        {% if node.row %}
+        {% with row=node.row, language_code=language_code, saved=false %}
+        {% include "partials/admin-translations-row.html" %}
+        {% endwith %}
+        {% endif %}
+        {% for child in node.children %}
+        {% with node=child, language_code=language_code %}
+        {% include "partials/admin-translations-node.html" %}
+        {% endwith %}
+        {% endfor %}
+    </div>
+</section>
+{% elif node.row %}
+{% with row=node.row, language_code=language_code, saved=false %}
+{% include "partials/admin-translations-row.html" %}
+{% endwith %}
+{% endif %}

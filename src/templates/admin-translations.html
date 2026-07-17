@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.admin_translations') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.admin_translations') }}</h1>
+        <p class="page-lead">{{ t('admin.translations.lead') }}</p>
+    </header>
+
+    <form
+        id="translations-filters"
+        class="search-panel"
+        hx-get="/admin/translations/list"
+        hx-target="#translations-list"
+        hx-swap="innerHTML"
+        hx-trigger="change, keyup changed delay:200ms from:#translations-search"
+    >
+        <div class="form-group">
+            <label class="field-label" for="translations-language">{{ t('admin.translations.language') }}</label>
+            <select id="translations-language" class="form-control" name="language">
+                {% for choice in language_choices %}
+                <option value="{{ choice.code }}" {% if choice.code == language_code %}selected{% endif %}>
+                    {{ choice.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="field-label" for="translations-search">{{ t('common.search') }}</label>
+            <input
+                id="translations-search"
+                class="form-control"
+                type="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="{{ t('admin.translations.search_placeholder') }}"
+            >
+        </div>
+
+        <section class="form-section">
+            <div class="section-heading">
+                <h2 class="section-title">{{ t('admin.translations.filter_groups') }}</h2>
+            </div>
+            <div class="translations-group-filters">
+                {% for group in top_level_groups %}
+                <label class="translations-group-filter">
+                    <input
+                        type="checkbox"
+                        name="group"
+                        value="{{ group }}"
+                        {% if group in selected_groups %}checked{% endif %}
+                    >
+                    {{ group }}
+                </label>
+                {% endfor %}
+            </div>
+        </section>
+
+        <label class="switch-row translations-incomplete-toggle">
+            <span>{{ t('admin.translations.incomplete_only') }}</span>
+            <label class="switch">
+                <input
+                    id="translations-incomplete-only"
+                    type="checkbox"
+                    name="incomplete_only"
+                    value="on"
+                    {% if incomplete_only %}checked{% endif %}
+                >
+                <span class="slider"></span>
+            </label>
+        </label>
+    </form>
+
+    <div id="translations-list">
+        {% include "partials/admin-translations-list.html" %}
+    </div>
+</div>
+
+<script>
+(function () {
+    function syncRow(row) {
+        const english = row.querySelector('[name="english_text"]');
+        const selected = row.querySelector('[name="selected_text"]');
+        const saveBtn = row.querySelector('.translations-row-save');
+        if (!english || !selected || !saveBtn) {
+            return;
+        }
+        const dirty =
+            english.value !== (english.dataset.original || "") ||
+            selected.value !== (selected.dataset.original || "");
+        saveBtn.disabled = !dirty;
+        row.classList.toggle("is-dirty", dirty);
+        const saved = row.querySelector(".translations-row-saved");
+        if (dirty && saved) {
+            saved.hidden = true;
+        }
+    }
+
+    function fitTextarea(field) {
+        field.style.height = "auto";
+        field.style.height = field.scrollHeight + "px";
+    }
+
+    function collapseTextarea(field) {
+        field.style.height = "";
+    }
+
+    document.body.addEventListener("input", function (event) {
+        const target = event.target;
+        if (!(target instanceof HTMLTextAreaElement)) {
+            const row = target.closest(".translations-row");
+            if (row) {
+                syncRow(row);
+            }
+            return;
+        }
+        if (target.classList.contains("translations-row-input") && document.activeElement === target) {
+            fitTextarea(target);
+        }
+        const row = target.closest(".translations-row");
+        if (row) {
+            syncRow(row);
+        }
+    });
+
+    document.body.addEventListener("focusin", function (event) {
+        const target = event.target;
+        if (target instanceof HTMLTextAreaElement && target.classList.contains("translations-row-input")) {
+            fitTextarea(target);
+        }
+    });
+
+    document.body.addEventListener("focusout", function (event) {
+        const target = event.target;
+        if (target instanceof HTMLTextAreaElement && target.classList.contains("translations-row-input")) {
+            collapseTextarea(target);
+        }
+    });
+
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        target.querySelectorAll(".translations-row").forEach(syncRow);
+        if (target.classList.contains("translations-row")) {
+            syncRow(target);
+        }
+    });
+
+    document.querySelectorAll(".translations-row").forEach(syncRow);
+})();
+</script>
+{% endblock %}

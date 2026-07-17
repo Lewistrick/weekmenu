@@ -1,0 +1,11 @@
+{% if tree %}
+<div class="translations-list">
+    {% for node in tree %}
+    {% with node=node, language_code=language_code %}
+    {% include "partials/admin-translations-node.html" %}
+    {% endwith %}
+    {% endfor %}
+</div>
+{% else %}
+<p class="search-placeholder">{{ t('admin.translations.empty') }}</p>
+{% endif %}

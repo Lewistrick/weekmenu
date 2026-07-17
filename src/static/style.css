@@ -2354,3 +2354,137 @@ div.recipe-detail {
     font-size: 0.9rem;
     color: #b5b5b5;
 }
+
+.translations-group-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1rem;
+    margin-top: 0.5rem;
+}
+
+.translations-group-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    color: #c8c8c8;
+    cursor: pointer;
+}
+
+.translations-incomplete-toggle {
+    margin-top: 1rem;
+    max-width: 22rem;
+}
+
+.translations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.translations-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 0;
+}
+
+.translations-group .translations-group {
+    background-color: #333;
+}
+
+.translations-group .translations-group .translations-group {
+    background-color: #2b2b2b;
+}
+
+.translations-group-heading {
+    margin: 0;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #555;
+}
+
+.translations-group[data-depth="1"] > .translations-group-heading,
+.translations-group[data-depth="2"] > .translations-group-heading,
+.translations-group[data-depth="3"] > .translations-group-heading {
+    font-size: 1.05rem;
+}
+
+.translations-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.translations-row {
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: #2a2a2a;
+}
+
+.translations-row.is-dirty {
+    border-color: #777;
+}
+
+.translations-row--incomplete {
+    border-left: 3px solid #b45309;
+}
+
+.translations-row-form {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.2fr) minmax(10rem, 1.4fr) minmax(10rem, 1.4fr) auto;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.translations-row-key {
+    display: block;
+    align-self: center;
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+    color: #d4d4d4;
+}
+
+.translations-row-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0;
+}
+
+.translations-row-input {
+    min-height: 2.35rem;
+    max-height: 12rem;
+    resize: none;
+    overflow-y: hidden;
+    line-height: 1.4;
+    field-sizing: content;
+}
+
+.translations-row-input:focus {
+    overflow-y: auto;
+}
+
+.translations-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.25rem;
+}
+
+.translations-row-save:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.translations-row-saved {
+    font-size: 0.85rem;
+    color: #86efac;
+}
+
+@media (max-width: 900px) {
+    .translations-row-form {
+        grid-template-columns: 1fr;
+    }
+}
