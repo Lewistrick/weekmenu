@@ -2,12 +2,12 @@
     <section class="recipe-section grocery-add-panel">
         <div class="section-heading">
             <h2 class="section-title">{{ t('grocery.section.add_groceries') }}</h2>
-            <form hx-post="/week-menu/grocery-list/add-weekly" hx-target="#grocery-list-body"
-                hx-swap="outerHTML" class="grocery-add-weekly-form">
+        <form hx-post="/week-menu/grocery-list/add-weekly" hx-target="#grocery-list-body"
+            hx-swap="outerHTML show:none" class="grocery-add-weekly-form">
                 <button type="submit" class="btn btn-secondary btn-sm">{{ t('grocery.action.add_weekly_groceries') }}</button>
             </form>
         </div>
-        <form hx-post="/week-menu/grocery-list/add" hx-target="#grocery-list-body" hx-swap="outerHTML"
+        <form hx-post="/week-menu/grocery-list/add" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="inline-form grocery-add-form">
             <div class="form-group">
                 <div class="ingredient-input">

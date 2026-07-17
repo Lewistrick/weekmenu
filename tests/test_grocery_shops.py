@@ -457,6 +457,12 @@ async def test_week_menu_page_has_generate_grocery_action(
     assert "week-menu-footer-actions" in response.text
     assert "btn-action--grocery" in response.text
     assert "Generate grocery list" in response.text
+    assert "btn-action--export" in response.text
+    assert "Copy week menu" in response.text
+    assert "copyWeekMenuExport(this)" in response.text
+    assert "week-menu-copy-messages" in response.text
+    assert "copyTextToClipboard" in response.text
+    assert "Week menu copied to clipboard." in response.text
     assert "grocery-generate-form" in response.text
 
 
@@ -897,7 +903,7 @@ async def test_grocery_list_htmx_assign_returns_partial(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """HTMX shop assignment should return only the grocery list panel."""
+    """HTMX shop assignment should return only the grocery list body partial."""
     shop = await Shop.create(owner=default_user, name="HTMX shop")
     recipe = await Recipe.create(
         name="HTMX stew",
@@ -924,9 +930,11 @@ async def test_grocery_list_htmx_assign_returns_partial(
     )
 
     assert response.status_code == 200
+    assert 'id="grocery-list-body"' in response.text
     assert 'id="grocery-list-panel"' in response.text
     assert "HTMX shop" in response.text
     assert "<!DOCTYPE html>" not in response.text
+    assert "navbar" not in response.text
 
 
 @pytest.mark.asyncio
@@ -1324,3 +1332,97 @@ async def test_grocery_list_sorting_persists_in_database(
 
     assert response.status_code == 200
     assert "Already have" in response.text
+    assert 'id="grocery-list-body"' in response.text
+    assert "<!DOCTYPE html>" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_htmx_move_from_shop_to_already_have_returns_partial(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Moving a shop item to already-have should update in place without a full page."""
+    shop = await Shop.create(owner=default_user, name="Corner")
+    recipe = await Recipe.create(
+        name="Shop move stew",
+        description="shop to already-have",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    milk = await Ingredient.create(owner=default_user, name="milk")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=milk, quantity=200, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/assign",
+        data={"ingredient_id": milk.id, "unit": "g", "shop_id": shop.id},
+        headers={"HX-Request": "true"},
+    )
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/already-have",
+        data={"ingredient_id": milk.id, "unit": "g"},
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert "<!DOCTYPE html>" not in response.text
+    assert "navbar" not in response.text
+    assert response.headers.get("HX-Refresh") is None
+    assert 'id="grocery-list-body"' in response.text
+    already_have_section = response.text.split("Already have", 1)[1]
+    assert ">milk</span>" in already_have_section
+    shop_section = response.text.split("By shop", 1)[1]
+    assert ">milk</span>" not in shop_section
+
+
+@pytest.mark.asyncio
+async def test_htmx_move_from_shop_to_to_check_returns_partial(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Moving a shop item to to-check should update in place without a full page."""
+    shop = await Shop.create(owner=default_user, name="Market")
+    recipe = await Recipe.create(
+        name="Shop check stew",
+        description="shop to to-check",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    eggs = await Ingredient.create(owner=default_user, name="eggs")
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=eggs, quantity=100, unit=grams
+    )
+    await test_client.post(f"/week-menu/tuesday/recipe/{recipe.id}")
+    await test_client.get("/week-menu/grocery-list")
+    await test_client.post(
+        "/week-menu/grocery-list/assign",
+        data={"ingredient_id": eggs.id, "unit": "g", "shop_id": shop.id},
+        headers={"HX-Request": "true"},
+    )
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/to-check",
+        data={"ingredient_id": eggs.id, "unit": "g"},
+        headers={"HX-Request": "true"},
+    )
+
+    assert response.status_code == 200
+    assert "<!DOCTYPE html>" not in response.text
+    assert "navbar" not in response.text
+    assert response.headers.get("HX-Refresh") is None
+    assert 'id="grocery-list-body"' in response.text
+    to_check_section = response.text.split("To check", 1)[1].split("Already have", 1)[0]
+    assert ">eggs</span>" in to_check_section

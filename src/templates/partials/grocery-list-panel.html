@@ -62,8 +62,8 @@
                     </span>
                     {{ group.shop_name }}
                 </h3>
-                <form hx-post="/week-menu/grocery-list/shop/{{ group.shop_id }}/already-have"
-                    hx-target="#grocery-list-panel" hx-swap="outerHTML" class="grocery-bulk-form">
+                <form method="post" hx-post="/week-menu/grocery-list/shop/{{ group.shop_id }}/already-have"
+                    hx-target="#grocery-list-body" hx-swap="outerHTML show:none" class="grocery-bulk-form">
                     <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all"
                         style="color: {{ group.foreground_color }}; border-color: {{ group.foreground_color }};">
                         {{ t('grocery.action.mark_all') }}

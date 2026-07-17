@@ -204,6 +204,8 @@ TEXTS: dict[str, str] = {
     "week_menu.lead": "Plan dinners for the week. Pin days you like, randomize the rest, or search for recipes yourself.",
     "week_menu.start_week_on": "Start week on",
     "week_menu.action.randomize": "Randomize week",
+    "week_menu.action.copy": "Copy week menu",
+    "week_menu.action.copy.aria": "Copy week menu to clipboard",
     "week_menu.constraints.title": "Tag constraints",
     "week_menu.constraints.hint": "Optional rules for randomize. Pinned days count toward constraints.",
     "week_menu.constraint.ignore": "Ignore",
@@ -382,6 +384,7 @@ TEXTS: dict[str, str] = {
     "message.recipe.ingredient_not_added": "Ingredient not added: {name} (could not find unit: {unit})",
     # Week menu
     "message.week_menu.grocery_preserved": "Your grocery list is preserved and was not regenerated from the week menu.",
+    "message.week_menu.copied": "Week menu copied to clipboard.",
     "message.week_menu.all_days_pinned_randomize": "All days are pinned. Unpin at least one day to randomize.",
     "message.week_menu.enter_ingredient": "Enter an ingredient name.",
     "message.week_menu.enter_positive_amount": "Enter a positive amount.",

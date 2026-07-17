@@ -7,7 +7,7 @@
     </button>
     <div class="grocery-inline-confirm" id="{{ confirm_id }}" hidden>
         <span class="grocery-inline-confirm-label">{{ confirm_label }}</span>
-        <form hx-post="{{ confirm_action }}" hx-target="#grocery-list-panel" hx-swap="outerHTML"
+        <form method="post" hx-post="{{ confirm_action }}" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="grocery-bulk-form">
             <button type="submit" class="shop-chip-btn shop-chip-btn--warn"
                 title="{{ t('common.confirm') }}" aria-label="{{ t('common.confirm') }}">

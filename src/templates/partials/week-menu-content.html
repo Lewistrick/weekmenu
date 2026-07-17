@@ -6,6 +6,7 @@
     {% with message_scope="week-menu" %}
     {% include "partials/flash-messages.html" %}
     {% endwith %}
+    <div id="week-menu-copy-messages" class="messages" aria-live="polite"></div>
     {% with warning_scope="week-menu" %}
     {% include "partials/flash-warnings.html" %}
     {% endwith %}
@@ -107,9 +108,77 @@
 
     <div class="week-menu-footer-actions">
         {% include "partials/grocery-generate-actions.html" %}
+        <button type="button" class="btn btn-action btn-action--export"
+            title="{{ t('week_menu.action.copy.aria') }}"
+            aria-label="{{ t('week_menu.action.copy.aria') }}"
+            data-copied-message="{{ t('message.week_menu.copied') }}"
+            onclick="copyWeekMenuExport(this)">
+            <span class="btn-action-icon" aria-hidden="true">📋</span>
+            <span>{{ t('week_menu.action.copy') }}</span>
+        </button>
     </div>
 </div>
 <script>
+    async function copyTextToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+    }
+
+    function showWeekMenuCopyMessage(message) {
+        const container = document.getElementById("week-menu-copy-messages");
+        if (!container) {
+            return;
+        }
+        const flashId = "week-menu-copy-message";
+        container.innerHTML = `
+            <div id="${flashId}" class="flash-banner single-message"
+                hx-get="/elements/empty/div/${flashId}"
+                hx-trigger="load delay:5s"
+                hx-target="this"
+                hx-swap="delete">
+                <span class="flash-banner-text"></span>
+                <button type="button" class="btn btn-sm icon-btn icon-action-btn"
+                    hx-get="/elements/empty/div/${flashId}"
+                    hx-target="#${flashId}"
+                    hx-swap="delete"
+                    title="{{ t('common.dismiss') }}"
+                    aria-label="{{ t('common.dismiss') }}">✕</button>
+            </div>
+        `;
+        const text = container.querySelector(".flash-banner-text");
+        if (text) {
+            text.textContent = message;
+        }
+        if (window.htmx) {
+            htmx.process(container);
+        }
+    }
+
+    async function copyWeekMenuExport(button) {
+        const response = await fetch("/week-menu/export", { credentials: "same-origin" });
+        if (!response.ok) {
+            return;
+        }
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("text/plain")) {
+            return;
+        }
+        const text = await response.text();
+        await copyTextToClipboard(text);
+        showWeekMenuCopyMessage(button.dataset.copiedMessage);
+    }
+
     document.querySelectorAll(".grocery-generate-trigger").forEach((trigger) => {
         trigger.addEventListener("click", () => {
             const confirm = document.getElementById(trigger.dataset.confirmId);

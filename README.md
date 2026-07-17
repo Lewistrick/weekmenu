@@ -63,7 +63,7 @@
 - Copy grouped plaintext for messaging under the grocery columns (ingredients by shop).
 - Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
 - Each shop section has a **Mark all ✓** button. The to-check and already-have lists each have a **🗑 Clear list** button (amber warning style) with inline confirmation; clearing either list removes those groceries from the plan entirely.
-- Export the week menu as plaintext via `GET /week-menu/export` (`{day} - {recipe}` per line, empty days omitted).
+- Copy the week menu to the clipboard from the footer **📋 Copy week menu** button (`{day} - {recipe}` per line, empty days omitted). The same plaintext is available via `GET /week-menu/export`.
 
 ### Weekly groceries
 - Keep a personal list of recurring groceries (staples you buy every week) that is unrelated to the week menu. Manage it at `/weekly-groceries/manage` (⚙️ Settings → 🧺 Weekly groceries).

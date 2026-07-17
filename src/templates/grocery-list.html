@@ -39,6 +39,37 @@
         navigator.clipboard.writeText(textarea.value);
     }
 
+    (function () {
+        let groceryScrollY = 0;
+
+        document.body.addEventListener("htmx:beforeRequest", (event) => {
+            const source = event.target;
+            if (!(source instanceof Element)) {
+                return;
+            }
+            const targetSelector = source.getAttribute("hx-target");
+            if (
+                targetSelector === "#grocery-list-body" ||
+                targetSelector === "#grocery-list-panel"
+            ) {
+                groceryScrollY = window.scrollY;
+            }
+        });
+
+        document.body.addEventListener("htmx:afterSwap", (event) => {
+            const target = event.detail && event.detail.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+            if (
+                target.id === "grocery-list-body" ||
+                target.id === "grocery-list-panel"
+            ) {
+                window.scrollTo(0, groceryScrollY);
+            }
+        });
+    })();
+
     document.addEventListener("click", (event) => {
         const trigger = event.target.closest(".grocery-inline-confirm-trigger");
         if (trigger) {

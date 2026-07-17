@@ -324,15 +324,8 @@ class WeekMenuController(Controller):
         action_message: str | None = None,
         grocery_add_reset_form: bool = False,
     ) -> dict:
-        """Build shared grocery-list context for HTML and plaintext export."""
+        """Build shared grocery-list page context."""
         user_id = await self._viewer_id(request)
-        default_servings = await self._default_servings(request)
-        menu = await load_week_menu(user_id, default_servings=default_servings)
-        start_day = await load_start_day(user_id)
-        recipe_ids = [
-            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
-        ]
-        recipes_by_id = await self._recipes_by_id(recipe_ids)
 
         grocery_message: str | None = None
         if preserve_existing and await is_grocery_list_initialized(user_id):
@@ -367,16 +360,9 @@ class WeekMenuController(Controller):
                 line_shop_ids,
             )
         )
-        days = await build_day_rows(
-            menu,
-            recipes_by_id,
-            start_day,
-            day_label_fn=lambda day: t(f"day.{day}"),
-        )
         units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return {
             "request": request,
-            "days": days,
             "unassigned_items": unassigned_items,
             "to_check_items": to_check_items,
             "already_have_items": already_have_items,
@@ -388,7 +374,6 @@ class WeekMenuController(Controller):
                 unassigned_label=t("grocery.label.unassigned"),
                 to_check_label=t("grocery.label.to_check"),
             ),
-            "week_menu_export_text": format_week_menu_export(days),
             "shops": shops,
             "ingredient_shop_ids": ingredient_shop_ids,
             "line_shop_ids": line_shop_ids,
@@ -424,9 +409,9 @@ class WeekMenuController(Controller):
     async def _render_grocery_panel(
         self, request: Request, *, action_message: str | None = None
     ) -> Template:
-        """Render the sortable grocery list panel for HTMX swaps."""
+        """Render the grocery list body for HTMX swaps."""
         return Template(
-            template_name="partials/grocery-list-panel.html",
+            template_name="partials/grocery-list-body.html",
             context=await self._build_grocery_context(
                 request, action_message=action_message
             ),
@@ -934,10 +919,25 @@ class WeekMenuController(Controller):
 
     @get(path="/export", summary="Export week menu as plaintext")
     async def week_menu_export(self, request: Request) -> Response[str]:
-        """Return the week menu as plain text lines."""
-        context = await self._build_grocery_context(request)
+        """Return the week menu as plain text ``{day} - {recipe}`` lines."""
+        user_id = await self._viewer_id(request)
+        default_servings = await self._default_servings(request)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
+        start_day = await load_start_day(user_id)
+        recipe_ids = [
+            slot["recipe_id"]
+            for slot in menu.values()
+            if slot["recipe_id"] is not None
+        ]
+        recipes_by_id = await self._recipes_by_id(recipe_ids)
+        days = await build_day_rows(
+            menu,
+            recipes_by_id,
+            start_day,
+            day_label_fn=lambda day: t(f"day.{day}"),
+        )
         return Response(
-            content=context["week_menu_export_text"],
+            content=format_week_menu_export(days),
             media_type="text/plain; charset=utf-8",
         )
 
