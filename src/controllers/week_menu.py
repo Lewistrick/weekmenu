@@ -424,9 +424,9 @@ class WeekMenuController(Controller):
     async def _render_grocery_panel(
         self, request: Request, *, action_message: str | None = None
     ) -> Template:
-        """Render the sortable grocery list panel for HTMX swaps."""
+        """Render the grocery list body for HTMX swaps."""
         return Template(
-            template_name="partials/grocery-list-panel.html",
+            template_name="partials/grocery-list-body.html",
             context=await self._build_grocery_context(
                 request, action_message=action_message
             ),
