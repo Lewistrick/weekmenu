@@ -1,0 +1,51 @@
+<article
+    class="translations-row{% if row.incomplete %} translations-row--incomplete{% endif %}"
+    id="translations-row-{{ row.key | replace('.', '-') }}"
+>
+    <form
+        class="translations-row-form"
+        hx-post="/admin/translations/save"
+        hx-target="#translations-row-{{ row.key | replace('.', '-') }}"
+        hx-swap="outerHTML"
+    >
+        <input type="hidden" name="key" value="{{ row.key }}">
+        <input type="hidden" name="language" value="{{ language_code }}">
+
+        <code class="translations-row-key" title="{{ row.key }}">{{ row.key }}</code>
+
+        <label class="translations-row-field">
+            <span class="field-label">{{ t('admin.translations.column.english') }}</span>
+            <textarea
+                class="form-control translations-row-input"
+                name="english_text"
+                rows="1"
+                data-original="{{ row.english_text }}"
+                aria-label="{{ t('admin.translations.column.english') }}: {{ row.key }}"
+            >{{ row.english_text }}</textarea>
+        </label>
+
+        <label class="translations-row-field">
+            <span class="field-label">{{ t('admin.translations.column.translation') }}</span>
+            <textarea
+                class="form-control translations-row-input"
+                name="selected_text"
+                rows="1"
+                data-original="{{ row.selected_text }}"
+                aria-label="{{ t('admin.translations.column.translation') }}: {{ row.key }}"
+            >{{ row.selected_text }}</textarea>
+        </label>
+
+        <div class="translations-row-actions">
+            <button
+                type="submit"
+                class="btn btn-sm icon-btn translations-row-save"
+                disabled
+                title="{{ t('admin.translations.action.save') }}"
+                aria-label="{{ t('admin.translations.action.save') }}"
+            >💾</button>
+            <span class="translations-row-saved" {% if not saved %}hidden{% endif %}>
+                {{ t('admin.translations.saved') }}
+            </span>
+        </div>
+    </form>
+</article>

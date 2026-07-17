@@ -172,6 +172,7 @@ class User(Model):
     username = TextField(required=True)
     email = TextField(null=True)
     password_hash = TextField(null=True)
+    is_admin = BooleanField(default=False)
 
     @classmethod
     async def get_by_username(cls, username: str) -> "User | None":

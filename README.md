@@ -23,6 +23,12 @@
 - Log in at `/login` and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
 - Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, language, default week-menu servings, change your password, or delete your account (which removes the account and its recipes).
 - Passwords are hashed with bcrypt and the logged-in user is tracked in a signed cookie session.
+- Users have an `is_admin` flag. The account named **Erick** is granted admin on startup/migration. Non-admins do not see the Admin section; admin routes return **403 Forbidden**.
+
+### Admin
+- Admins see an **Admin** section on the home page and in the navbar.
+- **Users** (`/admin/users`) is a placeholder for future user management.
+- **Translations** (`/admin/translations`) edits `UIText` rows: pick a language, filter by top-level key group, search by key/English/translation text, optionally show only incomplete translations, and save English + selected-language text per key with an inline confirmation.
 
 ### Recipe sharing and privacy
 - Every recipe has an **owner** (who controls it), a **creator** (who originally wrote it), and a private/public flag (toggle on the edit page). New recipes start private with you as both owner and creator.
@@ -50,6 +56,7 @@
 - Language-independent icons (nav emojis, action buttons, etc.) live in `src/i18n/icons.py` and are added by `t()` at render time, not stored in the database.
 - Templates use the Jinja global `t('key')`; controllers use `t()` from `src/i18n.service` for flash messages and errors.
 - When a translation is missing for the selected language, the app falls back to English, then to the key itself.
+- Admins can edit live database strings on `/admin/translations` without changing the Python catalogs (catalogs remain the seed/fallback source).
 
 ### Grocery lists by shop and plaintext export
 - Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.

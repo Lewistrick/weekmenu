@@ -15,7 +15,14 @@ from litestar.template import TemplateConfig
 from litestar.types.internal_types import TemplateConfigType
 
 import src.db_config as db_config
-from src.auth import SESSION_USER_KEY, get_current_user
+from src.auth import (
+    SESSION_USER_KEY,
+    ensure_default_admin,
+    get_current_user,
+    load_request_user,
+    template_current_user,
+)
+from src.controllers.admin import AdminController
 from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
 from src.controllers.ingredient_merge import IngredientMergeController
@@ -81,6 +88,9 @@ def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     """Register custom Jinja filters and globals."""
     template_engine.engine.filters["markdown"] = render_markdown
     template_engine.engine.globals["t"] = t  # ty: ignore[invalid-assignment]
+    template_engine.engine.globals["current_user"] = (  # ty: ignore[invalid-assignment]
+        template_current_user
+    )
 
 
 def create_template_engine() -> JinjaTemplateEngine:
@@ -111,7 +121,8 @@ async def favicon() -> File:
 
 
 async def before_request(request: Request) -> Response | None:
-    """Load i18n context and enforce authentication."""
+    """Load request user, i18n context, and enforce authentication."""
+    await load_request_user(request)
     await load_i18n_context(request)
     return await require_authentication(request)
 
@@ -122,6 +133,7 @@ async def init_db() -> None:
     await init_database(db_config.TORTOISE_CONFIG)
     await seed_english_texts()
     await seed_dutch_texts()
+    await ensure_default_admin()
 
 
 async def close_db() -> None:
@@ -152,6 +164,7 @@ app = Litestar(
         ShopController,
         WeekMenuController,
         WeeklyGroceryController,
+        AdminController,
         ElementController,
         static_files_router,
     ],

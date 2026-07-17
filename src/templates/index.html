@@ -79,5 +79,21 @@
             </a>
         </div>
     </section>
+
+    {% if current_user and current_user.is_admin %}
+    <section class="recipe-section">
+        <h2 class="section-title">{{ t('nav.admin') }}</h2>
+        <div class="quick-actions">
+            <a href="/admin/users" class="action-card">
+                <span class="action-card-title">{{ t('nav.users') }}</span>
+                <span class="action-card-desc">{{ t('home.users.desc') }}</span>
+            </a>
+            <a href="/admin/translations" class="action-card">
+                <span class="action-card-title">{{ t('nav.translations') }}</span>
+                <span class="action-card-desc">{{ t('home.translations.desc') }}</span>
+            </a>
+        </div>
+    </section>
+    {% endif %}
 </div>
 {% endblock %}

@@ -21,6 +21,8 @@ TEXTS: dict[str, str] = {
     "app.title.units": "Units",
     "app.title.merge_ingredient_units": "Merge ingredient units",
     "app.title.merge_ingredients": "Merge ingredients",
+    "app.title.admin_users": "Users",
+    "app.title.admin_translations": "Translations",
     # Navigation
     "nav.week_menu": "Week menu",
     "nav.grocery_list": "Grocery list",
@@ -40,6 +42,9 @@ TEXTS: dict[str, str] = {
     "nav.merge_ingredients": "Merge ingredients",
     "nav.account": "Account",
     "nav.logout": "Log out",
+    "nav.admin": "Admin",
+    "nav.users": "Users",
+    "nav.translations": "Translations",
     # Home
     "home.lead": "Welkom! Plan your meals, build your cookbook, and discover what to cook next.",
     "home.week_menu.desc": "Plan dinners for the week with random picks and pins.",
@@ -56,6 +61,8 @@ TEXTS: dict[str, str] = {
     "home.merge_ingredient_units.desc": "Convert recipes that use different units for the same ingredient.",
     "home.merge_ingredients.desc": "Combine duplicate ingredients such as oil and olive oil under one name.",
     "home.account.desc": "Manage your account: email, password, and more.",
+    "home.users.desc": "Manage user accounts and admin access.",
+    "home.translations.desc": "Edit UI strings for each language.",
     # Auth
     "auth.login.subtitle": "Log in to plan your week.",
     "auth.register.subtitle": "Create your account.",
@@ -459,4 +466,17 @@ TEXTS: dict[str, str] = {
     "message.weekly_groceries.not_found": "Weekly grocery not found.",
     "message.weekly_groceries.updated": "Weekly grocery updated.",
     "message.weekly_groceries.deleted": "Weekly grocery deleted.",
+    # Admin translations
+    "admin.users.lead": "User management is coming soon.",
+    "admin.translations.lead": "Edit English text and translations for each UI string.",
+    "admin.translations.language": "Language",
+    "admin.translations.search_placeholder": "Search keys or text…",
+    "admin.translations.filter_groups": "Groups",
+    "admin.translations.incomplete_only": "Only incomplete",
+    "admin.translations.column.key": "Key",
+    "admin.translations.column.english": "English",
+    "admin.translations.column.translation": "Translation",
+    "admin.translations.action.save": "Save",
+    "admin.translations.saved": "Saved",
+    "admin.translations.empty": "No translations match these filters.",
 }

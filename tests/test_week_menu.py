@@ -787,9 +787,9 @@ async def test_randomize_with_vary_constraint(
     for day in ["monday", "tuesday"]:
         day_marker = f'id="week-menu-day-{day}"'
         assert day_marker in response.text
-        day_html = response.text.split(day_marker, 1)[1].split(
-            'id="week-menu-day-', 1
-        )[0]
+        day_html = response.text.split(day_marker, 1)[1].split('id="week-menu-day-', 1)[
+            0
+        ]
         for recipe in recipes:
             if recipe.name in day_html:
                 assigned_tag_ids.append(recipe_tags[recipe.id])

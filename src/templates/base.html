@@ -26,6 +26,15 @@
                     <a href="/recipes/missing-tags" class="nav-link">{{ t('nav.missing_tags') }}</a>
                 </div>
             </details>
+            {% if current_user and current_user.is_admin %}
+            <details class="nav-group">
+                <summary class="nav-link">{{ t('nav.admin') }}</summary>
+                <div class="nav-group-menu">
+                    <a href="/admin/users" class="nav-link">{{ t('nav.users') }}</a>
+                    <a href="/admin/translations" class="nav-link">{{ t('nav.translations') }}</a>
+                </div>
+            </details>
+            {% endif %}
             <details class="nav-group nav-group--right">
                 <summary class="nav-link nav-link--muted">{{ t('nav.settings') }}</summary>
                 <div class="nav-group-menu">

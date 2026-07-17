@@ -36,6 +36,9 @@ async def init_test_db() -> None:
 
     await seed_english_texts()
     await seed_dutch_texts()
+    from src.auth import ensure_default_admin
+
+    await ensure_default_admin()
 
 
 async def close_test_db() -> None:
