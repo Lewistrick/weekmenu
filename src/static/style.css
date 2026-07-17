@@ -392,18 +392,6 @@ div.recipe-detail {
     background-color: #353535;
 }
 
-.recipes-missing-tags-recipe-link {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #f2f2f2;
-    text-decoration: none;
-}
-
-.recipes-missing-tags-recipe-link:hover {
-    color: #5a9fd4;
-    text-decoration: underline;
-}
-
 .recipes-missing-tags-groups {
     display: flex;
     flex-wrap: wrap;

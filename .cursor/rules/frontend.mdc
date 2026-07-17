@@ -10,4 +10,8 @@ Navigation can be done from the home page and the navbar. the navigation options
 - home page sections contains tiles with explanation; tiles can be clicked
 - navbar sections are buttons with dropdowns with buttons inside; the inner buttons can be clicked
 
-CSS styling should be app-wide, not page-specific. So for example, use classes like 'action-button' (instead of 'ingredient-add-button' and 'pin-recipe-button').
+### Reuse CSS classes before creating new ones
+1. Before adding a class, search `src/static/style.css` and `src/templates/` for an existing class with the same role (link, chip, form row, color picker, inline confirm, etc.).
+2. Prefer semantic, reusable classes (`recipe-link`, `tag-group-chip`, `manage-shop-color-input`) over page-prefixed ones (`week-menu-recipe-link`, `recipes-missing-tags-recipe-link`, `color-input`).
+3. Use generic classes and avoid page-specific classes as much as possible; they are only for layout unique to that page (e.g. `recipes-missing-tags-list` as a container), not for styling common UI elements.
+4. When copying UI from another page, copy the **same class names** from that page’s template — do not recreate the look with new CSS.
