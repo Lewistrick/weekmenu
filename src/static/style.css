@@ -781,6 +781,18 @@ div.recipe-detail {
     margin-right: 0.25rem;
 }
 
+.grocery-check-all-trigger {
+    color: var(--shop-fg, #ffffff);
+    border: 1px solid var(--shop-fg, #ffffff);
+    background-color: transparent;
+}
+
+.grocery-check-all-trigger:hover {
+    background-color: rgba(0, 0, 0, 0.15);
+    color: var(--shop-fg, #ffffff);
+    border-color: var(--shop-fg, #ffffff);
+}
+
 .shop-chip-btn--warn {
     background-color: #b45309;
     color: #fff;
@@ -797,18 +809,6 @@ div.recipe-detail {
 
 .grocery-shop-header .grocery-shop-title {
     margin: 0;
-}
-
-.grocery-shop-mark-all {
-    color: var(--shop-fg, #ffffff);
-    border-color: var(--shop-fg, #ffffff);
-    background-color: transparent;
-}
-
-.grocery-shop-mark-all:hover {
-    background-color: rgba(0, 0, 0, 0.15);
-    color: var(--shop-fg, #ffffff);
-    border-color: var(--shop-fg, #ffffff);
 }
 
 .grocery-layout {

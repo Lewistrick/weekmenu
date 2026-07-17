@@ -62,13 +62,9 @@
                     </span>
                     {{ group.shop_name }}
                 </h3>
-                <form method="post" hx-post="/week-menu/grocery-list/shop/{{ group.shop_id }}/already-have"
-                    hx-target="#grocery-list-body" hx-swap="outerHTML show:none" class="grocery-bulk-form">
-                    <button type="submit" class="btn btn-sm btn-ghost grocery-shop-mark-all"
-                        style="color: {{ group.foreground_color }}; border-color: {{ group.foreground_color }};">
-                        {{ t('grocery.action.mark_all') }}
-                    </button>
-                </form>
+                {% with confirm_id="mark-all-shop-" ~ group.shop_id ~ "-confirm", trigger_id="mark-all-shop-" ~ group.shop_id ~ "-trigger", confirm_label=t('grocery.action.mark_all.confirm'), confirm_action="/week-menu/grocery-list/shop/" ~ group.shop_id ~ "/already-have", trigger_label=t('grocery.action.mark_all'), trigger_icon="✓", trigger_class="grocery-check-all-trigger" %}
+                {% include "partials/grocery-inline-confirm.html" %}
+                {% endwith %}
             </div>
             <ul class="grocery-list">
                 {% for item in group.entries %}

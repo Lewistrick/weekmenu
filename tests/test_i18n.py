@@ -57,7 +57,7 @@ async def test_database_texts_exclude_icons(test_client: AsyncTestClient) -> Non
     mark_all = await UIText.get(
         language_code=DEFAULT_LANGUAGE_CODE, key="grocery.action.mark_all"
     )
-    assert mark_all.text == "Mark all"
+    assert mark_all.text == "Check all"
 
 
 @pytest.mark.asyncio
@@ -76,8 +76,8 @@ async def test_t_applies_icons_for_configured_keys(
 
     assert t("nav.week_menu").startswith("🗓")
     assert "Week menu" in t("nav.week_menu")
-    assert t("grocery.action.mark_all").endswith("✓")
-    assert "Mark all" in t("grocery.action.mark_all")
+    assert t("grocery.action.mark_all") == "Check all"
+    assert t("grocery.action.mark_all.confirm") == "Check all?"
 
 
 @pytest.mark.asyncio

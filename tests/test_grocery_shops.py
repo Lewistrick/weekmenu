@@ -823,6 +823,43 @@ async def test_grocery_list_mark_all_shop_already_have(
 
 
 @pytest.mark.asyncio
+async def test_grocery_list_mark_all_uses_inline_confirmation(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Mark-all should use the same inline confirm UI as clear-list."""
+    shop = await Shop.create(owner=default_user, name="Confirm shop")
+    recipe = await Recipe.create(
+        name="Confirm mark stew",
+        description="mark all confirm ui",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    thyme = await Ingredient.create(owner=default_user, name="thyme")
+    await set_ingredient_shop(default_user.id, thyme.id, shop.id)
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=thyme, quantity=5, unit=grams
+    )
+    await test_client.post(f"/week-menu/monday/recipe/{recipe.id}")
+
+    response = await test_client.get("/week-menu/grocery-list")
+
+    assert response.status_code == 200
+    assert f"mark-all-shop-{shop.id}-confirm" in response.text
+    assert f"mark-all-shop-{shop.id}-trigger" in response.text
+    assert "grocery-check-all-trigger" in response.text
+    assert "grocery-inline-confirm-wrap" in response.text
+    assert "Check all?" in response.text
+    assert f"/week-menu/grocery-list/shop/{shop.id}/already-have" in response.text
+    assert "grocery-shop-mark-all" not in response.text
+
+
+@pytest.mark.asyncio
 async def test_grocery_list_can_clear_already_have(
     test_client: AsyncTestClient,
     default_user: User,
