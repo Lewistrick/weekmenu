@@ -7,7 +7,10 @@
     <header class="page-header">
         <h1 class="page-title-main">{{ t('app.title.recipes_missing_tags') }}</h1>
         <p class="page-lead">{{ t('recipes_missing_tags.lead') }}</p>
+        <p class="section-hint">{{ t('recipes_missing_tags.hint') }}</p>
     </header>
+
+    <div id="recipes-missing-tags-messages"></div>
 
     {% if rows %}
     <div class="recipes-missing-tags-list">

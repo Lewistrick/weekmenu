@@ -193,6 +193,7 @@ TEXTS: dict[str, str] = {
     "ingredient.aria.cancel_edit": "Wijzigen ongedaan maken",
     # recipes_missing_tags
     "recipes_missing_tags.lead": "Zoek recepten die tags missen in één of meer groepen.",
+    "recipes_missing_tags.hint": "Klik op een missende tag-groep om tags voor dat recept te kiezen en sla daarna op of annuleer.",
     "recipes_missing_tags.missing_groups": "Missende tag-groepen:",
     "recipes_missing_tags.empty": "Elk recept heeft minstens één tag in elke groep.",
     "recipes_missing_tags.action.save": "Tags opslaan",
@@ -385,6 +386,7 @@ TEXTS: dict[str, str] = {
     "message.recipe.ingredient_added": "Ingrediënt toegevoegd",
     "message.recipe.error": "Fout: {error}",
     "message.recipe.tags_updated": "Recepttags bijgewerkt",
+    "message.recipes_missing_tags.tags_saved": "Tags voor {group_name} opgeslagen voor recept ",
     "message.recipe.deleted": "Recept verwijderd: {name}",
     "message.recipe.new_ingredient": "Hé, {name} kende ik nog niet!",
     "message.recipe.ingredient_not_added": "Ingrediënt niet toegevoegd: {name} (eenheid niet gevonden: {unit})",

@@ -1,0 +1,13 @@
+<div id="recipes-missing-tags-messages" hx-swap-oob="innerHTML">
+    <div class="flash-banner single-message ingredient-unit-conversion-message">
+        <span class="flash-banner-text">
+            {{ t('message.recipes_missing_tags.tags_saved', group_name=group_name) }}
+            <a href="/recipes/view/{{ recipe.id }}" class="recipe-id-link">#{{ recipe.id }} {{ recipe.name }}</a>
+        </span>
+    </div>
+</div>
+{% if row %}
+{% include "partials/recipes-missing-tags-row.html" %}
+{% else %}
+<div id="recipes-missing-tags-row-{{ recipe.id }}" hx-swap-oob="delete"></div>
+{% endif %}

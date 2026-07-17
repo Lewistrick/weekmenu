@@ -258,6 +258,29 @@ class RecipeController(Controller):
             context={"request": request, "row": row},
         )
 
+    async def _render_missing_tags_save_response(
+        self,
+        request: Request,
+        recipe_id: int,
+        *,
+        group_name: str,
+    ) -> Template:
+        """Render a refreshed row plus a flash message after saving tags."""
+        user_id = await self._current_user_id(request)
+        recipe = await Recipe.filter(owner_id=user_id, id=recipe_id).first()
+        if recipe is None:
+            raise NotFoundException()
+        row = await self._missing_tags_row(user_id, recipe_id)
+        return Template(
+            template_name="partials/recipes-missing-tags-save-response.html",
+            context={
+                "request": request,
+                "recipe": recipe,
+                "group_name": group_name,
+                "row": row,
+            },
+        )
+
     @get(path="/add", summary="Get the page to add a new recipe")
     async def add_recipe_page(self, request: Request) -> Template:
         """Show the page for adding a new recipe."""
@@ -504,7 +527,9 @@ class RecipeController(Controller):
         await self._set_recipe_tags_for_category(
             recipe_id, category_id, submitted_tag_ids, user_id
         )
-        return await self._render_missing_tags_row_or_delete(request, recipe_id)
+        return await self._render_missing_tags_save_response(
+            request, recipe_id, group_name=category.name
+        )
 
     @post(path="/{recipe_id:int}/add-to-week-menu", summary="Add recipe to week menu")
     async def add_to_week_menu(self, request: Request, recipe_id: int) -> Template:

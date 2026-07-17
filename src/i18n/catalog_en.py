@@ -197,6 +197,7 @@ TEXTS: dict[str, str] = {
     "ingredient.aria.cancel_edit": "Cancel edit",
     # Recipes missing tags
     "recipes_missing_tags.lead": "Find recipes that are missing one or more tag groups and fix them quickly.",
+    "recipes_missing_tags.hint": "Click a missing tag group to choose tags for that recipe, then save or cancel.",
     "recipes_missing_tags.missing_groups": "Missing groups:",
     "recipes_missing_tags.empty": "Every recipe has at least one tag in every tag group.",
     "recipes_missing_tags.action.save": "Save tags",
@@ -390,6 +391,7 @@ TEXTS: dict[str, str] = {
     "message.recipe.ingredient_added": "Ingredient added",
     "message.recipe.error": "Error: {error}",
     "message.recipe.tags_updated": "Recipe tags updated",
+    "message.recipes_missing_tags.tags_saved": "Saved {group_name} tags for recipe ",
     "message.recipe.deleted": "Recipe deleted: {name}",
     "message.recipe.new_ingredient": "Hey, I didn't know {name} yet!",
     "message.recipe.ingredient_not_added": "Ingredient not added: {name} (could not find unit: {unit})",

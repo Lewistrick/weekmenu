@@ -29,6 +29,7 @@ async def test_missing_tags_page_lists_missing_groups(
     response = await test_client.get("/recipes/missing-tags")
 
     assert response.status_code == 200
+    assert "Click a missing tag group" in response.text
     assert recipe.name in response.text
     assert season.name not in response.text.split(recipe.name)[1][:120]
     assert diet.name in response.text
@@ -89,9 +90,12 @@ async def test_save_missing_tags_group_refreshes_row_without_saved_group(
         data={"tag_ids[]": str(summer.id)},
     )
 
-    assert response.status_code == 200
+    assert response.status_code in {200, 201}
     assert response.headers.get("hx-reswap") is None
-    assert season.name not in response.text
+    assert "Saved season tags for recipe" in response.text
+    assert f'href="/recipes/view/{recipe.id}"' in response.text
+    assert "recipes-missing-tags-messages" in response.text
+    assert season.name not in response.text.split("recipes-missing-tags-row")[1]
     assert diet.name in response.text
     assert f'id="recipes-missing-tags-row-{recipe.id}"' in response.text
 
@@ -149,8 +153,8 @@ async def test_save_last_missing_group_deletes_recipe_row(
     )
 
     assert response.status_code in {200, 201}
-    assert response.headers.get("hx-reswap") == "delete"
-    assert response.text == ""
+    assert response.headers.get("hx-reswap") is None
+    assert "hx-swap-oob=\"delete\"" in response.text
 
 
 @pytest.mark.asyncio
