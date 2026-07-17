@@ -25,18 +25,21 @@ class Recipe(Model):
     cook_time_minutes = IntField()
     servings = IntField()
     owner = ForeignKeyField("models.User", related_name="recipes")
+    owner_id: int
     creator = ForeignKeyField(
         "models.User",
         related_name="created_recipes",
         null=True,
         on_delete=SET_NULL,
     )
+    creator_id: int | None
     imported_from = ForeignKeyField(
         "models.Recipe",
         related_name="imports",
         null=True,
         on_delete=SET_NULL,
     )
+    imported_from_id: int | None
     private = BooleanField(default=True)
     enabled = BooleanField(default=True)
 
@@ -97,6 +100,7 @@ class Ingredient(Model):
     id = IntField(primary_key=True)
     name = TextField(required=True)
     owner = ForeignKeyField("models.User", related_name="ingredients")
+    owner_id: int
 
 
 class TagCategory(Model):
@@ -107,6 +111,7 @@ class TagCategory(Model):
     foreground_color = TextField(default="#ffffff")
     background_color = TextField(default="#2563eb")
     owner = ForeignKeyField("models.User", related_name="tag_categories")
+    owner_id: int
 
 
 class Tag(Model):
@@ -123,8 +128,10 @@ class Tag(Model):
 
     id = IntField(primary_key=True)
     category = ForeignKeyField("models.TagCategory", "category")
+    category_id: int
     name = TextField(required=True)
     owner = ForeignKeyField("models.User", related_name="tags")
+    owner_id: int
 
 
 class RecipeTag(Model):
@@ -132,7 +139,9 @@ class RecipeTag(Model):
 
     id = IntField(primary_key=True)
     recipe = ForeignKeyField("models.Recipe", "tagged_recipe")
+    recipe_id: int
     tag = ForeignKeyField("models.Tag", name="recipe_tag")
+    tag_id: int
 
 
 class RecipeIngredient(Model):
@@ -140,9 +149,12 @@ class RecipeIngredient(Model):
 
     id = IntField(primary_key=True)
     recipe = ForeignKeyField("models.Recipe", "recipe")
+    recipe_id: int
     ingredient = ForeignKeyField("models.Ingredient", "ingredient")
+    ingredient_id: int
     quantity = FloatField(required=True)
     unit = ForeignKeyField("models.Unit", "unit")
+    unit_id: int
 
     def __str__(self) -> str:
         """Return a human-readable quantity, unit, and ingredient name."""
@@ -160,9 +172,12 @@ class WeeklyGrocery(Model):
 
     id = IntField(primary_key=True)
     owner = ForeignKeyField("models.User", related_name="weekly_groceries")
+    owner_id: int
     ingredient = ForeignKeyField("models.Ingredient", related_name="weekly_groceries")
+    ingredient_id: int
     quantity = FloatField(required=True)
     unit = ForeignKeyField("models.Unit", related_name="weekly_groceries")
+    unit_id: int
 
 
 class User(Model):
@@ -196,6 +211,7 @@ class UserPreference(Model):
         unique=True,
         on_delete=CASCADE,
     )
+    user_id: int
     language = TextField(default="🇬🇧 English")
     default_servings = IntField(default=2)
     start_day = TextField(default="monday")
@@ -208,6 +224,7 @@ class WeekMenuSlot(Model):
 
     id = IntField(primary_key=True)
     user = ForeignKeyField("models.User", related_name="week_menu_slots")
+    user_id: int
     day = TextField(required=True)
     recipe = ForeignKeyField(
         "models.Recipe",
@@ -215,6 +232,7 @@ class WeekMenuSlot(Model):
         null=True,
         on_delete=SET_NULL,
     )
+    recipe_id: int | None
     pinned = BooleanField(default=False)
     servings = IntField(default=2)
 
@@ -229,9 +247,11 @@ class WeekMenuTagConstraint(Model):
 
     id = IntField(primary_key=True)
     user = ForeignKeyField("models.User", related_name="week_menu_constraints")
+    user_id: int
     category = ForeignKeyField(
         "models.TagCategory", related_name="week_menu_constraints"
     )
+    category_id: int
     mode = TextField(default="off")
     tag = ForeignKeyField(
         "models.Tag",
@@ -239,6 +259,7 @@ class WeekMenuTagConstraint(Model):
         null=True,
         on_delete=SET_NULL,
     )
+    tag_id: int | None
     minimum_count = IntField(default=1)
 
     class Meta:
@@ -252,8 +273,11 @@ class GroceryListItem(Model):
 
     id = IntField(primary_key=True)
     user = ForeignKeyField("models.User", related_name="grocery_list_items")
+    user_id: int
     ingredient = ForeignKeyField("models.Ingredient", related_name="grocery_list_items")
+    ingredient_id: int
     unit = ForeignKeyField("models.Unit", related_name="grocery_list_items")
+    unit_id: int
     quantity = FloatField(required=True)
     status = TextField(default="active")
     shop = ForeignKeyField(
@@ -262,6 +286,7 @@ class GroceryListItem(Model):
         null=True,
         on_delete=SET_NULL,
     )
+    shop_id: int | None
 
     class Meta:
         """Database constraints for grocery list items."""
@@ -277,6 +302,7 @@ class Shop(Model):
     foreground_color = TextField(default="#ffffff")
     background_color = TextField(default="#2563eb")
     owner = ForeignKeyField("models.User", related_name="shops")
+    owner_id: int
 
 
 class UserIngredientShop(Model):
@@ -284,8 +310,11 @@ class UserIngredientShop(Model):
 
     id = IntField(primary_key=True)
     user = ForeignKeyField("models.User", related_name="ingredient_shops")
+    user_id: int
     ingredient = ForeignKeyField("models.Ingredient", related_name="user_shops")
+    ingredient_id: int
     shop = ForeignKeyField("models.Shop", related_name="user_ingredients", null=True)
+    shop_id: int | None
 
 
 class UIText(Model):
@@ -310,6 +339,7 @@ class Unit(Model):
     single = TextField(null=True)
     plural = TextField(null=True)
     owner = ForeignKeyField("models.User", related_name="units")
+    owner_id: int
 
     @classmethod
     async def find(cls, query: str, *, owner_id: int) -> "Unit | None":

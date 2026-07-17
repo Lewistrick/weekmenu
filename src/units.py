@@ -89,10 +89,11 @@ async def update_unit(
     plural = _normalize_text(plural_raw) or None
     if not abbrev:
         return False, t("message.units.abbrev_required")
-    unit.abbrev = abbrev
-    unit.single = single
-    unit.plural = plural
-    await unit.save()
+    await Unit.filter(id=unit_id, owner_id=owner_id).update(
+        abbrev=abbrev,
+        single=single,
+        plural=plural,
+    )
     return True, t("message.units.updated")
 
 

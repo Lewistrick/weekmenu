@@ -145,12 +145,20 @@ async def delete_unused_ingredient(owner_id: int, ingredient_id: int) -> bool:
     return True
 
 
-async def ingredient_assignment_rows(owner_id: int) -> list[dict[str, object]]:
+class AssignmentRow(TypedDict):
+    """One ingredient row on the manage-shops assignments panel."""
+
+    ingredient: Ingredient
+    shop_id: int | None
+    recipe_count: int
+
+
+async def ingredient_assignment_rows(owner_id: int) -> list[AssignmentRow]:
     """Return ingredients with their current shop assignment for management UI."""
     ingredients = await Ingredient.filter(owner_id=owner_id).order_by("name")
     shop_ids = await load_ingredient_shop_ids(owner_id)
     recipe_counts = await load_ingredient_recipe_counts(owner_id)
-    rows: list[dict[str, object]] = []
+    rows: list[AssignmentRow] = []
     for ingredient in ingredients:
         rows.append(
             {
@@ -167,7 +175,7 @@ class AssignmentGroup(TypedDict):
 
     label: str
     shop: ShopInfo | None
-    rows: list[dict[str, object]]
+    rows: list[AssignmentRow]
 
 
 async def ingredient_assignment_groups(

@@ -3,6 +3,7 @@
 from src.i18n.service import t
 from src.models import (
     GroceryListItem,
+    Ingredient,
     Unit,
     UserPreference,
     WeekMenuSlot,
@@ -17,9 +18,13 @@ from src.week_menu import (
     TagGroupConstraint,
     _normalize_constraint,
     empty_week_menu,
+    find_grocery_line,
     grocery_line_key,
+    hydrate_grocery_item_names,
     is_valid_day,
+    merge_grocery_items,
     normalize_servings,
+    resolve_grocery_line_shop_id,
 )
 
 GROCERY_STATUS_ACTIVE = "active"
@@ -452,8 +457,6 @@ async def mark_shop_already_have(
     line_shop_ids: dict[str, int],
 ) -> None:
     """Mark every grocery line in one shop section as already available."""
-    from src.week_menu import resolve_grocery_line_shop_id
-
     for item in items:
         if (
             resolve_grocery_line_shop_id(item, ingredient_shop_ids, line_shop_ids)
@@ -469,8 +472,6 @@ async def prune_orphaned_grocery_lines(
     working = list(items if items is not None else await load_grocery_list(user_id))
     if not working:
         return working
-
-    from src.models import Ingredient
 
     ingredient_ids = {item["ingredient_id"] for item in working}
     valid_ids = set(
@@ -504,8 +505,6 @@ async def update_grocery_line(
     items: list[GroceryItem] | None = None,
 ) -> tuple[bool, str | None]:
     """Update one grocery line, merging when the target unit already exists."""
-    from src.week_menu import find_grocery_line
-
     normalized_unit = unit.strip()
     old_unit_normalized = old_unit.strip()
     if not normalized_unit:
@@ -565,8 +564,6 @@ async def add_items_to_grocery_list(
     user_id: int, new_items: list[GroceryItem]
 ) -> list[GroceryItem]:
     """Add items to the current grocery list, merging matching lines."""
-    from src.week_menu import hydrate_grocery_item_names, merge_grocery_items
-
     existing: list[GroceryItem] = []
     if await is_grocery_list_initialized(user_id):
         existing = await hydrate_grocery_item_names(

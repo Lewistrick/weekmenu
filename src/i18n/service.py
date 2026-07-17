@@ -1,10 +1,14 @@
 """UI translation loading, lookup, and request-scoped context."""
 
 from contextvars import ContextVar
+
 from litestar import Request
 
+from src.auth import get_current_user
 from src.i18n.catalog_en import TEXTS
+from src.i18n.catalog_nl import TEXTS as NL_TEXTS
 from src.i18n.icons import apply_icons, strip_icons
+from src.models import UIText
 
 DEFAULT_LANGUAGE_CODE = "en"
 DUTCH_LANGUAGE_CODE = "nl"
@@ -69,8 +73,6 @@ async def load_catalog(language_code: str) -> Catalog:
     if language_code in _catalog_cache:
         return _catalog_cache[language_code]
 
-    from src.models import UIText
-
     rows = await UIText.filter(language_code=language_code).values("key", "text")
     catalog = {row["key"]: row["text"] for row in rows}
     _catalog_cache[language_code] = catalog
@@ -79,8 +81,6 @@ async def load_catalog(language_code: str) -> Catalog:
 
 async def seed_english_texts() -> None:
     """Upsert English UI strings from ``catalog_en.TEXTS`` into the database."""
-    from src.models import UIText
-
     for key, text in TEXTS.items():
         await UIText.update_or_create(
             defaults={"text": strip_icons(key, text)},
@@ -92,9 +92,6 @@ async def seed_english_texts() -> None:
 
 async def seed_dutch_texts() -> None:
     """Upsert Dutch UI strings from ``catalog_nl.TEXTS`` into the database."""
-    from src.i18n.catalog_nl import TEXTS as NL_TEXTS
-    from src.models import UIText
-
     for key, text in NL_TEXTS.items():
         await UIText.update_or_create(
             defaults={"text": strip_icons(key, text)},
@@ -113,7 +110,7 @@ async def load_i18n_context(request: Request) -> None:
     Args:
         request: The incoming HTTP request.
     """
-    from src.auth import get_current_user
+    # Deferred: user_settings → plan_store → i18n.service.
     from src.user_settings import load_user_settings
 
     user = await get_current_user(request)
