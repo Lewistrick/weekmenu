@@ -336,6 +336,54 @@ div.recipe-detail {
     color: #e0e0e0;
 }
 
+.tag-group-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background-color: var(--tag-bg, #2563eb);
+    color: var(--tag-fg, #ffffff);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.tag-group-chip--small {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.8rem;
+}
+
+.tag-group-chip--legend {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.8rem;
+}
+
+.manage-tag-color-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.manage-tag-color-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.manage-tag-color-label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #d8d8d8;
+}
+
+.manage-tag-color-input {
+    width: 100%;
+    max-width: 12rem;
+    padding: 0.2rem;
+    height: 2.5rem;
+}
+
 .tag-options {
     display: flex;
     flex-direction: column;
@@ -352,17 +400,36 @@ div.recipe-detail {
 
 .manage-tag-form {
     display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
     margin: 0;
+}
+
+.manage-tag-form-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.manage-tag-form--inline {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.manage-tag-form-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
 .manage-tag-form .form-control {
     flex: 1;
+    min-width: 0;
 }
 
-.manage-tag-form--create .form-control {
-    flex: initial;
+.manage-tag-form--create .manage-tag-form-row .form-control {
+    flex: 1;
 }
 
 .manage-tag-label {
@@ -427,6 +494,56 @@ div.recipe-detail {
 
 .week-menu-options-header {
     margin-bottom: 0.65rem;
+}
+
+.week-menu-options-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.week-menu-constraints-summary {
+    padding: 0.5rem 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.week-menu-constraints-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+}
+
+.week-menu-constraints-summary-header .section-title {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.week-menu-constraints-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.week-menu-constraint-readonly {
+    display: grid;
+    grid-template-columns: minmax(7rem, 9rem) 1fr;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.1rem 0;
+}
+
+.week-menu-constraint-readonly .tag-group-chip {
+    justify-self: start;
+}
+
+.week-menu-constraint-summary-text {
+    color: #d8d8d8;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    min-width: 0;
 }
 
 .week-menu-options-header .section-title {
@@ -788,7 +905,7 @@ div.recipe-detail {
 }
 
 .grocery-check-all-trigger:hover {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: transparent !important;
     color: var(--shop-fg, #ffffff);
     border-color: var(--shop-fg, #ffffff);
 }

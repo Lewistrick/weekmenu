@@ -50,7 +50,12 @@
             {% if tag_groups %}
             {% for group in tag_groups %}
             <fieldset class="tag-group-fieldset">
-                <legend>{{ group.category.name }}</legend>
+                <legend>
+                    <span class="tag-group-chip tag-group-chip--legend"
+                        style="--tag-bg: {{ group.category.background_color }}; --tag-fg: {{ group.category.foreground_color }};">
+                        {{ group.category.name }}
+                    </span>
+                </legend>
                 <div class="tag-options">
                     {% for tag in group.tags %}
                     <label class="tag-option">

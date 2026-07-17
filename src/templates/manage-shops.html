@@ -26,7 +26,15 @@
             <input id="shop-bg-new" name="background_color" class="form-control manage-shop-color-input" type="color" value="#2563eb">
             <label class="manage-shop-color-label" for="shop-fg-new">{{ t('common.text') }}</label>
             <input id="shop-fg-new" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="#ffffff">
-            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('shops.aria.add_shop') }}" aria-label="{{ t('shops.aria.add_shop') }}">➕</button>
+            <button
+                type="submit"
+                class="btn btn-sm btn-ghost"
+                title="{{ t('shops.aria.add_shop') }}"
+                aria-label="{{ t('shops.aria.add_shop') }}"
+            >
+                <span aria-hidden="true">💾</span>
+                <span>{{ t('shops.section.add_shop') }}</span>
+            </button>
         </form>
     </section>
 

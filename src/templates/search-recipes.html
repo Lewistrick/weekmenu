@@ -26,7 +26,12 @@
             </div>
             {% for group in tag_groups %}
             <div class="form-group">
-                <label for="tag-group-{{ group.category.id }}">{{ group.category.name }}</label>
+                <label for="tag-group-{{ group.category.id }}">
+                    <span class="tag-group-chip"
+                        style="--tag-bg: {{ group.category.background_color }}; --tag-fg: {{ group.category.foreground_color }};">
+                        {{ group.category.name }}
+                    </span>
+                </label>
                 <select id="tag-group-{{ group.category.id }}" name="tag_group_{{ group.category.id }}" class="form-control">
                     <option value="">{{ t('common.any') }}</option>
                     {% for tag in group.tags %}

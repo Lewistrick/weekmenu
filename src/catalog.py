@@ -19,6 +19,8 @@ from src.models import (
 if TYPE_CHECKING:
     from src.models import User
 
+import hashlib
+
 DEFAULT_UNITS: tuple[tuple[str, str | None, str | None], ...] = (
     ("g", "gram", "grams"),
     ("kg", "kilo", "kilo"),
@@ -28,6 +30,23 @@ DEFAULT_UNITS: tuple[tuple[str, str | None, str | None], ...] = (
     ("tl", "theelepel", "theelepels"),
     ("st", "stuk", "stuks"),
 )
+
+_TAG_CATEGORY_COLOR_PALETTE: tuple[tuple[str, str], ...] = (
+    ("#2563eb", "#ffffff"),  # blue
+    ("#16a34a", "#ffffff"),  # green
+    ("#f97316", "#1b1b1b"),  # orange (dark text)
+    ("#e11d48", "#ffffff"),  # rose
+    ("#7c3aed", "#ffffff"),  # purple
+    ("#0ea5e9", "#ffffff"),  # sky
+)
+
+
+def _default_tag_category_colors(name: str) -> tuple[str, str]:
+    """Pick a deterministic (background, foreground) pair from the category name."""
+    normalized = name.strip().lower()
+    digest = hashlib.md5(normalized.encode("utf-8")).hexdigest()
+    idx = int(digest[:8], 16) % len(_TAG_CATEGORY_COLOR_PALETTE)
+    return _TAG_CATEGORY_COLOR_PALETTE[idx]
 
 
 async def seed_default_units(user: User) -> int:
@@ -67,14 +86,29 @@ async def get_or_create_ingredient(owner_id: int, name: str) -> tuple[Ingredient
 
 
 async def get_or_create_tag_category(
-    owner_id: int, name: str
+    owner_id: int,
+    name: str,
+    *,
+    background_color: str | None = None,
+    foreground_color: str | None = None,
 ) -> tuple[TagCategory, bool]:
     """Return a tag category owned by ``owner_id``, creating it when missing."""
     normalized = name.strip()
     existing = await TagCategory.filter(owner_id=owner_id, name=normalized).first()
     if existing is not None:
         return existing, False
-    return await TagCategory.create(owner_id=owner_id, name=normalized), True
+    resolved_background, resolved_foreground = _default_tag_category_colors(
+        normalized
+    )
+    return (
+        await TagCategory.create(
+            owner_id=owner_id,
+            name=normalized,
+            background_color=background_color or resolved_background,
+            foreground_color=foreground_color or resolved_foreground,
+        ),
+        True,
+    )
 
 
 async def get_or_create_tag(

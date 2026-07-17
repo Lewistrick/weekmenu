@@ -46,7 +46,10 @@
         <div class="recipe-tag-groups" aria-label="{{ t('common.aria.recipe_tags') }}">
             {% for group in recipe_tag_groups %}
             <div class="recipe-tag-group">
-                <span class="recipe-tag-group-label">{{ group.category.name }}</span>
+                <span class="tag-group-chip"
+                    style="--tag-bg: {{ group.category.background_color }}; --tag-fg: {{ group.category.foreground_color }};">
+                    {{ group.category.name }}
+                </span>
                 {% for tag in group.tags %}
                 <span class="status-pill">{{ tag.name }}</span>
                 {% endfor %}

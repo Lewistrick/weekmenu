@@ -14,8 +14,39 @@
             <h2 class="section-title">{{ t('tags.section.add_group') }}</h2>
         </div>
         <form method="post" action="/tags/groups" class="manage-tag-form manage-tag-form--create">
-            <input id="group_name" name="group_name" class="form-control" placeholder="{{ t('tags.placeholder.group_name') }}" required>
-            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.add_group') }}" aria-label="{{ t('tags.aria.add_group') }}">➕</button>
+            <div class="manage-tag-form-row">
+                <input id="group_name" name="group_name" class="form-control" placeholder="{{ t('tags.placeholder.group_name') }}" required>
+                <button
+                    type="submit"
+                    class="btn btn-sm icon-btn"
+                    title="{{ t('tags.aria.add_group') }}"
+                    aria-label="{{ t('tags.aria.add_group') }}"
+                >
+                    ➕
+                </button>
+            </div>
+            <div class="manage-tag-color-inputs">
+                <div class="manage-tag-color-field">
+                    <label class="manage-tag-color-label" for="group-bg-new">{{ t('common.background') }}</label>
+                    <input
+                        id="group-bg-new"
+                        name="background_color"
+                        class="form-control manage-tag-color-input"
+                        type="color"
+                        value="#2563eb"
+                    >
+                </div>
+                <div class="manage-tag-color-field">
+                    <label class="manage-tag-color-label" for="group-fg-new">{{ t('common.text') }}</label>
+                    <input
+                        id="group-fg-new"
+                        name="foreground_color"
+                        class="form-control manage-tag-color-input"
+                        type="color"
+                        value="#ffffff"
+                    >
+                </div>
+            </div>
         </form>
     </section>
 
@@ -27,21 +58,39 @@
         {% for group in groups %}
         <article class="form-panel recipe-section">
             <form method="post" action="/tags/groups/{{ group.category.id }}" class="manage-tag-form">
-                <label class="manage-tag-label" for="group-name-{{ group.category.id }}">{{ t('tags.field.group_name') }}</label>
-                <input id="group-name-{{ group.category.id }}" name="group_name" class="form-control" value="{{ group.category.name }}" required>
-                <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.rename_group') }}" aria-label="{{ t('tags.aria.rename_group') }}">✏️</button>
-                <button type="button" class="btn btn-sm icon-btn" hx-delete="/tags/groups/{{ group.category.id }}"
-                    hx-target="body" hx-swap="innerHTML" title="{{ t('tags.aria.delete_group') }}" aria-label="{{ t('tags.aria.delete_group') }}">
-                    🗑️
-                </button>
+                <div class="manage-tag-form-row">
+                    <span class="tag-group-chip"
+                        style="--tag-bg: {{ group.category.background_color }}; --tag-fg: {{ group.category.foreground_color }};">
+                        {{ group.category.name }}
+                    </span>
+                    <label class="manage-tag-label" for="group-name-{{ group.category.id }}">{{ t('tags.field.group_name') }}</label>
+                    <input id="group-name-{{ group.category.id }}" name="group_name" class="form-control" value="{{ group.category.name }}" required>
+                </div>
+                <div class="manage-tag-color-inputs">
+                    <div class="manage-tag-color-field">
+                        <label class="manage-tag-color-label" for="group-bg-{{ group.category.id }}">{{ t('common.background') }}</label>
+                        <input id="group-bg-{{ group.category.id }}" name="background_color" class="form-control manage-tag-color-input" type="color" value="{{ group.category.background_color }}">
+                    </div>
+                    <div class="manage-tag-color-field">
+                        <label class="manage-tag-color-label" for="group-fg-{{ group.category.id }}">{{ t('common.text') }}</label>
+                        <input id="group-fg-{{ group.category.id }}" name="foreground_color" class="form-control manage-tag-color-input" type="color" value="{{ group.category.foreground_color }}">
+                    </div>
+                </div>
+                <div class="manage-tag-form-actions">
+                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.save_group') }}" aria-label="{{ t('tags.aria.save_group') }}">💾</button>
+                    <button type="button" class="btn btn-sm icon-btn" hx-delete="/tags/groups/{{ group.category.id }}"
+                        hx-target="body" hx-swap="innerHTML" title="{{ t('tags.aria.delete_group') }}" aria-label="{{ t('tags.aria.delete_group') }}">
+                        🗑️
+                    </button>
+                </div>
             </form>
 
             <div class="tag-options">
                 {% for tag in group.tags %}
-                <form method="post" action="/tags/values/{{ tag.id }}" class="manage-tag-form">
+                <form method="post" action="/tags/values/{{ tag.id }}" class="manage-tag-form manage-tag-form--inline">
                     <label class="manage-tag-label" for="tag-name-{{ tag.id }}">{{ t('tags.field.tag') }}</label>
                     <input id="tag-name-{{ tag.id }}" name="tag_name" class="form-control" value="{{ tag.name }}" required>
-                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.rename_tag') }}" aria-label="{{ t('tags.aria.rename_tag') }}">✏️</button>
+                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.save_tag') }}" aria-label="{{ t('tags.aria.save_tag') }}">💾</button>
                     <button type="button" class="btn btn-sm icon-btn" hx-delete="/tags/values/{{ tag.id }}"
                         hx-target="body" hx-swap="innerHTML" title="{{ t('tags.aria.delete_tag') }}" aria-label="{{ t('tags.aria.delete_tag') }}">
                         🗑️
@@ -50,7 +99,7 @@
                 {% endfor %}
             </div>
 
-            <form method="post" action="/tags/groups/{{ group.category.id }}/tags" class="manage-tag-form">
+            <form method="post" action="/tags/groups/{{ group.category.id }}/tags" class="manage-tag-form manage-tag-form--inline">
                 <label class="manage-tag-label" for="tag-new-{{ group.category.id }}">{{ t('tags.field.new_value') }}</label>
                 <input id="tag-new-{{ group.category.id }}" name="tag_name" class="form-control" placeholder="{{ t('tags.placeholder.tag_name') }}" required>
                 <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.add_tag') }}" aria-label="{{ t('tags.aria.add_tag') }}">➕</button>

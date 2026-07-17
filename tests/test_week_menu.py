@@ -652,13 +652,15 @@ async def test_week_menu_shows_tag_constraint_options(
     test_client: AsyncTestClient,
     carb_tags: tuple[TagCategory, Tag, Tag, Tag],
 ) -> None:
-    """The week menu page should list tag constraint controls."""
+    """The week menu page should show only active constraints and a manage link."""
     response = await test_client.get("/week-menu")
 
     assert response.status_code == 200
-    assert "Tag constraints" in response.text
-    assert "carb_type" in response.text
-    assert "Vary across week" in response.text
+    assert "Week menu randomizer options" in response.text
+    assert "Manage constraints" in response.text
+    assert "/week-menu/constraints/manage" in response.text
+    assert "Vary across week" not in response.text
+    assert "carb_type" not in response.text
 
 
 @pytest.mark.asyncio
@@ -699,7 +701,7 @@ async def test_save_tag_constraints_updates_existing_rows(
 def _constraint_row_html(page_html: str, category_name: str) -> str:
     """Return the HTML for one tag constraint row."""
     match = re.search(
-        rf'<div class="week-menu-constraint-row"[^>]*>.*?>{re.escape(category_name)}</label>.*?</div>\s*</div>\s*</div>',
+        rf'<div class="week-menu-constraint-row"[^>]*>.*?{re.escape(category_name)}.*?</label>.*?</div>\s*</div>\s*</div>',
         page_html,
         flags=re.DOTALL,
     )

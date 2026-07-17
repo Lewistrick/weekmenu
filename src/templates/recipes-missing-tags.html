@@ -30,7 +30,10 @@
             </header>
             <p class="section-hint">{{ t('recipes_missing_tags.missing_groups') }}
                 {% for group in row.missing_groups %}
-                <span class="status-pill">{{ group.name }}</span>
+                <span class="tag-group-chip tag-group-chip--small"
+                    style="--tag-bg: {{ group.background_color }}; --tag-fg: {{ group.foreground_color }};">
+                    {{ group.name }}
+                </span>
                 {% endfor %}
             </p>
         </article>

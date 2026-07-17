@@ -14,6 +14,14 @@ from src.models import Tag, TagCategory
 TagSchema = pydantic_model_creator(Tag, name="Tag")
 
 
+def _parse_color(value: object, *, fallback: str) -> str:
+    """Return a normalized hex color from form input."""
+    text = str(value or "").strip()
+    if len(text) == 7 and text.startswith("#"):
+        return text.lower()
+    return fallback
+
+
 class TagController(Controller):
     """Manage tag groups and individual tags."""
 
@@ -81,9 +89,24 @@ class TagController(Controller):
         owner_id = await self._current_user_id(request)
         form_data = await request.form()
         group_name = str(form_data.get("group_name", "")).strip()
+        background_color = _parse_color(
+            form_data.get("background_color"), fallback="#2563eb"
+        )
+        foreground_color = _parse_color(
+            form_data.get("foreground_color"), fallback="#ffffff"
+        )
         messages: list[str] = []
         if group_name:
-            _, created = await get_or_create_tag_category(owner_id, group_name)
+            group, created = await get_or_create_tag_category(
+                owner_id,
+                group_name,
+                background_color=background_color,
+                foreground_color=foreground_color,
+            )
+            if not created:
+                group.background_color = background_color
+                group.foreground_color = foreground_color
+                await group.save()
             if created:
                 messages.append(t("message.tags.group_added", name=group_name))
             else:
@@ -110,10 +133,21 @@ class TagController(Controller):
 
         form_data = await request.form()
         new_name = str(form_data.get("group_name", "")).strip()
+        background_color = _parse_color(
+            form_data.get("background_color"),
+            fallback=group.background_color,
+        )
+        foreground_color = _parse_color(
+            form_data.get("foreground_color"),
+            fallback=group.foreground_color,
+        )
         messages: list[str] = []
         if new_name:
             group.name = new_name
-            await group.save()
+        group.background_color = background_color
+        group.foreground_color = foreground_color
+        await group.save()
+        if new_name:
             messages.append(t("message.tags.group_renamed", name=new_name))
         else:
             messages.append(t("message.tags.group_name_required"))

@@ -222,6 +222,54 @@ class WeekMenuController(Controller):
             "grocery_list_has_items": await has_grocery_list_items(user_id),
         }
 
+    async def _constraints_page_context(
+        self,
+        request: Request,
+        *,
+        messages: list[str] | None = None,
+        warnings: list[str] | None = None,
+    ) -> dict:
+        """Build template context for week menu constraint management."""
+        user_id = await self._viewer_id(request)
+        tag_groups = await self._tag_groups(user_id)
+        category_ids = [group["category"].id for group in tag_groups]
+        constraints = await load_tag_constraints(user_id, category_ids)
+
+        constraint_rows: list[dict[str, object]] = []
+        for group in tag_groups:
+            category = group["category"]
+            constraint_rows.append(
+                {
+                    "category": category,
+                    "tags": group["tags"],
+                    "constraint": self._constraint_for_category(
+                        constraints, category.id
+                    ),
+                }
+            )
+
+        return {
+            "request": request,
+            "tag_constraint_rows": constraint_rows,
+            "messages": messages or [],
+            "warnings": warnings or [],
+        }
+
+    async def _render_constraints_manage_fragment(
+        self,
+        request: Request,
+        *,
+        messages: list[str] | None = None,
+        warnings: list[str] | None = None,
+    ) -> Template:
+        """Render only the constraints management root fragment (for HX swaps)."""
+        return Template(
+            template_name="partials/week-menu-constraints-manage.html",
+            context=await self._constraints_page_context(
+                request, messages=messages, warnings=warnings
+            ),
+        )
+
     @staticmethod
     async def _recipes_by_id(recipe_ids: list[int]) -> dict[int, Recipe]:
         """Load recipes referenced by the week menu."""
@@ -482,6 +530,17 @@ class WeekMenuController(Controller):
             context=await self._page_context(request),
         )
 
+    @get(
+        path="/constraints/manage",
+        summary="Manage week menu tag constraints",
+    )
+    async def constraints_manage_page(self, request: Request) -> Template:
+        """Show a dedicated page for editing week menu tag constraints."""
+        return Template(
+            template_name="week-menu-constraints-manage.html",
+            context=await self._constraints_page_context(request),
+        )
+
     @post(path="/constraints", summary="Save week menu tag constraints")
     async def save_constraints(self, request: Request) -> Template:
         """Persist tag constraint options and re-render the week menu."""
@@ -494,7 +553,7 @@ class WeekMenuController(Controller):
         logger.info("Parsed tag constraints")
         await save_tag_constraints(user_id, constraints)
         logger.info("Week menu tag constraints updated")
-        return await self._render_page(request)
+        return await self._render_constraints_manage_fragment(request)
 
     @post(path="/start-day", summary="Set week start day")
     async def set_start_day(self, request: Request) -> Template:

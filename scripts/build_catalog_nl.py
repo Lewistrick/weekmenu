@@ -289,7 +289,9 @@ AUTO_NL: dict[str, str] = {
     "week_menu.constraint.same_tag": "Overal dezelfde tag",
     "week_menu.constraint.vary": "Afwisselen over de week",
     "week_menu.constraints.hint": "Optionele regels voor randomiseren. Vastgezette dagen tellen mee voor beperkingen.",
-    "week_menu.constraints.title": "Tagbeperkingen",
+    "week_menu.constraints.manage_button": "Beheer beperkingen",
+    "week_menu.constraints.none_active": "Geen actieve beperkingen.",
+    "week_menu.constraints.title": "Weekmenu-randomiseringsopties",
     "week_menu.day.aria.clear": "Recept van dag wissen",
     "week_menu.day.aria.move_down": "Verplaats {day_label} omlaag",
     "week_menu.day.aria.move_down_short": "Omlaag",
@@ -311,6 +313,8 @@ AUTO_NL: dict[str, str] = {
     "weekly_groceries.lead": "Houd een lijst bij van boodschappen die je elke week koopt en voeg ze in één klik toe aan een boodschappenlijst.",
     "weekly_groceries.section.add": "Wekelijkse boodschap toevoegen",
     "weekly_groceries.section.yours": "Jouw wekelijkse boodschappen",
+    "app.title.manage_week_menu_constraints": "Beheer tagbeperkingen",
+    "nav.week_menu_constraints": "Weekmenu beperkingen",
 }
 
 

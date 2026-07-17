@@ -52,6 +52,14 @@ GROCERY_LIST_ITEM_COLUMNS = {
     "shop_id",
 }
 
+TAG_CATEGORY_COLUMNS = {
+    "id",
+    "name",
+    "owner_id",
+    "foreground_color",
+    "background_color",
+}
+
 
 def _table_columns(db_file: Path, table: str) -> set[str]:
     """Return the column names of a table in the given sqlite database."""
@@ -122,3 +130,15 @@ async def test_migrations_create_user_state_tables(tmp_path: Path) -> None:
     )
     assert "user_id" in _table_columns(db_file, "weekmenuslot")
     assert "user_id" in _table_columns(db_file, "weekmenutagconstraint")
+
+
+@pytest.mark.asyncio
+async def test_migrations_add_tag_category_colors(tmp_path: Path) -> None:
+    """All migrations together should add color columns to tag categories."""
+    db_file = tmp_path / "migrated.sqlite3"
+    sqlite3.connect(db_file).close()
+
+    for migration_path in MIGRATION_FILES:
+        await _apply_migration(db_file, migration_path)
+
+    assert TAG_CATEGORY_COLUMNS.issubset(_table_columns(db_file, "tagcategory"))
