@@ -10,12 +10,24 @@
 ### Docker (local)
 - Copy `.env.example` to `.env` and set a strong `SESSION_SECRET`.
 - Start the app: `docker compose up --build`
+  - If `docker` says permission denied on the socket, your shell has not picked up the `docker` group yet. Use a new login, or `newgrp docker`, or prefix with `sg docker -c '…'` (for example `sg docker -c 'docker compose up -d'`).
 - Open [http://localhost:8000](http://localhost:8000) (or the port set in `APP_PORT`).
-- The SQLite database is stored in a Docker volume (`sqlite-data`) mounted at `src/recipes.sqlite3`.
+- Compose publishes the app on **127.0.0.1** only (not the public IP), so other devices reach it via Tailscale Serve (below) or an SSH tunnel.
+- Create the SQLite file before the first start: `mkdir -p data && touch data/recipes.sqlite3`. Compose bind-mounts `./data/recipes.sqlite3` into the container (a Docker named volume at that path would become a directory and break SQLite).
+- To copy a database from another machine, stop the app first, then transfer a **consistent** file (do not `scp` a live `recipes.sqlite3` while the app is writing — that often produces `database disk image is malformed`). On the source machine: `sqlite3 path/to/recipes.sqlite3 ".backup '/tmp/recipes.sqlite3'"` then `scp` that backup to `data/recipes.sqlite3` on the server and start Compose again.
 - Aerich migrations run automatically when the app container starts.
 - PostgreSQL is included but disabled by default. To start it alongside the app (for future use):
   `docker compose --profile postgres up --build`
   The app still uses SQLite until `DATABASE_URL` is wired in `src/db_config.py`.
+
+### Access via Tailscale (private Tailnet)
+- Install Docker and Tailscale, start the app, and enable Serve in one go (needs sudo for package install):
+  `sudo bash scripts/setup_tailscale_serve.sh`
+- The first time, `tailscale up` prints a login URL. Open it in a browser and sign in with the **same Tailscale account** as your other devices. To skip the browser step, create an auth key in the Tailscale admin console and run:
+  `sudo TS_AUTHKEY=tskey-auth-... bash scripts/setup_tailscale_serve.sh`
+- After join + Serve, open the HTTPS MagicDNS URL from any device on your Tailnet (see `sudo tailscale serve status`), typically `https://weekmenu-vps.<your-tailnet>.ts.net`.
+- Do not open public firewall ports 80/443/8000 for the app; Tailscale traffic does not need them.
+- Funnel (public internet) and reverse-proxy-on-public-IP are out of scope for this setup.
 
 ### Accounts and login
 - The app requires an account. Visiting any page while logged out redirects to the login page.

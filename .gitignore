@@ -133,6 +133,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local Docker SQLite bind mount
+data/
+
 # Spyder project settings
 .spyderproject
 .spyproject

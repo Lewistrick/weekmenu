@@ -2,12 +2,14 @@ services:
   app:
     build: .
     ports:
-      - "${APP_PORT:-8000}:8000"
+      # Localhost only: reach the app via Tailscale Serve, not the public IP.
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
     env_file:
       - .env
     volumes:
-      # Persist the SQLite database across container restarts.
-      - sqlite-data:/app/src/recipes.sqlite3
+      # Bind a host *file* (not a named volume at this path). A named volume
+      # mounted on a missing file path becomes a directory and breaks SQLite.
+      - ./data/recipes.sqlite3:/app/src/recipes.sqlite3
     restart: unless-stopped
 
   # PostgreSQL is prepared for a future switch from SQLite. The app still uses
@@ -31,5 +33,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  sqlite-data:
   pg-data:
