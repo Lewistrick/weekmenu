@@ -4,7 +4,9 @@ import pytest
 from litestar.testing import AsyncTestClient
 
 from src.auth import hash_password, verify_password
+from src.invite_users import create_invited_user
 from src.models import Recipe, User
+from src.url_path import base_path, path_with_base
 from src.user_settings import load_user_settings
 from tests.conftest import DEFAULT_PASSWORD, DEFAULT_USERNAME, register_user
 
@@ -16,6 +18,21 @@ def test_password_hash_roundtrip() -> None:
     assert verify_password("hunter2!", hashed) is True
     assert verify_password("wrong", hashed) is False
     assert verify_password("anything", None) is False
+
+
+def test_base_path_defaults_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without APP_BASE_PATH, helpers should leave paths unchanged."""
+    monkeypatch.delenv("APP_BASE_PATH", raising=False)
+    assert base_path() == ""
+    assert path_with_base("/login") == "/login"
+
+
+def test_base_path_prefixes_routes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With APP_BASE_PATH set, helpers should prefix absolute app paths."""
+    monkeypatch.setenv("APP_BASE_PATH", "/weekmenu")
+    assert base_path() == "/weekmenu"
+    assert path_with_base("/login") == "/weekmenu/login"
+    assert path_with_base("/") == "/weekmenu/"
 
 
 @pytest.mark.asyncio
@@ -36,61 +53,37 @@ async def test_login_page_is_public(anon_client: AsyncTestClient) -> None:
 
     assert response.status_code == 200
     assert "Log in" in response.text
+    assert "/register" not in response.text
 
 
 @pytest.mark.asyncio
-async def test_register_creates_account_and_authenticates(
+async def test_register_routes_return_404(anon_client: AsyncTestClient) -> None:
+    """Public registration endpoints should be unavailable."""
+    get_response = await anon_client.get("/register")
+    post_response = await anon_client.post(
+        "/register",
+        data={
+            "username": "alice",
+            "password": "wonderland",
+            "password_confirm": "wonderland",
+            "email": "",
+        },
+    )
+
+    assert get_response.status_code == 404
+    assert post_response.status_code == 404
+    assert await User.get_by_username("alice") is None
+
+
+@pytest.mark.asyncio
+async def test_login_creates_authenticated_session(
     anon_client: AsyncTestClient,
 ) -> None:
-    """Registering should create a user and start an authenticated session."""
+    """Logging in should start an authenticated session."""
     await register_user(anon_client, username="alice", password="wonderland")
 
-    assert await User.get_by_username("alice") is not None
-    # The session cookie should now grant access to a protected page.
     protected = await anon_client.get("/week-menu", follow_redirects=False)
     assert protected.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_register_rejects_duplicate_username(
-    anon_client: AsyncTestClient,
-) -> None:
-    """Registering an existing username should fail with an error."""
-    await register_user(anon_client, username="bob", password="password1")
-
-    response = await anon_client.post(
-        "/register",
-        data={
-            "username": "bob",
-            "password": "password2",
-            "password_confirm": "password2",
-            "email": "",
-        },
-    )
-
-    assert response.status_code == 200
-    assert "already taken" in response.text
-    assert await User.filter(username="bob").count() == 1
-
-
-@pytest.mark.asyncio
-async def test_register_rejects_mismatched_passwords(
-    anon_client: AsyncTestClient,
-) -> None:
-    """Mismatched password confirmation should be rejected."""
-    response = await anon_client.post(
-        "/register",
-        data={
-            "username": "carol",
-            "password": "password1",
-            "password_confirm": "password2",
-            "email": "",
-        },
-    )
-
-    assert response.status_code == 200
-    assert "do not match" in response.text
-    assert await User.get_by_username("carol") is None
 
 
 @pytest.mark.asyncio
@@ -119,10 +112,10 @@ async def test_logout_clears_session(test_client: AsyncTestClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_first_account_claims_restored_recipes(
+async def test_first_invited_account_claims_restored_recipes(
     anon_client: AsyncTestClient,
 ) -> None:
-    """The first registered account should inherit restored placeholder-owned data."""
+    """The first invited account should inherit restored placeholder-owned data."""
     legacy_user = await User.create(username="_legacy", email="")
     await Recipe.create(
         name="Legacy dish",
@@ -135,30 +128,85 @@ async def test_first_account_claims_restored_recipes(
         enabled=True,
     )
 
-    await register_user(anon_client, username="firstowner", password="password1")
-
-    new_user = await User.get_by_username("firstowner")
-    assert new_user is not None
+    user, password = await create_invited_user(
+        username="firstowner", temporary_password="password1"
+    )
+    assert user is not None
     recipe = await Recipe.get(name="Legacy dish").select_related("owner")
-    assert recipe.owner.id == new_user.id
+    assert recipe.owner.id == user.id
     assert await User.get_by_username("_legacy") is None
+
+    await anon_client.post(
+        "/login", data={"username": "firstowner", "password": password}
+    )
+    # Must change password before using the app.
+    blocked = await anon_client.get("/week-menu", follow_redirects=False)
+    assert blocked.status_code == 302
+    assert blocked.headers["location"] == "/profile/password"
 
 
 @pytest.mark.asyncio
-async def test_register_with_placeholder_username_succeeds(
+async def test_invite_reclaims_placeholder_username(
     anon_client: AsyncTestClient,
 ) -> None:
-    """A restored placeholder username must not block registering that username."""
+    """A restored placeholder username must not block inviting that username."""
     await User.create(username="erick", email="")
 
-    await register_user(anon_client, username="erick", password="password1")
+    user, password = await create_invited_user(
+        username="erick", temporary_password="password1"
+    )
+    assert user.password_hash is not None
+    assert await User.filter(username="erick").count() == 1
 
+    await anon_client.post("/login", data={"username": "erick", "password": password})
+    await anon_client.post(
+        "/profile/password",
+        data={
+            "new_password": "password1",
+            "new_password_confirm": "password1",
+        },
+    )
     protected = await anon_client.get("/week-menu", follow_redirects=False)
     assert protected.status_code == 200
 
-    users = await User.filter(username="erick").all()
-    assert len(users) == 1
-    assert users[0].password_hash is not None
+
+@pytest.mark.asyncio
+async def test_forced_password_change_flow(anon_client: AsyncTestClient) -> None:
+    """Invited users must set a new password before accessing the app."""
+    await register_user(
+        anon_client,
+        username="invitee",
+        password="temp-pass-1",
+        must_change_password=True,
+    )
+
+    blocked = await anon_client.get("/", follow_redirects=False)
+    assert blocked.status_code == 302
+    assert blocked.headers["location"] == "/profile/password"
+
+    form = await anon_client.get("/profile/password")
+    assert form.status_code == 200
+    assert "Choose a new password" in form.text
+    assert "current_password" not in form.text
+
+    changed = await anon_client.post(
+        "/profile/password",
+        data={
+            "new_password": "permanent-pass",
+            "new_password_confirm": "permanent-pass",
+        },
+        follow_redirects=False,
+    )
+    assert changed.status_code == 302
+    assert changed.headers["location"] == "/"
+
+    user = await User.get_by_username("invitee")
+    assert user is not None
+    assert user.must_change_password is False
+    assert verify_password("permanent-pass", user.password_hash) is True
+
+    home = await anon_client.get("/", follow_redirects=False)
+    assert home.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -195,7 +243,7 @@ async def test_delete_account(test_client: AsyncTestClient) -> None:
     response = await test_client.post("/profile/delete", follow_redirects=False)
 
     assert response.status_code == 302
-    assert response.headers["location"] == "/register"
+    assert response.headers["location"] == "/login"
     assert await User.get_by_username(DEFAULT_USERNAME) is None
 
 

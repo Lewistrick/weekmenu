@@ -2319,6 +2319,14 @@ div.recipe-detail {
     margin: 0 0 0.75rem;
 }
 
+.admin-temp-password {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.15rem 0.4rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    user-select: all;
+}
+
 .nav-logout-form {
     margin: 0;
 }

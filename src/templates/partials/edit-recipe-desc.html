@@ -1,4 +1,4 @@
-<form hx-post="/recipes/edit-desc/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="inline-form">
+<form hx-post="{{ base_path }}/recipes/edit-desc/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML" class="inline-form">
     <div class="form-group">
         <textarea name="new_desc" class="form-control" autofocus>{{ recipe.description }}</textarea>
         <button type="submit" class="btn btn-primary btn-sm">{{ t('recipe.edit.action.save_description') }}</button>

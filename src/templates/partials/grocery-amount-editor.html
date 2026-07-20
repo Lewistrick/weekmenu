@@ -1,6 +1,6 @@
 <form class="grocery-amount-form" method="post"
-    action="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}"
-    hx-post="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}"
+    action="{{ base_path }}/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}"
+    hx-post="{{ base_path }}/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}"
     hx-target="#grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}"
     hx-swap="innerHTML">
     <input type="hidden" name="old_unit" value="{{ item.unit }}">
@@ -21,7 +21,7 @@
     </select>
     <button type="submit" class="btn btn-sm btn-primary" title="{{ t('grocery.aria.save_amount') }}" aria-label="{{ t('grocery.aria.save_amount') }}">✓</button>
     <button type="button" class="btn btn-sm icon-btn"
-        hx-get="/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}/display"
+        hx-get="{{ base_path }}/week-menu/grocery-list/item/{{ item.ingredient_id }}/{{ item.unit }}/display"
         hx-target="#grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}"
         hx-swap="innerHTML"
         title="{{ t('ingredient.aria.cancel_edit') }}" aria-label="{{ t('ingredient.aria.cancel_edit') }}">

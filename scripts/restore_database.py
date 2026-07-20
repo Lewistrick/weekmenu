@@ -228,8 +228,8 @@ def main() -> None:
     for table, count in counts.items():
         print(f"  {table}: {count}")
     print(
-        "Register a new account at /register to claim the restored recipes "
-        f"(currently owned by the placeholder user '{LEGACY_USERNAME}')."
+        "Have an admin create a user (or invite the placeholder username) to claim "
+        f"the restored recipes (currently owned by '{LEGACY_USERNAME}')."
     )
 
 

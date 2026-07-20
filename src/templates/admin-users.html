@@ -8,5 +8,82 @@
         <h1 class="page-title-main">{{ t('app.title.admin_users') }}</h1>
         <p class="page-lead">{{ t('admin.users.lead') }}</p>
     </header>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="flash-banner success-message">
+            <span class="flash-banner-text">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if warnings %}
+    <div class="messages">
+        {% for warning in warnings %}
+        <div class="flash-banner warning-message">
+            <span class="flash-banner-text">{{ warning }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if temporary_password %}
+    <section class="recipe-section">
+        <h2 class="section-title">{{ t('admin.users.temp_password_title') }}</h2>
+        <p class="page-lead">{{ t('admin.users.temp_password_lead', username=created_username) }}</p>
+        <p class="profile-detail">
+            <strong>{{ t('admin.users.temp_password_label') }}</strong>
+            <code class="admin-temp-password">{{ temporary_password }}</code>
+        </p>
+        <p class="page-lead">{{ t('admin.users.temp_password_warning') }}</p>
+    </section>
+    {% endif %}
+
+    <section class="recipe-section">
+        <h2 class="section-title">{{ t('admin.users.create_title') }}</h2>
+        <form class="profile-form" method="post" action="{{ base_path }}/admin/users">
+            <label class="field-label" for="username">{{ t('auth.field.username') }}</label>
+            <input class="form-control" id="username" name="username" type="text"
+                value="{{ form_username | default('') }}" required autofocus>
+
+            <label class="field-label" for="email">{{ t('auth.field.email') }}
+                <span class="field-optional">{{ t('auth.field.optional') }}</span>
+            </label>
+            <input class="form-control" id="email" name="email" type="email"
+                value="{{ form_email | default('') }}">
+
+            <button class="btn btn-primary" type="submit">{{ t('admin.users.create_action') }}</button>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <h2 class="section-title">{{ t('admin.users.list_title') }}</h2>
+        {% if users %}
+        <table class="grocery-day-table">
+            <thead>
+                <tr>
+                    <th>{{ t('auth.field.username') }}</th>
+                    <th>{{ t('auth.field.email') }}</th>
+                    <th>{{ t('admin.users.column.admin') }}</th>
+                    <th>{{ t('admin.users.column.must_change') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email or '—' }}</td>
+                    <td>{% if user.is_admin %}{{ t('common.yes') }}{% else %}{{ t('common.no') }}{% endif %}</td>
+                    <td>{% if user.must_change_password %}{{ t('common.yes') }}{% else %}{{ t('common.no') }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="page-lead">{{ t('admin.users.empty') }}</p>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}

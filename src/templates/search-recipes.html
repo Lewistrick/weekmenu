@@ -9,7 +9,7 @@
         <p class="page-lead">{{ t('search.lead') }}</p>
     </header>
 
-    <form class="search-panel" hx-get="/recipes/search-recipe" hx-target="#search-results" hx-swap="innerHTML"
+    <form class="search-panel" hx-get="{{ base_path }}/recipes/search-recipe" hx-target="#search-results" hx-swap="innerHTML"
         hx-trigger="keyup changed delay:200ms from:#recipe-search-input, change from:select, change from:#include-public-recipes">
         <label class="field-label" for="recipe-search-input">{{ t('common.search') }}</label>
         <input id="recipe-search-input" class="form-control" type="search" name="search"

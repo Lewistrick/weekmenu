@@ -1,5 +1,5 @@
 <h2 class="recipe-title-display">{{ recipe.name }}</h2>
-<button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
+<button hx-get="{{ base_path }}/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
     class="btn btn-ghost btn-sm" type="button">
     {{ t('recipe.edit.action.edit_title_plain') }}
 </button>

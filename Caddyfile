@@ -1,0 +1,6 @@
+:80 {
+	redir / /weekmenu/
+	handle /weekmenu* {
+		reverse_proxy app:8000
+	}
+}

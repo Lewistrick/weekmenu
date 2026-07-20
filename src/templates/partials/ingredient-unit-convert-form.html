@@ -8,7 +8,7 @@
     {% endif %}
 
     <form class="inline-form ingredient-unit-convert-form"
-        hx-post="/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}"
+        hx-post="{{ base_path }}/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}"
         hx-target="#{{ pair.row_id }}" hx-swap="outerHTML">
         <div class="ingredient-unit-pair-name">{{ pair.ingredient_name }}</div>
 
@@ -44,7 +44,7 @@
         <div class="ingredient-unit-form-actions">
             <button type="submit" class="btn btn-primary btn-sm">{{ t('ingredient_units.form.submit') }}</button>
             <button type="button" class="btn btn-secondary btn-sm"
-                hx-get="/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}"
+                hx-get="{{ base_path }}/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}"
                 hx-target="#{{ pair.row_id }}" hx-swap="outerHTML">
                 {{ t('ingredient_units.form.cancel') }}
             </button>

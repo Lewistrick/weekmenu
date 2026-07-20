@@ -57,6 +57,7 @@ from src.plan_store import (
     update_grocery_line,
 )
 from src.shops import load_ingredient_shop_ids, load_shops, set_ingredient_shop
+from src.url_path import path_with_base
 from src.user_settings import load_user_settings
 from src.week_menu import (
     GroceryItem,
@@ -449,7 +450,10 @@ class WeekMenuController(Controller):
             )
         if action_message:
             set_grocery_action_flash(request, action_message)
-        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
+        return Redirect(
+            path=path_with_base("/week-menu/grocery-list"),
+            status_code=HTTP_303_SEE_OTHER,
+        )
 
     async def _render_grocery_panel(
         self, request: Request, *, action_message: str | None = None
@@ -689,7 +693,10 @@ class WeekMenuController(Controller):
             set_grocery_suppress_preserve(request)
         else:
             raise NotFoundException()
-        return Redirect(path="/week-menu/grocery-list", status_code=HTTP_303_SEE_OTHER)
+        return Redirect(
+            path=path_with_base("/week-menu/grocery-list"),
+            status_code=HTTP_303_SEE_OTHER,
+        )
 
     @post(path="/grocery-list/add", summary="Add a custom grocery to the list")
     async def add_custom_grocery(self, request: Request) -> Template | Redirect:

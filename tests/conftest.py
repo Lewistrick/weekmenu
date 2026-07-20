@@ -1,18 +1,22 @@
 """Shared pytest fixtures."""
 
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 import pytest
 from litestar.testing import AsyncTestClient
 from tortoise import Tortoise
 from tortoise.exceptions import ConfigurationError
-from pathlib import Path
 
 import src.db_config as db_config_module
-from src.app import app
-from src.database import close_database, init_database
-from src.models import User
 import src.user_settings as user_settings_module
+from src.app import app
+from src.auth import hash_password
+from src.catalog import seed_default_units
+from src.database import close_database, init_database
+from src.invite_users import create_invited_user
+from src.models import User
+from src.plan_store import ensure_user_preference
 
 TEST_DB_CONFIG = {
     "connections": {"default": "sqlite://:memory:"},
@@ -69,22 +73,57 @@ DEFAULT_PASSWORD = "secret123"
 DEFAULT_EMAIL = "test@example.com"
 
 
+async def create_user(
+    *,
+    username: str = DEFAULT_USERNAME,
+    password: str = DEFAULT_PASSWORD,
+    email: str = DEFAULT_EMAIL,
+    must_change_password: bool = False,
+) -> User:
+    """Create a user with seeded units and preferences (no HTTP registration)."""
+    if must_change_password:
+        user, _password = await create_invited_user(
+            username=username,
+            email=email,
+            temporary_password=password,
+        )
+        return user
+
+    user = await User.create(
+        username=username,
+        email=email,
+        password_hash=hash_password(password),
+        must_change_password=False,
+    )
+    await seed_default_units(user)
+    await ensure_user_preference(user.id)
+    return user
+
+
 async def register_user(
     client: AsyncTestClient,
     username: str = DEFAULT_USERNAME,
     password: str = DEFAULT_PASSWORD,
     email: str = DEFAULT_EMAIL,
-) -> None:
-    """Register (and thereby log in) a user through the client."""
-    await client.post(
-        "/register",
-        data={
-            "username": username,
-            "password": password,
-            "password_confirm": password,
-            "email": email,
-        },
+    *,
+    must_change_password: bool = False,
+) -> User:
+    """Create a user and log in through the client.
+
+    Named ``register_user`` for compatibility with existing tests; public
+    registration is disabled, so this uses invite/create helpers instead.
+    """
+    user = await create_user(
+        username=username,
+        password=password,
+        email=email,
+        must_change_password=must_change_password,
     )
+    await client.post(
+        "/login",
+        data={"username": username, "password": password},
+    )
+    return user
 
 
 @pytest.fixture

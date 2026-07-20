@@ -2,7 +2,7 @@
     <div class="flash-banner single-message ingredient-unit-conversion-message">
         <span class="flash-banner-text">
             {{ t('message.recipes_missing_tags.tags_saved', group_name=group_name) }}
-            <a href="/recipes/view/{{ recipe.id }}" class="recipe-id-link">#{{ recipe.id }} {{ recipe.name }}</a>
+            <a href="{{ base_path }}/recipes/view/{{ recipe.id }}" class="recipe-id-link">#{{ recipe.id }} {{ recipe.name }}</a>
         </span>
     </div>
 </div>

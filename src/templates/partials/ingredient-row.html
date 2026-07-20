@@ -4,12 +4,12 @@
     </span>
     <div class="ingredient-actions">
         <button id="edit-btn-ingredient-{{ ingredient.id }}" class="btn btn-sm icon-btn icon-action-btn edit-ingredient-button"
-            hx-get="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}/edit"
+            hx-get="{{ base_path }}/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}/edit"
             hx-target="#edit-ingredient-{{ ingredient.id }}" hx-swap="innerHTML" type="button" title="{{ t('ingredient.aria.edit') }}" aria-label="{{ t('ingredient.aria.edit') }}">
             ✏️
         </button>
         <button class="btn btn-sm icon-btn icon-action-btn delete-ingredient-button"
-            hx-delete="/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}"
+            hx-delete="{{ base_path }}/recipes/{{ recipe_id }}/ingredients/{{ ingredient.id }}"
             hx-target="#edit-ingredient-{{ ingredient.id }}" hx-swap="delete" type="button" title="{{ t('ingredient.aria.remove') }}" aria-label="{{ t('ingredient.aria.remove') }}">
             🗑️
         </button>

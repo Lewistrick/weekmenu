@@ -20,7 +20,7 @@
         <div class="section-heading">
             <h2 class="section-title">{{ t('units.section.add') }}</h2>
         </div>
-        <form method="post" action="/units" class="inline-form">
+        <form method="post" action="{{ base_path }}/units" class="inline-form">
             <div class="form-group">
                 <div class="ingredient-input catalog-unit-input">
                     <input type="text" name="abbrev" class="form-control" placeholder="{{ t('units.placeholder.abbrev') }}" required
@@ -43,7 +43,7 @@
         <div class="catalog-unit-list">
             {% for row in units %}
             <div class="catalog-unit-row{% if row.incomplete %} catalog-unit-row--incomplete{% endif %}">
-                <form method="post" action="/units/{{ row.id }}" class="inline-form catalog-unit-edit-form">
+                <form method="post" action="{{ base_path }}/units/{{ row.id }}" class="inline-form catalog-unit-edit-form">
                     <div class="ingredient-input catalog-unit-input">
                         <input type="text" name="abbrev" class="form-control" value="{{ row.abbrev }}" required
                             aria-label="{{ t('units.aria.abbreviation_for', abbrev=row.abbrev) }}" />
@@ -52,7 +52,7 @@
                         <input type="text" name="plural" class="form-control" value="{{ row.plural }}"
                             placeholder="{{ t('units.placeholder.plural') }}" aria-label="{{ t('units.aria.plural_for', abbrev=row.abbrev) }}" />
                         <button type="submit" class="btn btn-sm icon-btn" title="{{ t('common.save') }}" aria-label="{{ t('common.save') }}">💾</button>
-                        <button type="button" class="btn btn-sm icon-btn" hx-delete="/units/{{ row.id }}"
+                        <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/units/{{ row.id }}"
                             hx-target="body" hx-swap="innerHTML" title="{{ t('common.delete') }}" aria-label="{{ t('common.delete') }}">🗑️</button>
                     </div>
                 </form>

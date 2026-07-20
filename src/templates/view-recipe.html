@@ -16,17 +16,17 @@
             <h1 class="recipe-title-main">{{ t('recipe.view.title_with_id', recipe_id=recipe.id, recipe_name=recipe.name) }}</h1>
             <div class="recipe-title-actions">
                 {% if can_edit %}
-                <a href="/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">{{ t('recipe.view.action.edit') }}</a>
+                <a href="{{ base_path }}/recipes/edit/{{ recipe.id }}" class="btn btn-secondary">{{ t('recipe.view.action.edit') }}</a>
                 {% elif can_import %}
                     {% if already_imported %}
                     <span class="recipe-import-note">{{ t('recipe.view.already_imported') }}</span>
                     {% else %}
-                    <form method="post" action="/recipes/{{ recipe.id }}/import">
+                    <form method="post" action="{{ base_path }}/recipes/{{ recipe.id }}/import">
                         <button type="submit" class="btn btn-secondary">{{ t('recipe.view.action.import') }}</button>
                     </form>
                     {% endif %}
                 {% endif %}
-                <form method="post" action="/recipes/{{ recipe.id }}/add-to-week-menu">
+                <form method="post" action="{{ base_path }}/recipes/{{ recipe.id }}/add-to-week-menu">
                     <input type="hidden" name="source" value="view">
                     <button type="submit" class="btn btn-primary">{{ t('recipe.view.action.add_to_week_menu') }}</button>
                 </form>

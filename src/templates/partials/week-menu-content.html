@@ -18,7 +18,7 @@
                 id="week-start-day"
                 name="start_day"
                 class="form-control"
-                hx-post="/week-menu/start-day"
+                hx-post="{{ base_path }}/week-menu/start-day"
                 hx-trigger="change"
                 hx-target="#week-menu-root"
                 hx-swap="outerHTML"
@@ -33,7 +33,7 @@
                 <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on" {% if include_public %}checked{% endif %}>
                 {{ t('common.include_public_recipes') }}
             </label>
-            <form class="week-menu-randomize-form" hx-post="/week-menu/randomize" hx-target="#week-menu-root"
+            <form class="week-menu-randomize-form" hx-post="{{ base_path }}/week-menu/randomize" hx-target="#week-menu-root"
                 hx-swap="outerHTML" hx-include="#week-menu-search-include-public">
                 <button type="submit" class="btn btn-primary">{{ t('week_menu.action.randomize') }}</button>
             </form>
@@ -52,7 +52,7 @@
         <div class="week-menu-constraints-summary-header">
             <h2 class="section-title">{{ t('week_menu.constraints.title') }}</h2>
             <a
-                href="/week-menu/constraints/manage"
+                href="{{ base_path }}/week-menu/constraints/manage"
                 class="btn btn-secondary btn-sm"
                 title="{{ t('week_menu.constraints.manage_button') }}"
                 aria-label="{{ t('week_menu.constraints.manage_button') }}"
@@ -135,13 +135,13 @@
         const flashId = "week-menu-copy-message";
         container.innerHTML = `
             <div id="${flashId}" class="flash-banner single-message"
-                hx-get="/elements/empty/div/${flashId}"
+                hx-get="{{ base_path }}/elements/empty/div/${flashId}"
                 hx-trigger="load delay:5s"
                 hx-target="this"
                 hx-swap="delete">
                 <span class="flash-banner-text"></span>
                 <button type="button" class="btn btn-sm icon-btn icon-action-btn"
-                    hx-get="/elements/empty/div/${flashId}"
+                    hx-get="{{ base_path }}/elements/empty/div/${flashId}"
                     hx-target="#${flashId}"
                     hx-swap="delete"
                     title="{{ t('common.dismiss') }}"
@@ -158,7 +158,7 @@
     }
 
     async function copyWeekMenuExport(button) {
-        const response = await fetch("/week-menu/export", { credentials: "same-origin" });
+        const response = await fetch("{{ base_path }}/week-menu/export", { credentials: "same-origin" });
         if (!response.ok) {
             return;
         }

@@ -3,7 +3,7 @@
 <ul class="search-result-list">
     {% for recipe in recipes %}
     <li>
-        <a href="/recipes/view/{{ recipe.id }}" class="search-result-item">
+        <a href="{{ base_path }}/recipes/view/{{ recipe.id }}" class="search-result-item">
             <span class="search-result-id">#{{ recipe.id }}</span>
             <span class="search-result-name">{{ recipe.name }}</span>
         </a>

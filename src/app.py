@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import cast
 
-from litestar import Litestar, Request, get
+from litestar import Litestar, Request, Router, get
 from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.logging import LoggingConfig
 from litestar.middleware.session.client_side import CookieBackendConfig
@@ -41,6 +41,7 @@ from src.database import (
 )
 from src.i18n.service import load_i18n_context, seed_dutch_texts, seed_english_texts, t
 from src.template_utils import render_markdown
+from src.url_path import BasePathProxy, base_path, path_with_base, strip_base_path
 
 DEBUG = os.environ.get("DEBUG", "true").lower() in ("1", "true", "yes")
 SESSION_SECRET = os.environ.get(
@@ -50,12 +51,30 @@ SESSION_SECRET = os.environ.get(
 session_config = CookieBackendConfig(secret=SESSION_SECRET)
 FAVICON_PATH = Path("src/static/favicon.svg")
 PUBLIC_PATH_PREFIXES = ("/login", "/register", "/static", "/schema", "/favicon.ico")
+PASSWORD_CHANGE_ALLOWLIST = (
+    "/login",
+    "/logout",
+    "/profile/password",
+    "/static",
+    "/favicon.ico",
+)
 
 
 def _is_public_path(path: str) -> bool:
     """Return whether a path can be accessed without authentication."""
+    app_path = strip_base_path(path)
     return any(
-        path == prefix or path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES
+        app_path == prefix or app_path.startswith(prefix)
+        for prefix in PUBLIC_PATH_PREFIXES
+    )
+
+
+def _is_password_change_allowed(path: str) -> bool:
+    """Return whether a must-change-password user may access this path."""
+    app_path = strip_base_path(path)
+    return any(
+        app_path == prefix or app_path.startswith(prefix)
+        for prefix in PASSWORD_CHANGE_ALLOWLIST
     )
 
 
@@ -69,19 +88,28 @@ async def require_authentication(request: Request) -> Response | None:
         A redirect response when authentication is required and missing,
         otherwise ``None`` to continue normal handling.
     """
-
     if _is_public_path(request.url.path):
         return None
 
-    if await get_current_user(request) is not None:
-        return None
+    user = await get_current_user(request)
+    if user is None:
+        request.session.pop(SESSION_USER_KEY, None)
+        login_path = path_with_base("/login")
+        if request.headers.get("HX-Request"):
+            return Response(
+                content=b"", status_code=200, headers={"HX-Redirect": login_path}
+            )
+        return Redirect(path=login_path)
 
-    request.session.pop(SESSION_USER_KEY, None)
+    if user.must_change_password and not _is_password_change_allowed(request.url.path):
+        change_path = path_with_base("/profile/password")
+        if request.headers.get("HX-Request"):
+            return Response(
+                content=b"", status_code=200, headers={"HX-Redirect": change_path}
+            )
+        return Redirect(path=change_path)
 
-    if request.headers.get("HX-Request"):
-        return Response(content=b"", status_code=200, headers={"HX-Redirect": "/login"})
-
-    return Redirect(path="/login")
+    return None
 
 
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
@@ -90,6 +118,12 @@ def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     template_engine.engine.globals["t"] = t  # ty: ignore[invalid-assignment]
     template_engine.engine.globals["current_user"] = (  # ty: ignore[invalid-assignment]
         template_current_user
+    )
+    template_engine.engine.globals["base_path"] = (  # ty: ignore[invalid-assignment]
+        BasePathProxy()
+    )
+    template_engine.engine.globals["url"] = (  # ty: ignore[invalid-assignment]
+        path_with_base
     )
 
 
@@ -150,24 +184,34 @@ static_files_router = create_static_files_router(
     path="/static", directories=["src/static"]
 )
 
+_app_route_handlers: list = [
+    index,
+    favicon,
+    AuthController,
+    RecipeController,
+    IngredientController,
+    IngredientUnitMergeController,
+    IngredientMergeController,
+    TagController,
+    UnitController,
+    ShopController,
+    WeekMenuController,
+    WeeklyGroceryController,
+    AdminController,
+    ElementController,
+    static_files_router,
+]
+
+_configured_base = base_path()
+if _configured_base:
+    _route_handlers: list = [
+        Router(path=_configured_base, route_handlers=_app_route_handlers)
+    ]
+else:
+    _route_handlers = _app_route_handlers
+
 app = Litestar(
-    route_handlers=[
-        index,
-        favicon,
-        AuthController,
-        RecipeController,
-        IngredientController,
-        IngredientUnitMergeController,
-        IngredientMergeController,
-        TagController,
-        UnitController,
-        ShopController,
-        WeekMenuController,
-        WeeklyGroceryController,
-        AdminController,
-        ElementController,
-        static_files_router,
-    ],
+    route_handlers=_route_handlers,
     middleware=[session_config.middleware],
     before_request=before_request,
     on_startup=[init_db],

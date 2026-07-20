@@ -1,7 +1,7 @@
 <div id="missing-tags-slot-{{ recipe.id }}-{{ category.id }}" class="missing-tags-group-slot missing-tags-group-editor">
     <form
         class="missing-tags-group-editor-form"
-        hx-post="/recipes/missing-tags/{{ recipe.id }}/groups/{{ category.id }}"
+        hx-post="{{ base_path }}/recipes/missing-tags/{{ recipe.id }}/groups/{{ category.id }}"
         hx-target="#recipes-missing-tags-row-{{ recipe.id }}"
         hx-swap="outerHTML"
     >
@@ -27,7 +27,7 @@
             <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                hx-get="/recipes/missing-tags/{{ recipe.id }}/row"
+                hx-get="{{ base_path }}/recipes/missing-tags/{{ recipe.id }}/row"
                 hx-target="#recipes-missing-tags-row-{{ recipe.id }}"
                 hx-swap="outerHTML"
                 title="{{ t('recipes_missing_tags.aria.cancel') }}"

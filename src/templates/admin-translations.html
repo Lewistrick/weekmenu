@@ -12,7 +12,7 @@
     <form
         id="translations-filters"
         class="search-panel"
-        hx-get="/admin/translations/list"
+        hx-get="{{ base_path }}/admin/translations/list"
         hx-target="#translations-list"
         hx-swap="innerHTML"
         hx-trigger="change, keyup changed delay:200ms from:#translations-search"

@@ -26,6 +26,7 @@ from src.models import (
     Unit,
 )
 from src.plan_store import load_start_day, load_week_menu, save_week_menu
+from src.url_path import path_with_base
 from src.week_menu import assign_recipe_to_unpinned_day
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
@@ -436,7 +437,7 @@ class RecipeController(Controller):
         await copy_recipe_catalog(source, user_id, copy)
 
         logger.info(f"User {user_id} imported recipe {recipe_id} as {copy.id}")
-        return Redirect(path=f"/recipes/view/{copy.id}")
+        return Redirect(path=path_with_base(f"/recipes/view/{copy.id}"))
 
     @get(path="/missing-tags", summary="Find recipes missing tag groups")
     async def recipes_missing_tags_page(self, request: Request) -> Template:
@@ -1221,4 +1222,4 @@ class RecipeController(Controller):
             )
             logger.info(f"Added ingredient to recipe: {recipe_ing}")
 
-        return Redirect(path=f"/recipes/view/{recipe.id}")
+        return Redirect(path=path_with_base(f"/recipes/view/{recipe.id}"))

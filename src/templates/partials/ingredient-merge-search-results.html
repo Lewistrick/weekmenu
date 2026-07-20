@@ -2,7 +2,7 @@
 <ul class="search-result-list">
     {% for ingredient in ingredients %}
     <li>
-        <button type="button" class="search-result-item" hx-post="/ingredients/merge/select"
+        <button type="button" class="search-result-item" hx-post="{{ base_path }}/ingredients/merge/select"
             hx-vals='{"field": "{{ field }}", "ingredient_id": {{ ingredient.id }}}' hx-target="body" hx-swap="none">
             <span class="search-result-name">{{ ingredient.name }}</span>
             <span class="search-result-id">{{ t('ingredient_merge.recipe_count', count=ingredient.recipe_count) }}</span>
