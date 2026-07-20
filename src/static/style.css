@@ -1361,34 +1361,14 @@ div.recipe-detail {
     margin: 0;
 }
 
-.catalog-unit-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-}
-
-.catalog-unit-row {
-    padding: 0.35rem 0.45rem;
-    border: 1px solid #555;
-    border-radius: 8px;
-    background-color: #3d3d3d;
-}
-
-.catalog-unit-row--incomplete {
-    border-color: #d4a017;
-    background-color: rgba(255, 193, 7, 0.1);
-}
-
-.catalog-unit-input .form-control {
+.ingredient-input > .form-control[name="abbrev"] {
     min-width: 0;
-}
-
-.catalog-unit-input .form-control[name="abbrev"] {
     flex: 0 1 4.5rem;
 }
 
-.catalog-unit-input .form-control[name="single"],
-.catalog-unit-input .form-control[name="plural"] {
+.ingredient-input > .form-control[name="single"],
+.ingredient-input > .form-control[name="plural"] {
+    min-width: 0;
     flex: 1 1 7rem;
 }
 
@@ -1403,6 +1383,34 @@ div.recipe-detail {
     border: 1px solid #555;
     border-radius: 8px;
     background-color: #3d3d3d;
+}
+
+.ingredient-unit-pair-row.is-incomplete {
+    border-color: #d4a017;
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+details.ingredient-unit-pair-row > summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+details.ingredient-unit-pair-row > summary::-webkit-details-marker {
+    display: none;
+}
+
+details.ingredient-unit-pair-row > summary .section-hint {
+    margin-left: 0.35rem;
+}
+
+details.ingredient-unit-pair-row > :not(summary) {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.week-menu-recipe-link + .section-hint {
+    margin-left: 0.35rem;
 }
 
 .ingredient-unit-pair-summary {

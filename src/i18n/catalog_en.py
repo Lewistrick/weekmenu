@@ -345,7 +345,9 @@ TEXTS: dict[str, str] = {
     "units.aria.abbreviation_for": "Abbreviation for {abbrev}",
     "units.aria.singular_for": "Singular label for {abbrev}",
     "units.aria.plural_for": "Plural label for {abbrev}",
+    "units.section.recipes_using_unit": "Recipes using this unit",
     "units.empty": "No units yet.",
+    "units.empty.no_recipes_using_unit": "No recipes currently use this unit.",
     # Ingredient unit merge
     "ingredient_units.lead": "Find ingredients that appear with more than one unit in your recipes or weekly groceries. Convert them to a single unit with a conversion factor.",
     "ingredient_units.section.pairs": "Ingredients with multiple units",

@@ -341,7 +341,9 @@ TEXTS: dict[str, str] = {
     "units.aria.abbreviation_for": "Afkorting voor {abbrev}",
     "units.aria.singular_for": "Enkelvoud voor {abbrev}",
     "units.aria.plural_for": "Meervoud voor {abbrev}",
+    "units.section.recipes_using_unit": "Recepten die deze eenheid gebruiken",
     "units.empty": "Nog geen eenheden.",
+    "units.empty.no_recipes_using_unit": "Nog geen recepten gebruiken deze eenheid.",
     # ingredient_units
     "ingredient_units.lead": "Vind ingrediënten die in meer dan één eenheid voorkomen in recepten of wekelijkse boodschappen. Zet ze om naar één eenheid met een conversiefactor.",
     "ingredient_units.section.pairs": "Ingrediënten met meerdere eenheden",

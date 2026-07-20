@@ -22,7 +22,7 @@
         </div>
         <form method="post" action="{{ base_path }}/units" class="inline-form">
             <div class="form-group">
-                <div class="ingredient-input catalog-unit-input">
+                <div class="ingredient-input">
                     <input type="text" name="abbrev" class="form-control" placeholder="{{ t('units.placeholder.abbrev') }}" required
                         aria-label="{{ t('units.aria.abbreviation') }}" />
                     <input type="text" name="single" class="form-control" placeholder="{{ t('units.placeholder.singular') }}"
@@ -40,23 +40,58 @@
             <h2 class="section-title">{{ t('units.section.yours') }}</h2>
         </div>
         {% if units %}
-        <div class="catalog-unit-list">
+        <div class="ingredient-unit-pair-list">
             {% for row in units %}
-            <div class="catalog-unit-row{% if row.incomplete %} catalog-unit-row--incomplete{% endif %}">
-                <form method="post" action="{{ base_path }}/units/{{ row.id }}" class="inline-form catalog-unit-edit-form">
-                    <div class="ingredient-input catalog-unit-input">
-                        <input type="text" name="abbrev" class="form-control" value="{{ row.abbrev }}" required
-                            aria-label="{{ t('units.aria.abbreviation_for', abbrev=row.abbrev) }}" />
-                        <input type="text" name="single" class="form-control" value="{{ row.single }}"
-                            placeholder="{{ t('units.placeholder.singular') }}" aria-label="{{ t('units.aria.singular_for', abbrev=row.abbrev) }}" />
-                        <input type="text" name="plural" class="form-control" value="{{ row.plural }}"
-                            placeholder="{{ t('units.placeholder.plural') }}" aria-label="{{ t('units.aria.plural_for', abbrev=row.abbrev) }}" />
-                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('common.save') }}" aria-label="{{ t('common.save') }}">💾</button>
-                        <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/units/{{ row.id }}"
-                            hx-target="body" hx-swap="innerHTML" title="{{ t('common.delete') }}" aria-label="{{ t('common.delete') }}">🗑️</button>
-                    </div>
-                </form>
-            </div>
+            <details class="ingredient-unit-pair-row{% if row.incomplete %} is-incomplete{% endif %}">
+                <summary>
+                    <strong>{{ row.abbrev }}</strong>
+                    {% if row.single or row.plural %}
+                    <span class="section-hint">
+                        {% if row.single %}{{ row.single }}{% endif %}{% if row.single and row.plural %} / {% endif %}{% if row.plural %}{{ row.plural }}{% endif %}
+                    </span>
+                    {% endif %}
+                </summary>
+                <div>
+                    <form method="post" action="{{ base_path }}/units/{{ row.id }}" class="inline-form">
+                        <div class="ingredient-input">
+                            <input type="text" name="abbrev" class="form-control" value="{{ row.abbrev }}" required
+                                aria-label="{{ t('units.aria.abbreviation_for', abbrev=row.abbrev) }}" />
+                            <input type="text" name="single" class="form-control" value="{{ row.single }}"
+                                placeholder="{{ t('units.placeholder.singular') }}" aria-label="{{ t('units.aria.singular_for', abbrev=row.abbrev) }}" />
+                            <input type="text" name="plural" class="form-control" value="{{ row.plural }}"
+                                placeholder="{{ t('units.placeholder.plural') }}" aria-label="{{ t('units.aria.plural_for', abbrev=row.abbrev) }}" />
+                            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('common.save') }}" aria-label="{{ t('common.save') }}">💾</button>
+                            <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/units/{{ row.id }}"
+                                hx-target="body" hx-swap="innerHTML" title="{{ t('common.delete') }}" aria-label="{{ t('common.delete') }}">🗑️</button>
+                        </div>
+                    </form>
+                    <h3 class="section-title">{{ t('units.section.recipes_using_unit') }}</h3>
+                    {% if row.recipe_usages or row.weekly_grocery_names or row.grocery_list_names %}
+                    <ul class="recipe-ingredient-list">
+                        {% for usage in row.recipe_usages %}
+                        <li>
+                            <a href="{{ base_path }}/recipes/view/{{ usage.recipe_id }}" class="week-menu-recipe-link">#{{ usage.recipe_id }} {{ usage.recipe_name }}</a>
+                            <span class="section-hint">{{ usage.ingredient_names | join(', ') }}</span>
+                        </li>
+                        {% endfor %}
+                        {% if row.weekly_grocery_names %}
+                        <li>
+                            <a href="{{ base_path }}/weekly-groceries/manage" class="week-menu-recipe-link">{{ t('nav.weekly_groceries') }}</a>
+                            <span class="section-hint">{{ row.weekly_grocery_names | join(', ') }}</span>
+                        </li>
+                        {% endif %}
+                        {% if row.grocery_list_names %}
+                        <li>
+                            <a href="{{ base_path }}/week-menu/grocery-list" class="week-menu-recipe-link">{{ t('nav.grocery_list') }}</a>
+                            <span class="section-hint">{{ row.grocery_list_names | join(', ') }}</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% else %}
+                    <p class="search-placeholder">{{ t('units.empty.no_recipes_using_unit') }}</p>
+                    {% endif %}
+                </div>
+            </details>
             {% endfor %}
         </div>
         {% else %}

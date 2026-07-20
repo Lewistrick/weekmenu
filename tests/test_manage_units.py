@@ -128,6 +128,38 @@ async def test_delete_unit_in_use_is_rejected(
 
 
 @pytest.mark.asyncio
+async def test_delete_unit_in_use_is_scoped_to_current_user(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """A unit should only be considered in-use for the current user's data."""
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+
+    other = await User.create(username="other_recipe_owner")
+    other_ingredient = await Ingredient.create(owner=other, name="flour")
+    other_recipe = await Recipe.create(
+        name="Cross-user recipe",
+        description="uses another account's unit row",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=other,
+        enabled=True,
+    )
+    await RecipeIngredient.create(
+        recipe=other_recipe,
+        ingredient=other_ingredient,
+        quantity=100,
+        unit=grams,
+    )
+
+    response = await test_client.delete(f"/units/{grams.id}")
+    assert response.status_code == 200
+    assert "Cannot delete" not in response.text
+
+
+@pytest.mark.asyncio
 async def test_incomplete_unit_highlights_row(
     test_client: AsyncTestClient,
     default_user: User,
@@ -138,8 +170,66 @@ async def test_incomplete_unit_highlights_row(
     response = await test_client.get("/units/manage")
 
     assert response.status_code == 200
-    assert "catalog-unit-row--incomplete" in response.text
+    assert "is-incomplete" in response.text
     assert "Missing singular or plural label." not in response.text
+
+
+@pytest.mark.asyncio
+async def test_unit_page_lists_recipes_using_the_unit(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Expanded unit rows should show recipe links and matching ingredients."""
+    grams = await Unit.filter(owner_id=default_user.id, abbrev="g").first()
+    assert grams is not None
+    flour = await Ingredient.create(owner=default_user, name="flour")
+    sugar = await Ingredient.create(owner=default_user, name="sugar")
+    recipe = await Recipe.create(
+        name="Cake",
+        description="dessert",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+        enabled=True,
+    )
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=flour, quantity=100, unit=grams
+    )
+    await RecipeIngredient.create(
+        recipe=recipe, ingredient=sugar, quantity=25, unit=grams
+    )
+
+    response = await test_client.get("/units/manage")
+
+    assert response.status_code == 200
+    assert "Recipes using this unit" in response.text
+    assert 'class="week-menu-recipe-link"' in response.text
+    assert f"#{recipe.id} Cake" in response.text
+    assert "flour, sugar" in response.text or "sugar, flour" in response.text
+
+
+@pytest.mark.asyncio
+async def test_unit_page_lists_weekly_grocery_usage(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Expanded unit rows should show weekly groceries that use the unit."""
+    st = await Unit.filter(owner_id=default_user.id, abbrev="st").first()
+    assert st is not None
+    sponge = await Ingredient.create(owner=default_user, name="sponge")
+    await WeeklyGrocery.create(
+        owner=default_user, ingredient=sponge, quantity=1, unit=st
+    )
+
+    response = await test_client.get("/units/manage")
+
+    assert response.status_code == 200
+    assert "Recipes using this unit" in response.text
+    assert 'href="/weekly-groceries/manage"' in response.text
+    assert "sponge" in response.text
+    assert "Weekly groceries using this unit" not in response.text
+    assert "Grocery list using this unit" not in response.text
 
 
 @pytest.mark.asyncio
