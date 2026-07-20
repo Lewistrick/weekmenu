@@ -11,12 +11,12 @@
     {% include "partials/flash-warnings.html" %}
     {% endwith %}
 
-    <div class="grocery-toolbar">
+    <div class="toolbar">
         <a href="{{ base_path }}/week-menu" class="btn btn-secondary">{{ t('grocery.back_to_week_menu') }}</a>
     </div>
 
     {% if tag_constraint_rows %}
-    <section class="week-menu-options">
+    <section class="form-panel week-menu-options">
         <div class="week-menu-options-header">
             <h2 class="section-title">{{ t('week_menu.constraints.title') }}</h2>
             <p class="section-hint">{{ t('week_menu.constraints.hint') }}</p>
@@ -77,7 +77,7 @@
                 </div>
             </div>
             {% endfor %}
-            <div class="week-menu-constraints-form-actions">
+            <div class="form-actions form-actions--end">
                 <button
                     type="submit"
                     class="btn btn-primary btn-sm"

@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="recipe-edit-page">
-    <div class="page-toolbar">
+    <div class="toolbar">
         <a href="{{ base_path }}/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm" title="{{ t('recipe.edit.aria.view_recipe') }}" aria-label="{{ t('recipe.edit.aria.view_recipe') }}">{{ t('recipe.edit.back_to_view') }}</a>
         <span class="page-mode-badge">{{ t('recipe.edit.mode_badge') }}</span>
     </div>
@@ -51,7 +51,7 @@
             {% for group in tag_groups %}
             <fieldset class="tag-group-fieldset">
                 <legend>
-                    <span class="tag-group-chip tag-group-chip--legend"
+                    <span class="tag-group-chip tag-group-chip--small"
                         style="--tag-bg: {{ group.category.background_color }}; --tag-fg: {{ group.category.foreground_color }};">
                         {{ group.category.name }}
                     </span>

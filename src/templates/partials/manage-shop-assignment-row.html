@@ -1,8 +1,8 @@
-<article class="manage-shop-ingredient-tile" id="manage-shop-assignment-{{ row.ingredient.id }}">
+<article class="form-panel manage-shop-ingredient-tile" id="manage-shop-assignment-{{ row.ingredient.id }}">
     <div class="manage-shop-ingredient-header">
         <span class="manage-shop-ingredient">{{ row.ingredient.name }}</span>
         <div class="manage-shop-ingredient-meta">
-            <span class="manage-shop-recipe-count">
+            <span class="section-hint">
                 {{ t('shops.assignments.in_recipes', count=row.recipe_count) }}
             </span>
             {% if row.recipe_count == 0 %}

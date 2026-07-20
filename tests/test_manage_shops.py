@@ -25,7 +25,7 @@ async def test_manage_shops_page_shows_tile_grid(
 
     assert response.status_code == 200
     assert "manage-shop-grid" in response.text
-    assert "manage-shop-tile" in response.text
+    assert "form-panel" in response.text
     assert "Albert Heijn" in response.text
 
 

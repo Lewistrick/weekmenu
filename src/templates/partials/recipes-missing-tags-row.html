@@ -1,7 +1,7 @@
-<article class="recipes-missing-tags-row" id="recipes-missing-tags-row-{{ row.recipe.id }}">
-    <a href="{{ base_path }}/recipes/view/{{ row.recipe.id }}" class="week-menu-recipe-link">#{{ row.recipe.id }} {{ row.recipe.name }}</a>
+<article class="form-panel recipes-missing-tags-row" id="recipes-missing-tags-row-{{ row.recipe.id }}">
+    <a href="{{ base_path }}/recipes/view/{{ row.recipe.id }}" class="recipe-link">#{{ row.recipe.id }} {{ row.recipe.name }}</a>
     <div class="recipes-missing-tags-groups">
-        <span class="recipes-missing-tags-groups-label">{{ t('recipes_missing_tags.missing_groups') }}</span>
+        <span class="section-hint">{{ t('recipes_missing_tags.missing_groups') }}</span>
         {% for group in row.missing_groups %}
         <div id="missing-tags-slot-{{ row.recipe.id }}-{{ group.id }}" class="missing-tags-group-slot">
             <button
