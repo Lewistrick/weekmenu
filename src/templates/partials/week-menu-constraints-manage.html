@@ -11,6 +11,10 @@
     {% include "partials/flash-warnings.html" %}
     {% endwith %}
 
+    <div class="grocery-toolbar">
+        <a href="{{ base_path }}/week-menu" class="btn btn-secondary">{{ t('grocery.back_to_week_menu') }}</a>
+    </div>
+
     {% if tag_constraint_rows %}
     <section class="week-menu-options">
         <div class="week-menu-options-header">
