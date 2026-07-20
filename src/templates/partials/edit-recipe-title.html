@@ -1,4 +1,4 @@
-<form hx-post="/recipes/edit-title/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML" class="inline-form">
+<form hx-post="{{ base_path }}/recipes/edit-title/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML" class="inline-form">
     <div class="form-group form-group--inline">
         <input type="text" name="new_title" value="{{ recipe.name }}" class="form-control" autofocus />
         <button type="submit" class="btn btn-primary btn-sm">{{ t('recipe.edit.action.save_title') }}</button>

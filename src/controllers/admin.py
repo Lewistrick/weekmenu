@@ -12,6 +12,9 @@ from src.admin_translations import (
     save_translation_texts,
 )
 from src.auth import require_admin
+from src.i18n.service import t
+from src.invite_users import create_invited_user
+from src.models import User
 
 
 def _parse_groups(raw_values: list[str]) -> set[str] | None:
@@ -39,18 +42,77 @@ def _query_group_values(request: Request) -> list[str]:
 
 
 class AdminController(Controller):
-    """Admin section: users placeholder and translations editor."""
+    """Admin section: invite users and translations editor."""
 
     path = "/admin"
     tags = ["admin"]
 
-    @get("/users")
-    async def users_page(self, request: Request) -> Template:
-        """Render a placeholder users admin page."""
-        await require_admin(request)
+    @staticmethod
+    async def _render_users_page(
+        request: Request,
+        *,
+        messages: list[str] | None = None,
+        warnings: list[str] | None = None,
+        created_username: str | None = None,
+        temporary_password: str | None = None,
+        form_username: str = "",
+        form_email: str = "",
+    ) -> Template:
+        """Render the users admin page with optional feedback."""
+        users = await User.all().order_by("username")
         return Template(
             template_name="admin-users.html",
-            context={"request": request},
+            context={
+                "request": request,
+                "users": users,
+                "messages": messages or [],
+                "warnings": warnings or [],
+                "created_username": created_username,
+                "temporary_password": temporary_password,
+                "form_username": form_username,
+                "form_email": form_email,
+            },
+        )
+
+    @get("/users")
+    async def users_page(self, request: Request) -> Template:
+        """Render the users admin page with create form and user list."""
+        await require_admin(request)
+        return await self._render_users_page(request)
+
+    @post("/users")
+    async def create_user(
+        self,
+        request: Request,
+        data: dict[str, str] = Body(media_type=RequestEncodingType.URL_ENCODED),
+    ) -> Template:
+        """Create an invited user with a one-time temporary password."""
+        await require_admin(request)
+        username = str(data.get("username", "")).strip()
+        email = str(data.get("email", "")).strip()
+
+        warnings: list[str] = []
+        if not username:
+            warnings.append(t("message.auth.username_required"))
+        elif await User.get_by_username(username) is not None:
+            warnings.append(t("message.auth.username_taken"))
+
+        if warnings:
+            return await self._render_users_page(
+                request,
+                warnings=warnings,
+                form_username=username,
+                form_email=email,
+            )
+
+        _user, temporary_password = await create_invited_user(
+            username=username, email=email
+        )
+        return await self._render_users_page(
+            request,
+            messages=[t("admin.users.created", username=username)],
+            created_username=username,
+            temporary_password=temporary_password,
         )
 
     @get("/translations")

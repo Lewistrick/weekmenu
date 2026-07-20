@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ t('app.title.register') }}</title>
-    <link rel="icon" type="image/png" href="/static/favicon.png">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/png" href="{{ base_path }}/static/favicon.png">
+    <link rel="stylesheet" href="{{ base_path }}/static/style.css">
 </head>
 
 <body>
@@ -25,7 +25,7 @@
             </div>
             {% endif %}
 
-            <form class="auth-form" method="post" action="/register">
+            <form class="auth-form" method="post" action="{{ base_path }}/register">
                 <label class="field-label" for="username">{{ t('auth.field.username') }}</label>
                 <input class="form-control" id="username" name="username" type="text" autocomplete="username"
                     value="{{ username | default('') }}" required autofocus>
@@ -45,7 +45,7 @@
                 <button class="btn btn-primary auth-submit" type="submit">{{ t('auth.action.create_account') }}</button>
             </form>
 
-            <p class="auth-switch">{{ t('auth.switch.have_account') }} <a href="/login">{{ t('auth.switch.log_in') }}</a>.</p>
+            <p class="auth-switch">{{ t('auth.switch.have_account') }} <a href="{{ base_path }}/login">{{ t('auth.switch.log_in') }}</a>.</p>
         </div>
     </main>
 </body>

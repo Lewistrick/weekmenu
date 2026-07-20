@@ -4,7 +4,7 @@
 >
     <form
         class="translations-row-form"
-        hx-post="/admin/translations/save"
+        hx-post="{{ base_path }}/admin/translations/save"
         hx-target="#translations-row-{{ row.key | replace('.', '-') }}"
         hx-swap="outerHTML"
     >

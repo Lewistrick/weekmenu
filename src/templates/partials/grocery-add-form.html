@@ -3,7 +3,7 @@
         <div class="section-heading">
             <h2 class="section-title">{{ t('grocery.section.add_groceries') }}</h2>
         </div>
-        <form hx-post="/week-menu/grocery-list/add" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
+        <form hx-post="{{ base_path }}/week-menu/grocery-list/add" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="inline-form grocery-add-form">
             <div class="form-group">
                 <div class="ingredient-input">
@@ -19,7 +19,7 @@
                 </div>
             </div>
         </form>
-        <form hx-post="/week-menu/grocery-list/add-weekly" hx-target="#grocery-list-body"
+        <form hx-post="{{ base_path }}/week-menu/grocery-list/add-weekly" hx-target="#grocery-list-body"
             hx-swap="outerHTML show:none" class="grocery-add-weekly-form">
             <button type="submit" class="btn btn-secondary btn-sm">{{ t('grocery.action.add_weekly_groceries') }}</button>
         </form>

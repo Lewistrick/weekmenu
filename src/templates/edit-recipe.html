@@ -5,7 +5,7 @@
 {% block content %}
 <div class="recipe-edit-page">
     <div class="page-toolbar">
-        <a href="/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm" title="{{ t('recipe.edit.aria.view_recipe') }}" aria-label="{{ t('recipe.edit.aria.view_recipe') }}">{{ t('recipe.edit.back_to_view') }}</a>
+        <a href="{{ base_path }}/recipes/view/{{ recipe.id }}" class="btn btn-secondary btn-sm" title="{{ t('recipe.edit.aria.view_recipe') }}" aria-label="{{ t('recipe.edit.aria.view_recipe') }}">{{ t('recipe.edit.back_to_view') }}</a>
         <span class="page-mode-badge">{{ t('recipe.edit.mode_badge') }}</span>
     </div>
 
@@ -16,7 +16,7 @@
         </div>
         <div id="recipe-title" class="editable-field">
             <h2 class="recipe-title-display">{{ recipe.name }}</h2>
-            <button hx-get="/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
+            <button hx-get="{{ base_path }}/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
                 class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_title') }}" aria-label="{{ t('recipe.edit.aria.edit_title') }}">{{ t('recipe.edit.action.edit_title') }}</button>
         </div>
     </section>
@@ -36,7 +36,7 @@
         </div>
         <div id="recipe-desc" class="editable-field editable-field--stacked">
             <div class="recipe-description recipe-description-display">{{ recipe.description | markdown | safe }}</div>
-            <button hx-get="/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
+            <button hx-get="{{ base_path }}/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
                 class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_description') }}" aria-label="{{ t('recipe.edit.aria.edit_description') }}">{{ t('recipe.edit.action.edit_description') }}</button>
         </div>
     </section>
@@ -46,7 +46,7 @@
             <h2 class="section-title">{{ t('common.tags') }}</h2>
             <p class="section-hint">{{ t('recipe.edit.tags_hint') }}</p>
         </div>
-        <form method="post" action="/recipes/{{ recipe.id }}/tags" class="form-panel">
+        <form method="post" action="{{ base_path }}/recipes/{{ recipe.id }}/tags" class="form-panel">
             {% if tag_groups %}
             {% for group in tag_groups %}
             <fieldset class="tag-group-fieldset">
@@ -86,7 +86,7 @@
             <h2 class="section-title">{{ t('recipe.edit.section.delete') }}</h2>
             <p class="section-hint">{{ t('recipe.edit.delete_hint') }}</p>
         </div>
-        <button hx-get="/recipes/delete/{{ recipe.id }}" hx-target="#delete-confirmation" hx-swap="innerHTML"
+        <button hx-get="{{ base_path }}/recipes/delete/{{ recipe.id }}" hx-target="#delete-confirmation" hx-swap="innerHTML"
             class="btn btn-danger btn-sm" type="button" title="{{ t('recipe.edit.aria.delete_recipe') }}" aria-label="{{ t('recipe.edit.aria.delete_recipe') }}">{{ t('recipe.edit.action.delete') }}</button>
         <div id="delete-confirmation"></div>
     </section>

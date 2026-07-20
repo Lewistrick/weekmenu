@@ -10,7 +10,7 @@
     </header>
 
     <div class="form-panel">
-        <form method="post" action="/recipes" class="recipe-form">
+        <form method="post" action="{{ base_path }}/recipes" class="recipe-form">
             <div class="form-group">
                 <label for="name">{{ t('recipe.field.name') }}</label>
                 <input type="text" id="name" name="name" class="form-control" required>
@@ -42,7 +42,7 @@
                     <p class="section-hint">{{ t('recipe.add.ingredients_hint') }}</p>
                 </div>
                 <div id="ingredients-container" class="ingredients-container"></div>
-                <button type="button" hx-get="/recipes/new-ingredient-input" hx-target="#ingredients-container"
+                <button type="button" hx-get="{{ base_path }}/recipes/new-ingredient-input" hx-target="#ingredients-container"
                     hx-swap="beforeend" class="btn btn-secondary btn-sm">
                     {{ t('recipe.add.action.add_ingredient') }}
                 </button>

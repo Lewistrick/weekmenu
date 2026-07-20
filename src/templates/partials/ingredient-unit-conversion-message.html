@@ -3,7 +3,7 @@
     <span class="flash-banner-text">
         {{ t('message.ingredient_units.recipes_edited', count=conversion_result.recipe_ids|length, new_unit=conversion_result.target_unit_label, old_unit=conversion_result.source_unit_label) }}
         {% for recipe_id in conversion_result.recipe_ids -%}
-        <a href="/recipes/view/{{ recipe_id }}" class="recipe-id-link">{{ recipe_id }}</a>{% if not loop.last %}, {% endif %}
+        <a href="{{ base_path }}/recipes/view/{{ recipe_id }}" class="recipe-id-link">{{ recipe_id }}</a>{% if not loop.last %}, {% endif %}
         {%- endfor %}
     </span>
 </div>

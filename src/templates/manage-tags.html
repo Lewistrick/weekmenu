@@ -13,7 +13,7 @@
         <div class="section-heading">
             <h2 class="section-title">{{ t('tags.section.add_group') }}</h2>
         </div>
-        <form method="post" action="/tags/groups" class="manage-tag-form manage-tag-form--create">
+        <form method="post" action="{{ base_path }}/tags/groups" class="manage-tag-form manage-tag-form--create">
             <div class="manage-tag-form-row">
                 <input id="group_name" name="group_name" class="form-control" placeholder="{{ t('tags.placeholder.group_name') }}" required>
                 <button
@@ -53,7 +53,7 @@
         {% if groups %}
         {% for group in groups %}
         <article class="form-panel recipe-section">
-            <form method="post" action="/tags/groups/{{ group.category.id }}" class="manage-tag-form">
+            <form method="post" action="{{ base_path }}/tags/groups/{{ group.category.id }}" class="manage-tag-form">
                 <div class="manage-tag-form-row">
                     <span class="tag-group-chip"
                         style="--tag-bg: {{ group.category.background_color }}; --tag-fg: {{ group.category.foreground_color }};">
@@ -70,7 +70,7 @@
                 </div>
                 <div class="manage-tag-form-actions">
                     <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.save_group') }}" aria-label="{{ t('tags.aria.save_group') }}">💾</button>
-                    <button type="button" class="btn btn-sm icon-btn" hx-delete="/tags/groups/{{ group.category.id }}"
+                    <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/tags/groups/{{ group.category.id }}"
                         hx-target="body" hx-swap="innerHTML" title="{{ t('tags.aria.delete_group') }}" aria-label="{{ t('tags.aria.delete_group') }}">
                         🗑️
                     </button>
@@ -79,11 +79,11 @@
 
             <div class="tag-options">
                 {% for tag in group.tags %}
-                <form method="post" action="/tags/values/{{ tag.id }}" class="manage-tag-form manage-tag-form--inline">
+                <form method="post" action="{{ base_path }}/tags/values/{{ tag.id }}" class="manage-tag-form manage-tag-form--inline">
                     <label class="manage-tag-label" for="tag-name-{{ tag.id }}">{{ t('tags.field.tag') }}</label>
                     <input id="tag-name-{{ tag.id }}" name="tag_name" class="form-control" value="{{ tag.name }}" required>
                     <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.save_tag') }}" aria-label="{{ t('tags.aria.save_tag') }}">💾</button>
-                    <button type="button" class="btn btn-sm icon-btn" hx-delete="/tags/values/{{ tag.id }}"
+                    <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/tags/values/{{ tag.id }}"
                         hx-target="body" hx-swap="innerHTML" title="{{ t('tags.aria.delete_tag') }}" aria-label="{{ t('tags.aria.delete_tag') }}">
                         🗑️
                     </button>
@@ -91,7 +91,7 @@
                 {% endfor %}
             </div>
 
-            <form method="post" action="/tags/groups/{{ group.category.id }}/tags" class="manage-tag-form manage-tag-form--inline">
+            <form method="post" action="{{ base_path }}/tags/groups/{{ group.category.id }}/tags" class="manage-tag-form manage-tag-form--inline">
                 <label class="manage-tag-label" for="tag-new-{{ group.category.id }}">{{ t('tags.field.new_value') }}</label>
                 <input id="tag-new-{{ group.category.id }}" name="tag_name" class="form-control" placeholder="{{ t('tags.placeholder.tag_name') }}" required>
                 <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.add_tag') }}" aria-label="{{ t('tags.aria.add_tag') }}">➕</button>

@@ -7,39 +7,33 @@
 - To open the app on other devices on your home network, bind to all interfaces:
   `uv run litestar --app src.app:app run -r --host 0.0.0.0 --port 8000`
 
-### Docker (local)
+### Docker (local / VPS)
 - Copy `.env.example` to `.env` and set a strong `SESSION_SECRET`.
+- Create the SQLite file before the first start: `mkdir -p data && touch data/recipes.sqlite3`. Compose bind-mounts `./data/recipes.sqlite3` into the container (a Docker named volume at that path would become a directory and break SQLite).
 - Start the app: `docker compose up --build`
   - If `docker` says permission denied on the socket, your shell has not picked up the `docker` group yet. Use a new login, or `newgrp docker`, or prefix with `sg docker -c '…'` (for example `sg docker -c 'docker compose up -d'`).
-- Open [http://localhost:8000](http://localhost:8000) (or the port set in `APP_PORT`).
-- Compose publishes the app on **127.0.0.1** only (not the public IP), so other devices reach it via Tailscale Serve (below) or an SSH tunnel.
-- Create the SQLite file before the first start: `mkdir -p data && touch data/recipes.sqlite3`. Compose bind-mounts `./data/recipes.sqlite3` into the container (a Docker named volume at that path would become a directory and break SQLite).
+- Public access is via **Caddy on port 80** at `http://<host-IP>/weekmenu` (the app itself stays on localhost:8000).
+- For a one-shot VPS setup (Docker install + compose up): `sudo bash scripts/setup_public_deploy.sh`
+- Open firewall **port 80** only. Traffic is **HTTP (plaintext)** until you add a domain and HTTPS later. Do not expose port 8000 publicly.
+- Set `APP_BASE_PATH=/weekmenu` in `.env` for Docker (default in `.env.example`). Local `uv run` leaves it empty so URLs stay at `/login`, `/week-menu`, etc.
 - To copy a database from another machine, stop the app first, then transfer a **consistent** file (do not `scp` a live `recipes.sqlite3` while the app is writing — that often produces `database disk image is malformed`). On the source machine: `sqlite3 path/to/recipes.sqlite3 ".backup '/tmp/recipes.sqlite3'"` then `scp` that backup to `data/recipes.sqlite3` on the server and start Compose again.
 - Aerich migrations run automatically when the app container starts.
 - PostgreSQL is included but disabled by default. To start it alongside the app (for future use):
   `docker compose --profile postgres up --build`
   The app still uses SQLite until `DATABASE_URL` is wired in `src/db_config.py`.
 
-### Access via Tailscale (private Tailnet)
-- Install Docker and Tailscale, start the app, and enable Serve in one go (needs sudo for package install):
-  `sudo bash scripts/setup_tailscale_serve.sh`
-- The first time, `tailscale up` prints a login URL. Open it in a browser and sign in with the **same Tailscale account** as your other devices. To skip the browser step, create an auth key in the Tailscale admin console and run:
-  `sudo TS_AUTHKEY=tskey-auth-... bash scripts/setup_tailscale_serve.sh`
-- After join + Serve, open the HTTPS MagicDNS URL from any device on your Tailnet (see `sudo tailscale serve status`), typically `https://weekmenu-vps.<your-tailnet>.ts.net`.
-- Do not open public firewall ports 80/443/8000 for the app; Tailscale traffic does not need them.
-- Funnel (public internet) and reverse-proxy-on-public-IP are out of scope for this setup.
-
 ### Accounts and login
 - The app requires an account. Visiting any page while logged out redirects to the login page.
-- Create an account at `/register` with a username, a password (min. 6 characters), and an optional email address. Registering logs you in automatically.
-- Log in at `/login` and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
-- Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, language, default week-menu servings, change your password, or delete your account (which removes the account and its recipes).
+- Public self-registration (`/register`) is **disabled**. Accounts are invite-only: an admin creates them on `/admin/users`.
+- When an admin creates a user, the page shows a **one-time temporary password**. Share it with the new user; they must change it before using the app (the temporary password still works for login until they set a new one).
+- Log in at `/login` (or `/weekmenu/login` when deployed with a base path) and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
+- Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, language, default week-menu servings, change your password, or delete your account (which removes the account and its recipes). Deleting an account returns you to the login page.
 - Passwords are hashed with bcrypt and the logged-in user is tracked in a signed cookie session.
 - Users have an `is_admin` flag. The account named **Erick** is granted admin on startup/migration. Non-admins do not see the Admin section; admin routes return **403 Forbidden**.
 
 ### Admin
 - Admins see an **Admin** section on the home page and in the navbar.
-- **Users** (`/admin/users`) is a placeholder for future user management.
+- **Users** (`/admin/users`) lists accounts and creates invite-only users with a generated temporary password.
 - **Translations** (`/admin/translations`) edits `UIText` rows: pick a language, filter by top-level key group, search by key/English/translation text, optionally show only incomplete translations, and save English + selected-language text per key with an inline confirmation.
 
 ### Recipe sharing and privacy
@@ -93,7 +87,7 @@
 
 ### Per-user catalog (ingredients, units, tags, shops)
 - Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
-- Registering a new account seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
+- Creating a new account (via admin invite) seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
 - Manage units at `/units/manage` (⚙️ Settings → 📏 Units): edit abbreviation, singular, and plural labels, add new units, or delete unused ones. Units missing a singular or plural label show a warning.
 - Merge ingredient units at `/ingredients/merge-units/manage` (⚙️ Settings → 🔀 Merge ingredient units): find ingredients that appear with more than one unit, then convert all uses to a single unit by entering a ratio on both sides (for example, `200 gram = 1 piece`).
 - Merge ingredients at `/ingredients/merge/manage` (⚙️ Settings → 🔗 Merge ingredients): combine duplicate ingredients such as oil and olive oil. Pick which name to keep; recipe lines with the same unit are summed, and the other ingredient is removed.

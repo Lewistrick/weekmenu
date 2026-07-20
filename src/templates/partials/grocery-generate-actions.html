@@ -8,14 +8,14 @@
     </button>
     <div class="grocery-generate-choices" id="grocery-generate-choices" hidden>
         <span class="grocery-inline-confirm-label">{{ t('grocery.generate.confirm') }}</span>
-        <form method="post" action="/week-menu/grocery-list/generate" class="grocery-bulk-form">
+        <form method="post" action="{{ base_path }}/week-menu/grocery-list/generate" class="grocery-bulk-form">
             <input type="hidden" name="mode" value="replace">
             <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"
                 title="{{ t('grocery.generate.replace.title') }}" aria-label="{{ t('grocery.generate.replace.aria') }}">
                 {{ t('grocery.generate.replace') }}
             </button>
         </form>
-        <form method="post" action="/week-menu/grocery-list/generate" class="grocery-bulk-form">
+        <form method="post" action="{{ base_path }}/week-menu/grocery-list/generate" class="grocery-bulk-form">
             <input type="hidden" name="mode" value="merge">
             <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"
                 title="{{ t('grocery.generate.add.title') }}" aria-label="{{ t('grocery.generate.add.aria') }}">
@@ -29,7 +29,7 @@
         </button>
     </div>
     {% else %}
-    <form method="post" action="/week-menu/grocery-list/generate" class="grocery-generate-form">
+    <form method="post" action="{{ base_path }}/week-menu/grocery-list/generate" class="grocery-generate-form">
         <input type="hidden" name="mode" value="replace">
         <button type="submit" class="btn btn-action btn-action--grocery"
             title="{{ t('grocery.generate.aria') }}" aria-label="{{ t('grocery.generate.aria') }}">

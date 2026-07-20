@@ -80,14 +80,38 @@ async def test_non_admin_admin_routes_return_403(
 
 
 @pytest.mark.asyncio
-async def test_admin_users_placeholder_ok(test_client: AsyncTestClient) -> None:
-    """Admins can open the users placeholder page."""
+async def test_admin_users_page_lists_and_creates(
+    test_client: AsyncTestClient,
+) -> None:
+    """Admins can list users and create invite-only accounts."""
     await _make_admin_client(test_client)
 
-    response = await test_client.get("/admin/users")
+    page = await test_client.get("/admin/users")
+    assert page.status_code == 200
+    assert "Create user" in page.text
+    assert "testuser" in page.text
 
-    assert response.status_code == 200
-    assert "Users" in response.text or "Gebruikers" in response.text
+    created = await test_client.post(
+        "/admin/users",
+        data={"username": "newfriend", "email": "friend@example.com"},
+    )
+    assert created.status_code == 200
+    assert "Created account for newfriend" in created.text
+    assert "Temporary password" in created.text
+    assert 'class="admin-temp-password"' in created.text
+
+    user = await User.get_by_username("newfriend")
+    assert user is not None
+    assert user.email == "friend@example.com"
+    assert user.must_change_password is True
+    assert user.is_admin is False
+
+    duplicate = await test_client.post(
+        "/admin/users",
+        data={"username": "newfriend", "email": ""},
+    )
+    assert duplicate.status_code == 200
+    assert "already taken" in duplicate.text
 
 
 @pytest.mark.asyncio

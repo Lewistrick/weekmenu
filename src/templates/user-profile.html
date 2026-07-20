@@ -12,7 +12,7 @@
     <section class="recipe-section">
         <h2 class="section-title">{{ t('profile.section.details') }}</h2>
         <p class="profile-detail"><strong>{{ t('profile.username_label') }}</strong> {{ current_user.username }}</p>
-        <form class="profile-form" method="post" action="/profile/email">
+        <form class="profile-form" method="post" action="{{ base_path }}/profile/email">
             <label class="field-label" for="email">{{ t('auth.field.email') }} <span class="field-optional">{{ t('auth.field.optional') }}</span></label>
             <input class="form-control" id="email" name="email" type="email" value="{{ current_user.email or '' }}">
             <button class="btn btn-secondary" type="submit">{{ t('profile.action.save_email') }}</button>
@@ -21,7 +21,7 @@
 
     <section class="recipe-section">
         <h2 class="section-title">{{ t('profile.section.settings') }}</h2>
-        <form class="profile-form" method="post" action="/profile/settings">
+        <form class="profile-form" method="post" action="{{ base_path }}/profile/settings">
             <label class="field-label" for="language">{{ t('profile.field.language') }}</label>
             <select class="form-control" id="language" name="language">
                 {% for option in language_options %}
@@ -39,7 +39,7 @@
 
     <section class="recipe-section">
         <h2 class="section-title">{{ t('profile.section.change_password') }}</h2>
-        <form class="profile-form" method="post" action="/profile/password">
+        <form class="profile-form" method="post" action="{{ base_path }}/profile/password">
             <label class="field-label" for="current_password">{{ t('profile.field.current_password') }}</label>
             <input class="form-control" id="current_password" name="current_password" type="password"
                 autocomplete="current-password" required>
@@ -58,7 +58,7 @@
 
     <section class="recipe-section">
         <h2 class="section-title">{{ t('profile.section.danger_zone') }}</h2>
-        <form class="profile-form" method="post" action="/profile/delete"
+        <form class="profile-form" method="post" action="{{ base_path }}/profile/delete"
             onsubmit="return confirm('{{ t('profile.confirm.delete_account') }}');">
             <button class="btn btn-danger" type="submit">{{ t('profile.action.delete_account') }}</button>
         </form>

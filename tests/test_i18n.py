@@ -152,4 +152,6 @@ async def test_login_page_renders_translated_strings(
 
     assert response.status_code == 200
     assert "Log in to plan your week." in response.text
-    assert "Create one" in response.text
+    assert "Log in" in response.text
+    assert "Create one" not in response.text
+    assert "/register" not in response.text

@@ -1,6 +1,6 @@
 <div class="form-group" id="recipe-status-controls">
     <div class="recipe-status-editor">
-        <form hx-post="/recipes/{{ recipe.id }}/toggle-private" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
+        <form hx-post="{{ base_path }}/recipes/{{ recipe.id }}/toggle-private" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
             class="recipe-status-toggle">
             <label class="switch-row">
                 <span>{{ t('recipe.status.public_recipe') }}</span>
@@ -10,7 +10,7 @@
                 </label>
             </label>
         </form>
-        <form hx-post="/recipes/{{ recipe.id }}/toggle-enabled" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
+        <form hx-post="{{ base_path }}/recipes/{{ recipe.id }}/toggle-enabled" hx-trigger="change" hx-target="#recipe-status-controls" hx-swap="outerHTML"
             class="recipe-status-toggle">
             <label class="switch-row">
                 <span>{{ t('recipe.status.enabled_recipe') }}</span>

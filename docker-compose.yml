@@ -1,15 +1,29 @@
 services:
   app:
     build: .
+    expose:
+      - "8000"
     ports:
-      # Localhost only: reach the app via Tailscale Serve, not the public IP.
+      # Localhost-only direct access for debugging; public traffic goes via Caddy :80.
       - "127.0.0.1:${APP_PORT:-8000}:8000"
+    environment:
+      APP_BASE_PATH: ${APP_BASE_PATH:-/weekmenu}
     env_file:
       - .env
     volumes:
       # Bind a host *file* (not a named volume at this path). A named volume
       # mounted on a missing file path becomes a directory and breaks SQLite.
       - ./data/recipes.sqlite3:/app/src/recipes.sqlite3
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - app
     restart: unless-stopped
 
   # PostgreSQL is prepared for a future switch from SQLite. The app still uses

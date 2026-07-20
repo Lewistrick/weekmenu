@@ -8,7 +8,7 @@
 
             <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
 
-                hx-post="/week-menu/{{ day_row.day }}/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
+                hx-post="{{ base_path }}/week-menu/{{ day_row.day }}/move/up" hx-target="#week-menu-panel" hx-swap="innerHTML"
 
                 title="{{ t('week_menu.day.aria.move_up_short') }}" aria-label="{{ t('week_menu.day.aria.move_up', day_label=t('day.' ~ day_row.day)) }}" {% if loop.first %}disabled{% endif %}>
 
@@ -18,7 +18,7 @@
 
             <button type="button" class="btn btn-sm icon-btn week-menu-move-btn"
 
-                hx-post="/week-menu/{{ day_row.day }}/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
+                hx-post="{{ base_path }}/week-menu/{{ day_row.day }}/move/down" hx-target="#week-menu-panel" hx-swap="innerHTML"
 
                 title="{{ t('week_menu.day.aria.move_down_short') }}" aria-label="{{ t('week_menu.day.aria.move_down', day_label=t('day.' ~ day_row.day)) }}" {% if loop.last %}disabled{% endif %}>
 
@@ -36,7 +36,7 @@
 
             {% if day_row.recipe %}
 
-            <a href="/recipes/view/{{ day_row.recipe.id }}" class="week-menu-recipe-link">
+            <a href="{{ base_path }}/recipes/view/{{ day_row.recipe.id }}" class="week-menu-recipe-link">
 
                 #{{ day_row.recipe.id }} {{ day_row.recipe.name }}
 
@@ -62,7 +62,7 @@
 
             <input id="servings-{{ day_row.day }}" class="form-control week-menu-servings-input" type="number" min="1"
 
-                name="servings" value="{{ day_row.servings }}" hx-post="/week-menu/{{ day_row.day }}/servings"
+                name="servings" value="{{ day_row.servings }}" hx-post="{{ base_path }}/week-menu/{{ day_row.day }}/servings"
 
                 hx-trigger="change" hx-target="#week-menu-panel" hx-swap="innerHTML"
 
@@ -76,7 +76,7 @@
 
             <button type="button" class="btn btn-sm icon-btn icon-action-btn{% if day_row.pinned %} icon-btn--active{% endif %}"
 
-                hx-post="/week-menu/{{ day_row.day }}/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
+                hx-post="{{ base_path }}/week-menu/{{ day_row.day }}/pin" hx-target="#week-menu-panel" hx-swap="innerHTML"
 
                 title="{% if day_row.pinned %}{{ t('week_menu.day.unpin') }}{% else %}{{ t('week_menu.day.pin') }}{% endif %}"
 
@@ -88,7 +88,7 @@
 
             <button type="button" class="btn btn-sm icon-btn icon-action-btn"
 
-                hx-post="/week-menu/{{ day_row.day }}/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
+                hx-post="{{ base_path }}/week-menu/{{ day_row.day }}/clear" hx-target="#week-menu-panel" hx-swap="innerHTML"
 
                 title="{{ t('week_menu.day.aria.clear') }}" aria-label="{{ t('week_menu.day.aria.clear') }}">
 
@@ -106,7 +106,7 @@
 
                     <input id="search-{{ day_row.day }}" class="form-control" type="search" name="search"
 
-                        placeholder="{{ t('common.placeholder.search_recipe') }}" hx-get="/week-menu/{{ day_row.day }}/search"
+                        placeholder="{{ t('common.placeholder.search_recipe') }}" hx-get="{{ base_path }}/week-menu/{{ day_row.day }}/search"
 
                         hx-include="#week-menu-search-include-public"
 

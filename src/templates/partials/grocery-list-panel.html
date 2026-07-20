@@ -14,7 +14,7 @@
         <div class="grocery-subsection-header">
             <h3 class="grocery-subsection-title">{{ t('grocery.section.to_check') }}</h3>
             {% if to_check_items %}
-            {% with confirm_id="clear-to-check-confirm", trigger_id="clear-to-check-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action="/week-menu/grocery-list/to-check/clear", trigger_label=t('grocery.clear_list') %}
+            {% with confirm_id="clear-to-check-confirm", trigger_id="clear-to-check-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action=base_path ~ "/week-menu/grocery-list/to-check/clear", trigger_label=t('grocery.clear_list') %}
             {% include "partials/grocery-inline-confirm.html" %}
             {% endwith %}
             {% endif %}
@@ -32,7 +32,7 @@
         <div class="grocery-subsection-header">
             <h3 class="grocery-subsection-title">{{ t('grocery.section.already_have') }}</h3>
             {% if already_have_items %}
-            {% with confirm_id="clear-already-have-confirm", trigger_id="clear-already-have-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action="/week-menu/grocery-list/already-have/clear", trigger_label=t('grocery.clear_list') %}
+            {% with confirm_id="clear-already-have-confirm", trigger_id="clear-already-have-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action=base_path ~ "/week-menu/grocery-list/already-have/clear", trigger_label=t('grocery.clear_list') %}
             {% include "partials/grocery-inline-confirm.html" %}
             {% endwith %}
             {% endif %}
@@ -62,7 +62,7 @@
                     </span>
                     {{ group.shop_name }}
                 </h3>
-                {% with confirm_id="mark-all-shop-" ~ group.shop_id ~ "-confirm", trigger_id="mark-all-shop-" ~ group.shop_id ~ "-trigger", confirm_label=t('grocery.action.mark_all.confirm'), confirm_action="/week-menu/grocery-list/shop/" ~ group.shop_id ~ "/already-have", trigger_label=t('grocery.action.mark_all'), trigger_icon="✓", trigger_class="grocery-check-all-trigger" %}
+                {% with confirm_id="mark-all-shop-" ~ group.shop_id ~ "-confirm", trigger_id="mark-all-shop-" ~ group.shop_id ~ "-trigger", confirm_label=t('grocery.action.mark_all.confirm'), confirm_action=base_path ~ "/week-menu/grocery-list/shop/" ~ group.shop_id ~ "/already-have", trigger_label=t('grocery.action.mark_all'), trigger_icon="✓", trigger_class="grocery-check-all-trigger" %}
                 {% include "partials/grocery-inline-confirm.html" %}
                 {% endwith %}
             </div>

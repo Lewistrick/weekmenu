@@ -20,7 +20,7 @@
             <p class="section-hint">{{ t('ingredient_merge.form.hint') }}</p>
         </div>
         {% if ingredients %}
-        <form method="post" action="/ingredients/merge" class="ingredient-merge-form">
+        <form method="post" action="{{ base_path }}/ingredients/merge" class="ingredient-merge-form">
             <div class="ingredient-merge-selectors">
                 {% with field_prefix="source-ingredient", field_role="source", label_key="ingredient_merge.form.source", selected_id=selected_source_id, selected_name=selected_source_name %}
                 {% include "partials/ingredient-merge-field.html" %}

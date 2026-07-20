@@ -133,12 +133,13 @@ async def test_migrations_create_user_state_tables(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_migrations_add_tag_category_colors(tmp_path: Path) -> None:
-    """All migrations together should add color columns to tag categories."""
+async def test_migrations_add_must_change_password(tmp_path: Path) -> None:
+    """All migrations together should add must_change_password on users."""
     db_file = tmp_path / "migrated.sqlite3"
     sqlite3.connect(db_file).close()
 
     for migration_path in MIGRATION_FILES:
         await _apply_migration(db_file, migration_path)
 
-    assert TAG_CATEGORY_COLUMNS.issubset(_table_columns(db_file, "tagcategory"))
+    assert "must_change_password" in _table_columns(db_file, "user")
+    assert "is_admin" in _table_columns(db_file, "user")

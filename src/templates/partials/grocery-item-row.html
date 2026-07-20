@@ -14,7 +14,7 @@
     </div>
     <div class="shop-chip-row" role="group" aria-label="{{ t('grocery.aria.actions_for_item', item_name=item.name) }}">
         {% for shop in shops %}
-        <form method="post" hx-post="/week-menu/grocery-list/assign" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
+        <form method="post" hx-post="{{ base_path }}/week-menu/grocery-list/assign" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
@@ -28,7 +28,7 @@
         </form>
         {% endfor %}
         {% if line_key in to_check_line_keys %}
-        <form method="post" hx-post="/week-menu/grocery-list/to-check/remove" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
+        <form method="post" hx-post="{{ base_path }}/week-menu/grocery-list/to-check/remove" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
@@ -38,7 +38,7 @@
             </button>
         </form>
         {% else %}
-        <form method="post" hx-post="/week-menu/grocery-list/to-check" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
+        <form method="post" hx-post="{{ base_path }}/week-menu/grocery-list/to-check" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
@@ -49,7 +49,7 @@
         </form>
         {% endif %}
         {% if line_key in already_have_line_keys %}
-        <form method="post" hx-post="/week-menu/grocery-list/already-have/remove" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
+        <form method="post" hx-post="{{ base_path }}/week-menu/grocery-list/already-have/remove" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">
@@ -59,7 +59,7 @@
             </button>
         </form>
         {% else %}
-        <form method="post" hx-post="/week-menu/grocery-list/already-have" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
+        <form method="post" hx-post="{{ base_path }}/week-menu/grocery-list/already-have" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
             class="shop-chip-form">
             <input type="hidden" name="ingredient_id" value="{{ item.ingredient_id }}">
             <input type="hidden" name="unit" value="{{ item.unit }}">

@@ -20,7 +20,7 @@
         <div class="section-heading">
             <h2 class="section-title">{{ t('shops.section.add_shop') }}</h2>
         </div>
-        <form method="post" action="/shops" class="manage-shop-create-form">
+        <form method="post" action="{{ base_path }}/shops" class="manage-shop-create-form">
             <input id="shop_name" name="shop_name" class="form-control" placeholder="{{ t('shops.placeholder.shop_name') }}" required>
             <label class="manage-shop-color-label" for="shop-bg-new">{{ t('common.background') }}</label>
             <input id="shop-bg-new" name="background_color" class="form-control manage-shop-color-input" type="color" value="#2563eb">
@@ -46,7 +46,7 @@
         <div class="manage-shop-grid">
             {% for shop in shops %}
             <article class="manage-shop-tile">
-                <form method="post" action="/shops/{{ shop.id }}" class="manage-shop-edit-form">
+                <form method="post" action="{{ base_path }}/shops/{{ shop.id }}" class="manage-shop-edit-form">
                     <span class="shop-chip-btn shop-chip-btn--preview manage-shop-tile-preview"
                         style="color: {{ shop.foreground_color }}; background-color: {{ shop.background_color }};">
                         {{ shop.letter }}
@@ -60,7 +60,7 @@
                     </div>
                     <div class="manage-shop-tile-actions">
                         <button type="submit" class="btn btn-sm icon-btn" title="{{ t('shops.aria.save_shop') }}" aria-label="{{ t('shops.aria.save_shop') }}">💾</button>
-                        <button type="button" class="btn btn-sm icon-btn" hx-delete="/shops/{{ shop.id }}"
+                        <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/shops/{{ shop.id }}"
                             hx-target="body" hx-swap="innerHTML" title="{{ t('shops.aria.delete_shop') }}" aria-label="{{ t('shops.aria.delete_shop') }}">
                             🗑️
                         </button>

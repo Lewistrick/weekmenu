@@ -10,11 +10,11 @@
     </header>
 
     <div class="quick-actions">
-        <a href="/week-menu" class="action-card">
+        <a href="{{ base_path }}/week-menu" class="action-card">
             <span class="action-card-title">{{ t('nav.week_menu') }}</span>
             <span class="action-card-desc">{{ t('home.week_menu.desc') }}</span>
         </a>
-        <a href="/week-menu/grocery-list" class="action-card">
+        <a href="{{ base_path }}/week-menu/grocery-list" class="action-card">
             <span class="action-card-title">{{ t('nav.grocery_list') }}</span>
             <span class="action-card-desc">{{ t('home.grocery_list.desc') }}</span>
         </a>
@@ -23,23 +23,23 @@
     <section class="recipe-section home-group-section">
         <h2 class="section-title">{{ t('nav.recipes') }}</h2>
         <div class="quick-actions">
-            <a href="/recipes/search" class="action-card">
+            <a href="{{ base_path }}/recipes/search" class="action-card">
                 <span class="action-card-title">{{ t('nav.find_recipe') }}</span>
                 <span class="action-card-desc">{{ t('home.find_recipe.desc') }}</span>
             </a>
-            <a href="/recipes/add" class="action-card">
+            <a href="{{ base_path }}/recipes/add" class="action-card">
                 <span class="action-card-title">{{ t('nav.add_recipe') }}</span>
                 <span class="action-card-desc">{{ t('home.add_recipe.desc') }}</span>
             </a>
-            <a href="/recipes/random" class="action-card">
+            <a href="{{ base_path }}/recipes/random" class="action-card">
                 <span class="action-card-title">{{ t('nav.random_private_recipe') }}</span>
                 <span class="action-card-desc">{{ t('home.random_private_recipe.desc') }}</span>
             </a>
-            <a href="/recipes/random-public" class="action-card">
+            <a href="{{ base_path }}/recipes/random-public" class="action-card">
                 <span class="action-card-title">{{ t('nav.random_public_recipe') }}</span>
                 <span class="action-card-desc">{{ t('home.random_public_recipe.desc') }}</span>
             </a>
-            <a href="/recipes/missing-tags" class="action-card">
+            <a href="{{ base_path }}/recipes/missing-tags" class="action-card">
                 <span class="action-card-title">{{ t('nav.missing_tags') }}</span>
                 <span class="action-card-desc">{{ t('home.missing_tags.desc') }}</span>
             </a>
@@ -49,31 +49,31 @@
     <section class="recipe-section">
         <h2 class="section-title">{{ t('nav.settings') }}</h2>
         <div class="quick-actions">
-            <a href="/tags/manage" class="action-card">
+            <a href="{{ base_path }}/tags/manage" class="action-card">
                 <span class="action-card-title">{{ t('nav.tag_groups') }}</span>
                 <span class="action-card-desc">{{ t('home.tag_groups.desc') }}</span>
             </a>
-            <a href="/shops/manage" class="action-card">
+            <a href="{{ base_path }}/shops/manage" class="action-card">
                 <span class="action-card-title">{{ t('nav.shops') }}</span>
                 <span class="action-card-desc">{{ t('home.shops.desc') }}</span>
             </a>
-            <a href="/weekly-groceries/manage" class="action-card">
+            <a href="{{ base_path }}/weekly-groceries/manage" class="action-card">
                 <span class="action-card-title">{{ t('nav.weekly_groceries') }}</span>
                 <span class="action-card-desc">{{ t('home.weekly_groceries.desc') }}</span>
             </a>
-            <a href="/units/manage" class="action-card">
+            <a href="{{ base_path }}/units/manage" class="action-card">
                 <span class="action-card-title">{{ t('nav.units') }}</span>
                 <span class="action-card-desc">{{ t('home.units.desc') }}</span>
             </a>
-            <a href="/ingredients/merge-units/manage" class="action-card">
+            <a href="{{ base_path }}/ingredients/merge-units/manage" class="action-card">
                 <span class="action-card-title">{{ t('nav.merge_ingredient_units') }}</span>
                 <span class="action-card-desc">{{ t('home.merge_ingredient_units.desc') }}</span>
             </a>
-            <a href="/ingredients/merge/manage" class="action-card">
+            <a href="{{ base_path }}/ingredients/merge/manage" class="action-card">
                 <span class="action-card-title">{{ t('nav.merge_ingredients') }}</span>
                 <span class="action-card-desc">{{ t('home.merge_ingredients.desc') }}</span>
             </a>
-            <a href="/profile" class="action-card">
+            <a href="{{ base_path }}/profile" class="action-card">
                 <span class="action-card-title">{{ t('nav.account') }}</span>
                 <span class="action-card-desc">{{ t('home.account.desc') }}</span>
             </a>
@@ -84,11 +84,11 @@
     <section class="recipe-section">
         <h2 class="section-title">{{ t('nav.admin') }}</h2>
         <div class="quick-actions">
-            <a href="/admin/users" class="action-card">
+            <a href="{{ base_path }}/admin/users" class="action-card">
                 <span class="action-card-title">{{ t('nav.users') }}</span>
                 <span class="action-card-desc">{{ t('home.users.desc') }}</span>
             </a>
-            <a href="/admin/translations" class="action-card">
+            <a href="{{ base_path }}/admin/translations" class="action-card">
                 <span class="action-card-title">{{ t('nav.translations') }}</span>
                 <span class="action-card-desc">{{ t('home.translations.desc') }}</span>
             </a>

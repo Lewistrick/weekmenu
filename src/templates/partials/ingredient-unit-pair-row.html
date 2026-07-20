@@ -8,7 +8,7 @@
             <span class="unit-chip">{{ pair.unit_b.label }} ({{ pair.unit_b.abbrev }})</span>
         </span>
         <button type="button" class="btn btn-secondary btn-sm"
-            hx-get="/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}/edit"
+            hx-get="{{ base_path }}/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}/edit"
             hx-target="#{{ pair.row_id }}" hx-swap="outerHTML"
             title="{{ t('ingredient_units.aria.convert') }}"
             aria-label="{{ t('ingredient_units.aria.convert') }}">
