@@ -1,150 +1,52 @@
 # Weekmenu
 
-## Usage
-### To start the app
-- `uv run litestar --app src.app:app run -r`
-    - (remove `-r` when not editing the code)
-- To open the app on other devices on your home network, bind to all interfaces:
-  `uv run litestar --app src.app:app run -r --host 0.0.0.0 --port 8000`
+Plan dinners for the week from your own recipes, then turn that plan into a grocery list sorted by shop.
 
-### Docker (local / VPS)
-- Copy `.env.example` to `.env` and set a strong `SESSION_SECRET`.
-- Create the SQLite file before the first start: `mkdir -p data && touch data/recipes.sqlite3`. Compose bind-mounts `./data/recipes.sqlite3` into the container (a Docker named volume at that path would become a directory and break SQLite).
-- Start the app: `docker compose up --build`
-  - If `docker` says permission denied on the socket, your shell has not picked up the `docker` group yet. Use a new login, or `newgrp docker`, or prefix with `sg docker -c '…'` (for example `sg docker -c 'docker compose up -d'`).
-- Public access is via **Caddy on port 80** at `http://<host-IP>/weekmenu` (the app itself stays on localhost:8000).
-- For a one-shot VPS setup (Docker install + compose up): `sudo bash scripts/setup_public_deploy.sh`
-- Open firewall **port 80** only. Traffic is **HTTP (plaintext)** until you add a domain and HTTPS later. Do not expose port 8000 publicly.
-- Set `APP_BASE_PATH=/weekmenu` in `.env` for Docker (default in `.env.example`). Local `uv run` leaves it empty so URLs stay at `/login`, `/week-menu`, etc.
-- To copy a database from another machine, stop the app first, then transfer a **consistent** file (do not `scp` a live `recipes.sqlite3` while the app is writing — that often produces `database disk image is malformed`). On the source machine: `sqlite3 path/to/recipes.sqlite3 ".backup '/tmp/recipes.sqlite3'"` then `scp` that backup to `data/recipes.sqlite3` on the server and start Compose again.
-- Aerich migrations run automatically when the app container starts.
-- PostgreSQL is included but disabled by default. To start it alongside the app (for future use):
-  `docker compose --profile postgres up --build`
-  The app still uses SQLite until `DATABASE_URL` is wired in `src/db_config.py`.
+## What you can do
 
-### Accounts and login
-- The app requires an account. Visiting any page while logged out redirects to the login page.
-- Public self-registration (`/register`) is **disabled**. Accounts are invite-only: an admin creates them on `/admin/users`.
-- When an admin creates a user, the page shows a **one-time temporary password**. Share it with the new user; they must change it before using the app (the temporary password still works for login until they set a new one).
-- Log in at `/login` (or `/weekmenu/login` when deployed with a base path) and log out from the "🚪 Log out" item in the ⚙️ Settings menu.
-- Manage your account at `/profile` (reachable via ⚙️ Settings → 👤 Account): update your email, language, default week-menu servings, change your password, or delete your account (which removes the account and its recipes). Deleting an account returns you to the login page.
-- Passwords are hashed with bcrypt and the logged-in user is tracked in a signed cookie session.
-- Users have an `is_admin` flag. The account named **Erick** is granted admin on startup/migration. Non-admins do not see the Admin section; admin routes return **403 Forbidden**.
+- **Recipes** — Add, edit, search, and tag recipes. Mark recipes public so others can view or import them; keep yours private by default. Find recipes missing tags and fill them in quickly.
+- **Week menu** — Fill each day with a recipe (search, pin, or randomize). Set servings per day, reorder days, and optionally constrain random picks by tags (same tag all week, vary across the week, or at least N days with a tag). Copy the week as plain text when you want to share it.
+- **Grocery list** — Generate from the week menu (replace, add to, or keep an existing list). Sort items into shops, mark things to check or already have, edit amounts, and copy a shop-grouped list for messaging. Add one-off items or your saved weekly staples in one click.
+- **Your catalog** — Ingredients, units, tag groups, and shops are yours alone. Merge duplicate ingredients or units when things get messy. Manage recurring weekly groceries under Settings.
 
-### Admin
-- Admins see an **Admin** section on the home page and in the navbar.
-- **Users** (`/admin/users`) lists accounts and creates invite-only users with a generated temporary password.
-- **Translations** (`/admin/translations`) edits `UIText` rows: pick a language, filter by top-level key group, search by key/English/translation text, optionally show only incomplete translations, and save English + selected-language text per key with an inline confirmation.
+Open pages from the home screen tiles or the navbar (same destinations).
 
-### Recipe sharing and privacy
-- Every recipe has an **owner** (who controls it), a **creator** (who originally wrote it), and a private/public flag (toggle on the edit page). New recipes start private with you as both owner and creator.
-- You always see and manage your own recipes. You can also open other users' **public** recipes (read-only) via direct links or search when you opt in.
-- By default, recipe search, the random **private** recipe picker, listings, and week-menu tools only use **your own** recipes. Check **Include public recipes** on the search or week menu page to also show other users' public recipes in those tools.
-- Use **Random public recipe** to jump straight to a random public recipe owned by another user.
-- Import a public recipe you do not own with **Import to my recipes** on its view page. This creates a private copy in your collection, keeps the original creator credited, and blocks importing the same public recipe twice.
-- Trying to edit or delete a recipe you do not own returns a 404.
+## Accounts
 
-### Per-user week menu
-- Your week menu, start day, tag constraints, include-public preference, and grocery list are stored in the database per account, so they follow you across browsers and devices when you log in.
-- Edit week menu randomizer options on `/week-menu/constraints/manage` (⚙️ Settings → Week menu constraints); the week menu page shows a compact summary of only the active (non-ignored) options. The constraints page links back to the week menu.
-- Week menu randomization and per-day recipe search use your own recipes by default; enable **Include public recipes** in the week menu toolbar to widen the pool.
-- New empty week-menu slots use your profile setting for default servings.
+You need an account to use the app. Self-registration is closed: an **admin** creates users under **Admin → Users** and shows a one-time temporary password. The new person logs in, sets their own password, then can use the app.
 
-### Account settings
-- Language and default week-menu servings are stored in the database per account.
-- Legacy `user_settings/{user_id}.json` files are imported automatically the first time settings are loaded after upgrading.
-- Settings are editable from `/profile` under the **Settings** section.
+In **Account** (Settings) you can change email, language, default servings, password, or delete your account.
 
-### Internationalization (i18n)
-- User-facing UI strings are stored in the `uitext` database table (`language_code`, `key`, `text`) and loaded per request based on the account language setting.
-- English strings are seeded from `src/i18n/catalog_en.py` on startup and in tests.
-- Dutch strings are seeded from `src/i18n/catalog_nl.py` (regenerate from `translations.xlsx` with `uv run python scripts/build_catalog_nl.py`).
-- Language-independent icons (nav emojis, action buttons, etc.) live in `src/i18n/icons.py` and are added by `t()` at render time, not stored in the database.
-- Templates use the Jinja global `t('key')`; controllers use `t()` from `src/i18n.service` for flash messages and errors.
-- When a translation is missing for the selected language, the app falls back to English, then to the key itself.
-- Admins can edit live database strings on `/admin/translations` without changing the Python catalogs (catalogs remain the seed/fallback source).
+Admins can also edit UI translations under **Admin → Translations**.
 
-### Grocery lists by shop and plaintext export
-- Open the grocery list from the navbar or home page (`/week-menu/grocery-list`). Use **Generate grocery list** on the week menu page to create or update the list from your current week menu.
-- At the top of the grocery list page you can **add your own groceries** that are unrelated to the week menu: enter an ingredient name, an amount, and pick a unit, then click **Add**. Adding an item that matches an existing line (same ingredient and unit) sums the amounts. If no list exists yet, adding an item starts one.
-- Under that form, **🧺 Add weekly groceries** appends every saved weekly grocery to the current list in one click (see below). A horizontal divider separates this add panel from the list. Both add actions update the list in place via HTMX without reloading the page.
-- Manage shops at `/shops/manage` (⚙️ Settings → 🏪 Shops). Each shop has a name plus foreground and background colors used on the grocery list.
-- Generating from the week menu creates a new list when empty, or lets you **Replace** the current list, **Add** week-menu groceries to it, or cancel. Visiting the grocery list page directly preserves a non-empty list instead of regenerating over your sorting work.
-- The grocery list uses a two-column layout: **To sort** (unassigned items with one-click shop buttons, a **?** chip for items to verify later, and a ✓ **already have** chip) on the left, and solid-color shop lists on the right. Items marked **To check** or **Already have** appear in subsections below the unsorted list and can be moved back with the same chips.
-- Moving an ingredient to a shop, to-check, or already-have updates the list in place (no full page reload), so your scroll position is preserved.
-- When the same ingredient appears in more than one unit (e.g. grams and kilograms), shop and status buttons affect only that specific line.
-- Shop selection uses colored chip buttons showing the first letter of the shop name. Amounts are shown on the right and can be edited with a click.
-- Copy grouped plaintext for messaging under the grocery columns (ingredients by shop).
-- Amounts are shown on the right and can be edited with a click. Lines are identified by ingredient and unit, so duplicate units merge when you edit.
-- Each shop section has a **✓ Check all** button (shop text color, with inline confirmation). The to-check and already-have lists each have a **🗑 Clear list** button with inline confirmation; clearing either list removes those groceries from the plan entirely.
-- Copy the week menu to the clipboard from the footer **📋 Copy week menu** button (`{day} - {recipe}` per line, empty days omitted). The same plaintext is available via `GET /week-menu/export`.
+## Run it locally
 
-### Weekly groceries
-- Keep a personal list of recurring groceries (staples you buy every week) that is unrelated to the week menu. Manage it at `/weekly-groceries/manage` (⚙️ Settings → 🧺 Weekly groceries).
-- Each weekly grocery has an ingredient name, an amount, and a unit. Names reuse your ingredient catalog (so shop assignments still apply), units must be existing units, and duplicates (same ingredient and unit) are rejected.
-- Weekly groceries are saved in the database per user, so they persist across sessions.
-- Add them all to your grocery list with the **🧺 Add weekly groceries** button under the add-individual form on the grocery list page; only groceries not already on the list are added, and matching lines are merged when they are added.
+```bash
+uv run litestar --app src.app:app run -r
+```
 
-### Per-user catalog (ingredients, units, tags, shops)
-- Ingredients, units, tag groups, tag values, and shops belong to an account. You only see and manage your own catalog data in lists, forms, and API responses.
-- Creating a new account (via admin invite) seeds a default unit set: `g`, `kg`, `ml`, `l`, `el`, `tl`, `st` (with singular/plural labels where applicable).
-- Manage units at `/units/manage` (⚙️ Settings → 📏 Units): edit abbreviation, singular, and plural labels, add new units, or delete unused ones. Units missing a singular or plural label show a warning.
-- Merge ingredient units at `/ingredients/merge-units/manage` (⚙️ Settings → 🔀 Merge ingredient units): find ingredients that appear with more than one unit, then convert all uses to a single unit by entering a ratio on both sides (for example, `200 gram = 1 piece`).
-- Merge ingredients at `/ingredients/merge/manage` (⚙️ Settings → 🔗 Merge ingredients): combine duplicate ingredients such as oil and olive oil. Pick which name to keep; recipe lines with the same unit are summed, and the other ingredient is removed.
-- Multiple units may share the same abbreviation when their singular or plural labels differ.
-- When you import a public recipe, its ingredients, units, and tags are remapped into your catalog (matched by name where possible) so edits stay isolated from the original author's data.
+Drop `-r` when you are not editing code. For other devices on your network:
 
-### What will it be able to do
-- Compose your own cookbook
-- Organize recipes with tag groups and values (for example: season, carb type, diet)
-- Find recipes missing tags at `/recipes/missing-tags` (🍽️ Recipes → 🏷️ Missing tags): open a recipe by name, click a missing tag group, pick tags with checkboxes, then save or cancel inline
-- Create a random week menu, giving you a random recipe for each day of the week
-    - Optional tag constraints when randomizing: same tag for every day, vary tags across the week, or at least N days with a chosen tag
-    - Reorder meals by moving a day's recipe up or down the week
-    - Enter the number of servings for each day; amounts are scaled from each recipe's own serving count
-- Generate a grocery list from the week menu
-    - Ingredient quantities are scaled to each day's servings, then ingredients sharing the same name and unit are added together
-- Generate a grocery list from the week menu via **Generate grocery list** at the bottom of the week menu page
-- Add your own one-off groceries to the grocery list, unrelated to the week menu
-- Keep a reusable list of weekly groceries and add them all to the grocery list in one click
-- Search recipes by name, description, ingredients, and optional tag filters
+```bash
+uv run litestar --app src.app:app run -r --host 0.0.0.0 --port 8000
+```
 
-### To see the API docs
-- [http://127.0.0.1:8000/schema/swagger](http://127.0.0.1:8000/schema/swagger)
+API docs (when running locally): [http://127.0.0.1:8000/schema/swagger](http://127.0.0.1:8000/schema/swagger)
 
-## Database
-### To view the database diagram:
-- go to [dbdiagram.io](dbdiagram.io)
-- click `create your diagram`
-- paste the content of `dbdiagram.txt` inside the left panel
+## Deploy with Docker
 
-### Basic structure
-- The `recipes` table is the center of the database
-    - It contains a description, prep and cook time, number of servings, and an owner (`owner_id` → `user`)
-- Each recipe has a number of ingredients in `recipe_ingredients`
-    - foreign key `recipe_ingredients.id` = `recipe.id`
-- Each recipe_ingredient points to a food in `ingredients` and a unit in `units`
-    - foreign key `ingredients.id` = `recipe_ingredients.ingredient_id`
-    - foreign key `units.unit_id` = `recipe_ingredients.unit_id`
-- Recipes can have `tags`, in `tag_categories`
-    - foreign key `recipe_tags.id` = `tag.id`
-    - foreign key `tag_category.id`= `tag.category_id`
-- Users can keep recurring weekly groceries in `weeklygrocery`
-    - each row has an `owner_id` → `user`, an `ingredient_id` → `ingredient`, a `unit_id` → `unit`, and a `quantity`
+1. Copy `.env.example` to `.env` and set a strong `SESSION_SECRET`.
+2. `mkdir -p data && touch data/recipes.sqlite3`
+3. `docker compose up --build`
 
-### How to
-- Fresh setup (empty database): `uv run aerich init-db`
-- After changing models in `src/models.py`:
-    - `uv run aerich migrate --name [type_reason_here]`
-    - `uv run aerich upgrade`
-- The app applies pending aerich migrations automatically on startup (`src/database.py`).
+The site is served at `http://<host-IP>/weekmenu` on port **80** (HTTP only for now). On a VPS you can use `sudo bash scripts/setup_public_deploy.sh`. Open firewall port 80; leave 8000 closed to the public.
 
-## Development
-### Tests
-- Run the suite with `uv run pytest`
-- HTTP tests use an in-memory SQLite database via autouse fixtures in `tests/conftest.py`; they apply the same aerich migrations and do not write to `src/recipes.sqlite3`
-- If `init_db` runs during pytest while still pointed at `src/recipes.sqlite3`, the app raises an error instead of touching production data
+To move a database safely: stop the app, backup with `sqlite3 … ".backup '…'"`, copy that file to `data/recipes.sqlite3`, then start again (do not copy a live SQLite file mid-write).
 
-### Formatting and hooks
-- Python: `uv run ruff format` and `uv run ruff check` (`.py` files only)
-- Optional pre-commit hooks: `uv run pre-commit install`, then `uv run pre-commit run --all-files`
+## For developers
+
+**Database** — Models live in `src/models.py`. Fresh DB: `uv run aerich init-db`. After model changes: `uv run aerich migrate --name …` then `uv run aerich upgrade` (the app also upgrades on startup). Diagram sketch: paste `dbdiagram.txt` into [dbdiagram.io](https://dbdiagram.io).
+
+**Tests / lint** — `uv run pytest`, `uv run ruff format`, `uv run ruff check`. Optional: `uv run pre-commit install`.
+
+**i18n** — UI strings seed from `src/i18n/catalog_en.py` and `catalog_nl.py`; icons from `src/i18n/icons.py`. Dutch catalog can be rebuilt with `uv run python scripts/build_catalog_nl.py`.
