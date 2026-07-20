@@ -59,6 +59,12 @@
         {% endif %}
     </header>
 
+    {% if recipe.image_url %}
+    <figure class="recipe-image-wrap">
+        <img src="{{ recipe.image_url }}" alt="" class="recipe-image" loading="lazy">
+    </figure>
+    {% endif %}
+
     <section class="recipe-section">
         <h2 class="section-title">{{ t('common.ingredients') }}</h2>
         <ul class="recipe-ingredient-list">

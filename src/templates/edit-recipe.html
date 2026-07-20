@@ -23,6 +23,23 @@
 
     <section class="recipe-section">
         <div class="section-heading">
+            <h2 class="section-title">{{ t('recipe.edit.section.image') }}</h2>
+            <p class="section-hint">{{ t('recipe.edit.image_hint') }}</p>
+        </div>
+        <div id="recipe-image" class="editable-field editable-field--stacked">
+            {% if recipe.image_url %}
+            <img src="{{ recipe.image_url }}" alt="" class="recipe-image" loading="lazy">
+            <p class="recipe-image-url">{{ recipe.image_url }}</p>
+            {% else %}
+            <p class="search-placeholder">{{ t('recipe.edit.image_none') }}</p>
+            {% endif %}
+            <button hx-get="{{ base_path }}/recipes/image-editor/{{ recipe.id }}" hx-target="#recipe-image" hx-swap="innerHTML"
+                class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_image') }}" aria-label="{{ t('recipe.edit.aria.edit_image') }}">{{ t('recipe.edit.action.edit_image') }}</button>
+        </div>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
             <h2 class="section-title">{{ t('common.ingredients') }}</h2>
             <p class="section-hint">{{ t('recipe.edit.ingredients_hint') }}</p>
         </div>

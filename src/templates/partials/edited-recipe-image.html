@@ -1,0 +1,16 @@
+{% if recipe.image_url %}
+<img src="{{ recipe.image_url }}" alt="" class="recipe-image" loading="lazy">
+<p class="recipe-image-url">{{ recipe.image_url }}</p>
+{% else %}
+<p class="search-placeholder">{{ t('recipe.edit.image_none') }}</p>
+{% endif %}
+<button hx-get="{{ base_path }}/recipes/image-editor/{{ recipe.id }}" hx-target="#recipe-image" hx-swap="innerHTML"
+    class="btn btn-ghost btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_image') }}" aria-label="{{ t('recipe.edit.aria.edit_image') }}">
+    {{ t('recipe.edit.action.edit_image') }}
+</button>
+{% with message_scope="recipe-image" %}
+{% include "partials/flash-messages.html" %}
+{% endwith %}
+{% with warning_scope="recipe-image" %}
+{% include "partials/flash-warnings.html" %}
+{% endwith %}

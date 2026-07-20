@@ -32,6 +32,12 @@
             </div>
 
             <div class="form-group">
+                <label for="image_url">{{ t('recipe.field.image_url') }} <span class="field-optional">{{ t('recipe.field.image_url_optional') }}</span></label>
+                <input type="text" id="image_url" name="image_url" class="form-control" placeholder="https://…">
+                <p class="section-hint">{{ t('recipe.field.image_url_hint') }}</p>
+            </div>
+
+            <div class="form-group">
                 <label for="description">{{ t('common.description') }}</label>
                 <textarea id="description" name="description" rows="5" class="form-control"></textarea>
             </div>
