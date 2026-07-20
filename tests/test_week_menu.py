@@ -664,6 +664,18 @@ async def test_week_menu_shows_tag_constraint_options(
 
 
 @pytest.mark.asyncio
+async def test_constraints_manage_links_to_week_menu(
+    test_client: AsyncTestClient,
+) -> None:
+    """The constraints page should link back to the week menu."""
+    response = await test_client.get("/week-menu/constraints/manage")
+
+    assert response.status_code == 200
+    assert 'href="/week-menu"' in response.text
+    assert "Back to week menu" in response.text
+
+
+@pytest.mark.asyncio
 async def test_save_tag_constraints_updates_existing_rows(
     default_user: User,
     carb_tags: tuple[TagCategory, Tag, Tag, Tag],

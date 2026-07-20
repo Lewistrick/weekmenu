@@ -46,7 +46,7 @@
 
 ### Per-user week menu
 - Your week menu, start day, tag constraints, include-public preference, and grocery list are stored in the database per account, so they follow you across browsers and devices when you log in.
-- Edit week menu randomizer options on `/week-menu/constraints/manage` (⚙️ Settings → Week menu constraints); the week menu page shows a compact summary of only the active (non-ignored) options.
+- Edit week menu randomizer options on `/week-menu/constraints/manage` (⚙️ Settings → Week menu constraints); the week menu page shows a compact summary of only the active (non-ignored) options. The constraints page links back to the week menu.
 - Week menu randomization and per-day recipe search use your own recipes by default; enable **Include public recipes** in the week menu toolbar to widen the pool.
 - New empty week-menu slots use your profile setting for default servings.
 
