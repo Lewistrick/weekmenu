@@ -26,6 +26,7 @@ from src.models import (
     Unit,
 )
 from src.plan_store import load_start_day, load_week_menu, save_week_menu
+from src.recipe_image import parse_recipe_image_url
 from src.url_path import path_with_base
 from src.week_menu import assign_recipe_to_unpinned_day
 
@@ -425,6 +426,7 @@ class RecipeController(Controller):
         copy = await Recipe.create(
             name=source.name,
             description=source.description,
+            image_url=source.image_url,
             prep_time_minutes=source.prep_time_minutes,
             cook_time_minutes=source.cook_time_minutes,
             servings=source.servings,
@@ -621,6 +623,15 @@ class RecipeController(Controller):
             template_name="partials/edit-recipe-desc.html", context={"recipe": recipe}
         )
 
+    @get(path="/image-editor/{recipe_id:int}", summary="Image URL editor")
+    async def image_editor(self, request: Request, recipe_id: int) -> Template:
+        """Load the inline editor for the recipe image URL."""
+        recipe = await self._get_owned_recipe(request, recipe_id)
+
+        return Template(
+            template_name="partials/edit-recipe-image.html", context={"recipe": recipe}
+        )
+
     @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")
     async def edit_title(
         self,
@@ -669,6 +680,40 @@ class RecipeController(Controller):
         return Template(
             template_name="partials/edited-recipe-desc.html",
             context={"recipe": recipe, "messages": messages},
+        )
+
+    @post(path="/edit-image/{recipe_id:int}", summary="Edit the image URL")
+    async def edit_image(
+        self,
+        request: Request,
+        recipe_id: int,
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
+    ) -> Template:
+        """Set or clear the recipe image URL and return the display partial."""
+        recipe = await self._get_owned_recipe(request, recipe_id)
+
+        messages: list[str] = []
+        warnings: list[str] = []
+        ok, value, error = parse_recipe_image_url(data.get("image_url"))
+        if not ok:
+            warnings.append(error or t("message.recipe.image_url_invalid"))
+        else:
+            recipe.image_url = value  # ty: ignore[invalid-assignment]
+            await recipe.save()
+            if value is None:
+                messages.append(t("message.recipe.image_url_cleared"))
+            else:
+                messages.append(t("message.recipe.image_url_updated"))
+
+        return Template(
+            template_name="partials/edited-recipe-image.html",
+            context={
+                "recipe": recipe,
+                "messages": messages,
+                "warnings": warnings,
+            },
         )
 
     @post(path="/{recipe_id:int}/toggle-private", summary="Toggle recipe privacy")
@@ -1116,13 +1161,14 @@ class RecipeController(Controller):
         await recipe.delete()
 
     @post(name="Add a recipe")
-    async def add(self, request: Request) -> Redirect:
+    async def add(self, request: Request) -> Redirect | Template:
         """Create a new recipe, user-style.
 
         Accepts
         - a name of the recipe
         - the number of servings
         - a description (preparation steps)
+        - an optional image URL
         - the number of minutes it takes to prep the food
         - the number of minutes it takes to cook the food
         - a list of ingredients like this: quantity|unit|ingredient, e.g. 200|g|potatoes
@@ -1145,6 +1191,19 @@ class RecipeController(Controller):
         cook_time_minutes = (
             int(cook_time_minutes_str) if cook_time_minutes_str else None
         )
+        image_ok, image_url, image_error = parse_recipe_image_url(
+            form_data.get("image_url")
+        )
+        owner_id = await self._current_user_id(request)
+        if not image_ok:
+            return Template(
+                template_name="add-recipe.html",
+                context={
+                    "request": request,
+                    "tag_groups": await self._tag_groups(owner_id),
+                    "warnings": [image_error or t("message.recipe.image_url_invalid")],
+                },
+            )
 
         quantities = form_data.getall("quantity[]") if "quantity[]" in form_data else []
         units = form_data.getall("unit[]") if "unit[]" in form_data else []
@@ -1165,11 +1224,11 @@ class RecipeController(Controller):
         ]
 
         logger.debug(f"Adding recipe: {name}")
-        owner_id = await self._current_user_id(request)
         owner = await get_current_user(request)
         recipe = await Recipe.create(
             name=name,
             description=description or name,
+            image_url=image_url,
             prep_time_minutes=prep_time_minutes,
             cook_time_minutes=cook_time_minutes,
             servings=servings,

@@ -21,6 +21,7 @@ class Recipe(Model):
     id = IntField(primary_key=True)
     name = TextField(required=True)
     description = TextField()
+    image_url = TextField(null=True)
     prep_time_minutes = IntField()
     cook_time_minutes = IntField()
     servings = IntField()
