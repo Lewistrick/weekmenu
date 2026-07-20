@@ -138,7 +138,7 @@ def test_format_week_menu_export_skips_empty_days() -> None:
         ]
     )
 
-    assert text == "Monday - Potato mash\nWednesday - Soup"
+    assert text == "mo Potato mash\nwe Soup"
 
 
 @pytest.mark.asyncio
@@ -443,7 +443,7 @@ async def test_week_menu_export_returns_plaintext(
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain")
-    assert "Friday - Export dinner" in response.text
+    assert "fr Export dinner" in response.text
 
 
 @pytest.mark.asyncio

@@ -117,11 +117,16 @@ def format_grocery_export(
 
 
 def format_week_menu_export(days: list[dict[str, Any]]) -> str:
-    """Render the week menu as ``{day} - {recipe}`` lines."""
+    """Render the week menu as ``{day_abbrev} {recipe}`` lines.
+
+    Each day label is shortened to its first two characters (lowercase),
+    with a space before the recipe name and no hyphen.
+    """
     lines: list[str] = []
     for row in days:
         recipe = row.get("recipe")
         if recipe is None:
             continue
-        lines.append(f"{row['label']} - {recipe.name}")
+        day_abbrev = str(row["label"])[:2].lower()
+        lines.append(f"{day_abbrev} {recipe.name}")
     return "\n".join(lines)

@@ -982,7 +982,7 @@ class WeekMenuController(Controller):
 
     @get(path="/export", summary="Export week menu as plaintext")
     async def week_menu_export(self, request: Request) -> Response[str]:
-        """Return the week menu as plain text ``{day} - {recipe}`` lines."""
+        """Return the week menu as plain text ``{day_abbrev} {recipe}`` lines."""
         user_id = await self._viewer_id(request)
         default_servings = await self._default_servings(request)
         menu = await load_week_menu(user_id, default_servings=default_servings)
