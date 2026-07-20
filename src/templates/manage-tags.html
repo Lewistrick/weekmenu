@@ -26,7 +26,7 @@
                 </button>
             </div>
             <div class="manage-shop-tile-colors">
-                <label class="manage-shop-color-label" for="group-bg-new">{{ t('common.background') }}</label>
+                <label class="section-hint" for="group-bg-new">{{ t('common.background') }}</label>
                 <input
                     id="group-bg-new"
                     name="background_color"
@@ -34,7 +34,7 @@
                     type="color"
                     value="#2563eb"
                 >
-                <label class="manage-shop-color-label" for="group-fg-new">{{ t('common.text') }}</label>
+                <label class="section-hint" for="group-fg-new">{{ t('common.text') }}</label>
                 <input
                     id="group-fg-new"
                     name="foreground_color"
@@ -63,12 +63,12 @@
                     <input id="group-name-{{ group.category.id }}" name="group_name" class="form-control" value="{{ group.category.name }}" required>
                 </div>
                 <div class="manage-shop-tile-colors">
-                    <label class="manage-shop-color-label" for="group-bg-{{ group.category.id }}">{{ t('common.background') }}</label>
+                    <label class="section-hint" for="group-bg-{{ group.category.id }}">{{ t('common.background') }}</label>
                     <input id="group-bg-{{ group.category.id }}" name="background_color" class="form-control manage-shop-color-input" type="color" value="{{ group.category.background_color }}">
-                    <label class="manage-shop-color-label" for="group-fg-{{ group.category.id }}">{{ t('common.text') }}</label>
+                    <label class="section-hint" for="group-fg-{{ group.category.id }}">{{ t('common.text') }}</label>
                     <input id="group-fg-{{ group.category.id }}" name="foreground_color" class="form-control manage-shop-color-input" type="color" value="{{ group.category.foreground_color }}">
                 </div>
-                <div class="manage-tag-form-actions">
+                <div class="form-actions">
                     <button type="submit" class="btn btn-sm icon-btn" title="{{ t('tags.aria.save_group') }}" aria-label="{{ t('tags.aria.save_group') }}">💾</button>
                     <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/tags/groups/{{ group.category.id }}"
                         hx-target="body" hx-swap="innerHTML" title="{{ t('tags.aria.delete_group') }}" aria-label="{{ t('tags.aria.delete_group') }}">

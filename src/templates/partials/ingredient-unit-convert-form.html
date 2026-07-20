@@ -1,4 +1,4 @@
-<div class="ingredient-unit-pair-row ingredient-unit-pair-row--editing" id="{{ pair.row_id }}">
+<div class="form-panel" id="{{ pair.row_id }}">
     {% if warnings %}
     <ul class="flash-warnings">
         {% for warning in warnings %}
@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <div class="ingredient-unit-form-actions">
+        <div class="form-actions">
             <button type="submit" class="btn btn-primary btn-sm">{{ t('ingredient_units.form.submit') }}</button>
             <button type="button" class="btn btn-secondary btn-sm"
                 hx-get="{{ base_path }}/ingredients/merge-units/{{ pair.ingredient_id }}/{{ pair.unit_a.id }}/{{ pair.unit_b.id }}"

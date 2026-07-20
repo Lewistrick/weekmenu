@@ -29,7 +29,7 @@
             </select>
         </form>
         <div class="week-menu-toolbar-actions">
-            <label class="week-menu-include-public" for="week-menu-search-include-public">
+            <label class="include-public" for="week-menu-search-include-public">
                 <input id="week-menu-search-include-public" type="checkbox" name="include_public" value="on" {% if include_public %}checked{% endif %}>
                 {{ t('common.include_public_recipes') }}
             </label>
@@ -48,8 +48,8 @@
     {% endif %}
     {% endfor %}
 
-    <section class="week-menu-options week-menu-constraints-summary">
-        <div class="week-menu-constraints-summary-header">
+    <section class="form-panel week-menu-options week-menu-constraints-summary">
+        <div class="subheader">
             <h2 class="section-title">{{ t('week_menu.constraints.title') }}</h2>
             <a
                 href="{{ base_path }}/week-menu/constraints/manage"

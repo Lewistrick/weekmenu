@@ -11,7 +11,7 @@
         <p class="search-placeholder">{{ t('grocery.to_sort.empty') }}</p>
         {% endif %}
 
-        <div class="grocery-subsection-header">
+        <div class="subheader">
             <h3 class="grocery-subsection-title">{{ t('grocery.section.to_check') }}</h3>
             {% if to_check_items %}
             {% with confirm_id="clear-to-check-confirm", trigger_id="clear-to-check-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action=base_path ~ "/week-menu/grocery-list/to-check/clear", trigger_label=t('grocery.clear_list') %}
@@ -29,7 +29,7 @@
         <p class="search-placeholder">{{ t('grocery.to_check.empty') }}</p>
         {% endif %}
 
-        <div class="grocery-subsection-header">
+        <div class="subheader">
             <h3 class="grocery-subsection-title">{{ t('grocery.section.already_have') }}</h3>
             {% if already_have_items %}
             {% with confirm_id="clear-already-have-confirm", trigger_id="clear-already-have-trigger", confirm_label=t('grocery.clear_list.confirm'), confirm_action=base_path ~ "/week-menu/grocery-list/already-have/clear", trigger_label=t('grocery.clear_list') %}
@@ -54,7 +54,7 @@
         {% for group in grocery_groups %}
         <div class="grocery-shop-group"
             style="--shop-bg: {{ group.background_color }}; --shop-fg: {{ group.foreground_color }};">
-            <div class="grocery-shop-header">
+            <div class="subheader">
                 <h3 class="grocery-shop-title">
                     <span class="shop-chip-btn shop-chip-btn--title"
                         style="color: {{ group.foreground_color }}; background-color: {{ group.background_color }};">

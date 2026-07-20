@@ -42,7 +42,7 @@
         {% if units %}
         <div class="ingredient-unit-pair-list">
             {% for row in units %}
-            <details class="ingredient-unit-pair-row{% if row.incomplete %} is-incomplete{% endif %}">
+            <details class="form-panel{% if row.incomplete %} is-incomplete{% endif %}">
                 <summary>
                     <strong>{{ row.abbrev }}</strong>
                     {% if row.single or row.plural %}
@@ -70,19 +70,19 @@
                     <ul class="recipe-ingredient-list">
                         {% for usage in row.recipe_usages %}
                         <li>
-                            <a href="{{ base_path }}/recipes/view/{{ usage.recipe_id }}" class="week-menu-recipe-link">#{{ usage.recipe_id }} {{ usage.recipe_name }}</a>
+                            <a href="{{ base_path }}/recipes/view/{{ usage.recipe_id }}" class="recipe-link">#{{ usage.recipe_id }} {{ usage.recipe_name }}</a>
                             <span class="section-hint">{{ usage.ingredient_names | join(', ') }}</span>
                         </li>
                         {% endfor %}
                         {% if row.weekly_grocery_names %}
                         <li>
-                            <a href="{{ base_path }}/weekly-groceries/manage" class="week-menu-recipe-link">{{ t('nav.weekly_groceries') }}</a>
+                            <a href="{{ base_path }}/weekly-groceries/manage" class="recipe-link">{{ t('nav.weekly_groceries') }}</a>
                             <span class="section-hint">{{ row.weekly_grocery_names | join(', ') }}</span>
                         </li>
                         {% endif %}
                         {% if row.grocery_list_names %}
                         <li>
-                            <a href="{{ base_path }}/week-menu/grocery-list" class="week-menu-recipe-link">{{ t('nav.grocery_list') }}</a>
+                            <a href="{{ base_path }}/week-menu/grocery-list" class="recipe-link">{{ t('nav.grocery_list') }}</a>
                             <span class="section-hint">{{ row.grocery_list_names | join(', ') }}</span>
                         </li>
                         {% endif %}

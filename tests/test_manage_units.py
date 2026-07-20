@@ -204,7 +204,7 @@ async def test_unit_page_lists_recipes_using_the_unit(
 
     assert response.status_code == 200
     assert "Recipes using this unit" in response.text
-    assert 'class="week-menu-recipe-link"' in response.text
+    assert 'class="recipe-link"' in response.text
     assert f"#{recipe.id} Cake" in response.text
     assert "flour, sugar" in response.text or "sugar, flour" in response.text
 
