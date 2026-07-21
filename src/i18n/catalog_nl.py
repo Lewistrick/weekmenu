@@ -24,6 +24,7 @@ TEXTS: dict[str, str] = {
     "app.title.merge_ingredients": "Ingrediënten samenvoegen",
     "app.title.admin_users": "Gebruikers",
     "app.title.admin_translations": "Vertalingen",
+    "app.title.admin_info": "Technische info",
     # nav
     "nav.week_menu": "Weekmenu",
     "nav.grocery_list": "Boodschappen",
@@ -46,6 +47,7 @@ TEXTS: dict[str, str] = {
     "nav.admin": "Beheer",
     "nav.users": "Gebruikers",
     "nav.translations": "Vertalingen",
+    "nav.info": "Technische info",
     # home
     "home.lead": "Welkom! Plan je maaltijden, stel je kookboek samen, en ontdek wat je morgen eet.",
     "home.week_menu.desc": "Stel een willekeurig weekmenu samen.",
@@ -64,6 +66,7 @@ TEXTS: dict[str, str] = {
     "home.account.desc": "Beheer je account: email, wachtwoord, en meer.",
     "home.users.desc": "Beheer gebruikersaccounts en adminrechten.",
     "home.translations.desc": "Bewerk UI-teksten per taal.",
+    "home.info.desc": "Bekijk database- en runtimegegevens.",
     # auth
     "auth.login.subtitle": "Log in om je week te plannen.",
     "auth.register.subtitle": "Maak een account aan.",
@@ -505,4 +508,17 @@ TEXTS: dict[str, str] = {
     "admin.translations.action.save": "Opslaan",
     "admin.translations.saved": "Opgeslagen",
     "admin.translations.empty": "Geen vertalingen komen overeen met deze filters.",
+    "admin.info.lead": "Runtime- en databasegegevens voor deze installatie.",
+    "admin.info.section.database": "Database",
+    "admin.info.section.runtime": "Runtime",
+    "admin.info.label.database_backend": "Backend",
+    "admin.info.label.database_url": "Verbinding",
+    "admin.info.label.postgres_version": "PostgreSQL-versie",
+    "admin.info.label.user_count": "Gebruikers",
+    "admin.info.label.recipe_count": "Recepten",
+    "admin.info.label.python_version": "Python",
+    "admin.info.label.platform": "Platform",
+    "admin.info.label.debug": "Debugmodus",
+    "admin.info.debug.on": "Aan",
+    "admin.info.debug.off": "Uit",
 }

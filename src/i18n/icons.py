@@ -22,6 +22,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "nav.admin": "🛡️ ",
     "nav.users": "👥 ",
     "nav.translations": "🌐 ",
+    "nav.info": "ℹ️ ",
     "admin.translations.action.save": "💾 ",
     "recipe.edit.back_to_view": "← ",
     "recipe.edit.action.edit_title": "✏️ ",

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.admin_info') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.admin_info') }}</h1>
+        <p class="page-lead">{{ t('admin.info.lead') }}</p>
+    </header>
+
+    <section class="recipe-section">
+        <h2 class="section-title">{{ t('admin.info.section.database') }}</h2>
+        <p class="profile-detail"><strong>{{ t('admin.info.label.database_backend') }}</strong> {{ info.database_backend }}</p>
+        <p class="profile-detail"><strong>{{ t('admin.info.label.database_url') }}</strong> <code>{{ info.database_url }}</code></p>
+        {% if info.postgres_version %}
+        <p class="profile-detail"><strong>{{ t('admin.info.label.postgres_version') }}</strong> {{ info.postgres_version }}</p>
+        {% endif %}
+        <p class="profile-detail"><strong>{{ t('admin.info.label.user_count') }}</strong> {{ info.user_count }}</p>
+        <p class="profile-detail"><strong>{{ t('admin.info.label.recipe_count') }}</strong> {{ info.recipe_count }}</p>
+    </section>
+
+    <section class="recipe-section">
+        <h2 class="section-title">{{ t('admin.info.section.runtime') }}</h2>
+        <p class="profile-detail"><strong>{{ t('admin.info.label.python_version') }}</strong> {{ info.python_version }}</p>
+        <p class="profile-detail"><strong>{{ t('admin.info.label.platform') }}</strong> {{ info.platform }}</p>
+        <p class="profile-detail"><strong>{{ t('admin.info.label.debug') }}</strong> {{ t('admin.info.debug.on') if info.debug else t('admin.info.debug.off') }}</p>
+    </section>
+</div>
+{% endblock %}

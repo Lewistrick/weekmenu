@@ -8,12 +8,12 @@ services:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
     environment:
       APP_BASE_PATH: ${APP_BASE_PATH:-/weekmenu}
+      DATABASE_URL: ${DATABASE_URL}
     env_file:
       - .env
-    volumes:
-      # Bind a host *file* (not a named volume at this path). A named volume
-      # mounted on a missing file path becomes a directory and breaks SQLite.
-      - ./data/recipes.sqlite3:/app/src/recipes.sqlite3
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   caddy:
@@ -26,16 +26,14 @@ services:
       - app
     restart: unless-stopped
 
-  # PostgreSQL is prepared for a future switch from SQLite. The app still uses
-  # SQLite until DATABASE_URL is wired in src/db_config.py.
-  #
-  # Enable with: docker compose --profile postgres up
   postgres:
-    profiles: [postgres]
     image: postgres:16-alpine
+    ports:
+      # Localhost-only access for one-off migrations and debugging.
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-weekmenu}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_DB: ${POSTGRES_DB:-weekmenu}
     volumes:
       - pg-data:/var/lib/postgresql/data
