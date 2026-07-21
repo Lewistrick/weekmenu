@@ -225,17 +225,41 @@ async def test_random_private_recipe_only_picks_owned_recipes(
 
 
 @pytest.mark.asyncio
-async def test_random_public_recipe_only_picks_other_users_public_recipes(
+async def test_random_public_recipe_picks_any_public_recipe(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Public random picker should choose public recipes not owned by the viewer."""
+    """Public random picker should choose any public recipe, including the viewer's."""
     other = await _make_user("bob")
-    await _make_recipe(default_user, "My Dish", private=False)
+    await _make_recipe(default_user, "My Public Dish", private=False)
     await _make_recipe(other, "Shared Dish", private=False)
+    await _make_recipe(default_user, "My Private Dish", private=True)
+
+    seen_titles: set[str] = set()
+    for _ in range(20):
+        response = await test_client.get("/recipes/random-public")
+        assert response.status_code == 200
+        if "My Public Dish" in response.text:
+            seen_titles.add("My Public Dish")
+        if "Shared Dish" in response.text:
+            seen_titles.add("Shared Dish")
+        assert "My Private Dish" not in response.text
+        if seen_titles == {"My Public Dish", "Shared Dish"}:
+            break
+
+    assert seen_titles == {"My Public Dish", "Shared Dish"}
+
+
+@pytest.mark.asyncio
+async def test_random_public_recipe_empty_when_none_available(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """With no public recipes at all, show an empty page instead of 404."""
+    await _make_recipe(default_user, "My Private Dish", private=True)
 
     response = await test_client.get("/recipes/random-public")
 
     assert response.status_code == 200
-    assert "Shared Dish" in response.text
-    assert "My Dish" not in response.text
+    assert "No public recipes are available yet." in response.text
+    assert "My Private Dish" not in response.text

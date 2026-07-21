@@ -4,7 +4,7 @@ Plan dinners for the week from your own recipes, then turn that plan into a groc
 
 ## What you can do
 
-- **Recipes** — Add, edit, search, and tag recipes. Optionally attach an image via an http(s) URL (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, or `.avif` — not SVG). Mark recipes public so others can view or import them; keep yours private by default. Find recipes missing tags and fill them in quickly.
+- **Recipes** — Add, edit, search, and tag recipes. Optionally attach an image via an http(s) URL (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, or `.avif` — not SVG). Mark recipes public so others can view or import them; keep yours private by default. Find recipes missing tags or a description and fill them in quickly.
 - **Week menu** — Fill each day with a recipe (search, pin, or randomize). Set servings per day, reorder days, and optionally constrain random picks by tags (same tag all week, vary across the week, or at least N days with a tag). Copy the week as plain text when you want to share it.
 - **Grocery list** — Generate from the week menu (replace, add to, or keep an existing list). Sort items into shops, mark things to check or already have, edit amounts, and copy a shop-grouped list for messaging. Add one-off items or your saved weekly staples in one click.
 - **Your catalog** — Ingredients, units, tag groups, and shops are yours alone. Merge duplicate ingredients or units when things get messy. Manage recurring weekly groceries under Settings.

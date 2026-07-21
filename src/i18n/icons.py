@@ -9,6 +9,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "nav.random_private_recipe": "🎲 ",
     "nav.random_public_recipe": "🌍 ",
     "nav.missing_tags": "🏷️ ",
+    "nav.missing_description": "📝 ",
     "nav.settings": "⚙️ ",
     "nav.tag_groups": "🏷️ ",
     "nav.shops": "🏪 ",
