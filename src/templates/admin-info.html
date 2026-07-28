@@ -11,20 +11,20 @@
 
     <section class="recipe-section">
         <h2 class="section-title">{{ t('admin.info.section.database') }}</h2>
-        <p class="profile-detail"><strong>{{ t('admin.info.label.database_backend') }}</strong> {{ info.database_backend }}</p>
-        <p class="profile-detail"><strong>{{ t('admin.info.label.database_url') }}</strong> <code>{{ info.database_url }}</code></p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.database_backend') }}</span> {{ info.database_backend }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.database_url') }}</span> <code>{{ info.database_url }}</code></p>
         {% if info.postgres_version %}
-        <p class="profile-detail"><strong>{{ t('admin.info.label.postgres_version') }}</strong> {{ info.postgres_version }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.postgres_version') }}</span> {{ info.postgres_version }}</p>
         {% endif %}
-        <p class="profile-detail"><strong>{{ t('admin.info.label.user_count') }}</strong> {{ info.user_count }}</p>
-        <p class="profile-detail"><strong>{{ t('admin.info.label.recipe_count') }}</strong> {{ info.recipe_count }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.user_count') }}</span> {{ info.user_count }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.recipe_count') }}</span> {{ info.recipe_count }}</p>
     </section>
 
     <section class="recipe-section">
         <h2 class="section-title">{{ t('admin.info.section.runtime') }}</h2>
-        <p class="profile-detail"><strong>{{ t('admin.info.label.python_version') }}</strong> {{ info.python_version }}</p>
-        <p class="profile-detail"><strong>{{ t('admin.info.label.platform') }}</strong> {{ info.platform }}</p>
-        <p class="profile-detail"><strong>{{ t('admin.info.label.debug') }}</strong> {{ t('admin.info.debug.on') if info.debug else t('admin.info.debug.off') }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.python_version') }}</span> {{ info.python_version }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.platform') }}</span> {{ info.platform }}</p>
+        <p class="profile-detail"><span class="status-pill">{{ t('admin.info.label.debug') }}</span> {{ t('admin.info.debug.on') if info.debug else t('admin.info.debug.off') }}</p>
     </section>
 </div>
 {% endblock %}
