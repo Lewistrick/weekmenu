@@ -26,10 +26,15 @@
                     </form>
                     {% endif %}
                 {% endif %}
-                <form method="post" action="{{ base_path }}/recipes/{{ recipe.id }}/add-to-week-menu">
-                    <input type="hidden" name="source" value="view">
-                    <button type="submit" class="btn btn-primary">{{ t('recipe.view.action.add_to_week_menu') }}</button>
-                </form>
+                <div id="recipe-groceries-action">
+                    <form method="post" hx-post="{{ base_path }}/recipes/{{ recipe.id }}/add-to-groceries?servings={{ display_servings }}"
+                        hx-target="#recipe-groceries-action" hx-swap="outerHTML" class="recipe-add-groceries-form">
+                        <button type="submit" class="btn btn-primary btn-action">
+                            <span class="btn-action-icon" aria-hidden="true">🛒</span>
+                            <span>{{ t('grocery.action.add_to_grocery_list') }}</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         <div class="recipe-status" aria-label="{{ t('common.aria.recipe_metadata') }}">
@@ -66,8 +71,16 @@
     {% endif %}
 
     <section class="recipe-section">
+        <div class="recipe-servings-section">
+            <label for="view-recipe-servings">{{ t('common.servings') }}</label>
+            <input type="number" id="view-recipe-servings" class="form-control recipe-servings-input" value="{{ display_servings }}" min="1"
+                onchange="htmx.ajax('GET', '{{ base_path }}/recipes/{{ recipe.id }}/ingredients?servings=' + this.value, {target: '#recipe-ingredients', swap: 'innerHTML'})">
+        </div>
+    </section>
+
+    <section class="recipe-section">
         <h2 class="section-title">{{ t('common.ingredients') }}</h2>
-        <ul class="recipe-ingredient-list">
+        <ul class="recipe-ingredient-list" id="recipe-ingredients">
             {% for ingredient in ingredients %}
             <li>{{ ingredient.quantity }} {{ ingredient.unit.abbrev }} {{ ingredient.ingredient.name }}</li>
             {% endfor %}

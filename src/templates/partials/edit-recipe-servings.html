@@ -1,0 +1,5 @@
+<form hx-post="{{ base_path }}/recipes/edit-servings/{{ recipe.id }}" hx-target="#recipe-servings" hx-swap="innerHTML"
+    class="editable-field-form">
+    <input type="number" name="new_servings" class="form-control" value="{{ recipe.servings }}" min="1" required />
+    <button type="submit" class="btn btn-primary btn-sm">{{ t('common.save') }}</button>
+</form>

@@ -25,10 +25,25 @@ from src.models import (
     TagCategory,
     Unit,
 )
-from src.plan_store import load_start_day, load_week_menu, save_week_menu
+from src.plan_store import (
+    add_items_to_grocery_list,
+    find_grocery_line_in_store,
+    load_grocery_list,
+    load_start_day,
+    load_week_menu,
+    save_week_menu,
+)
 from src.recipe_image import parse_recipe_image_url
 from src.url_path import path_with_base
-from src.week_menu import assign_recipe_to_unpinned_day
+from src.week_menu import (
+    GroceryItem,
+    assign_recipe_to_unpinned_day,
+    build_grocery_list,
+    find_grocery_line,
+    ingredient_in_grocery_list,
+    normalize_servings,
+    scale_ingredient_quantity,
+)
 
 RecipeSchema = pydantic_model_creator(Recipe, name="Recept")
 IngredientSchema = pydantic_model_creator(Ingredient, name="Ingredient")
@@ -372,7 +387,7 @@ class RecipeController(Controller):
         )
 
     @get(path="/view/{recipe_id:int}", summary="Get the page to view a recipe")
-    async def view_recipe_page(self, request: Request, recipe_id: int) -> Template:
+    async def view_recipe_page(self, request: Request, recipe_id: int, servings: int | None = None) -> Template:
         """Render the read-only recipe detail page."""
         user_id = await self._current_user_id(request)
         recipe = await Recipe.filter(
@@ -385,6 +400,7 @@ class RecipeController(Controller):
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
+        display_servings = normalize_servings(servings) if servings is not None else recipe.servings
         can_edit = await self._user_owns(recipe.id, user_id)
         return Template(
             template_name="view-recipe.html",
@@ -392,10 +408,110 @@ class RecipeController(Controller):
                 "request": request,
                 "recipe": recipe,
                 "ingredients": ingredients,
+                "display_servings": display_servings,
                 "can_edit": can_edit,
                 "can_import": not can_edit,
                 "already_imported": await self._already_imported(user_id, recipe.id),
                 "recipe_tag_groups": await self._recipe_tags_by_category(recipe.id),
+            },
+        )
+
+    @get(
+        path="/{recipe_id:int}/ingredients",
+        summary="Get scaled ingredients for a recipe",
+    )
+    async def get_scaled_ingredients(
+        self, request: Request, recipe_id: int, servings: int | None = None
+    ) -> Template:
+        """Return recipe ingredients scaled to the given servings."""
+        user_id = await self._current_user_id(request)
+        recipe = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id
+        ).first()
+        if recipe is None:
+            raise NotFoundException()
+
+        ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
+        display_servings = normalize_servings(servings) if servings is not None else recipe.servings
+        recipe_servings = normalize_servings(recipe.servings)
+
+        scaled_ingredients = []
+        for ingredient in ingredients:
+            scaled_quantity = scale_ingredient_quantity(
+                ingredient.quantity, display_servings, recipe_servings
+            )
+            ingredient.quantity = scaled_quantity
+            scaled_ingredients.append(ingredient)
+
+        return Template(
+            template_name="partials/recipe-ingredients-list.html",
+            context={
+                "request": request,
+                "ingredients": scaled_ingredients,
+            },
+        )
+
+    @post(
+        path="/{recipe_id:int}/add-to-groceries",
+        summary="Add recipe ingredients to grocery list",
+    )
+    async def add_recipe_to_groceries(
+        self, request: Request, recipe_id: int, servings: int | None = None
+    ) -> Template:
+        """Add scaled recipe ingredients to the grocery list."""
+        user_id = await self._current_user_id(request)
+        recipe = await Recipe.filter(
+            self._visible_filter(user_id), id=recipe_id
+        ).first()
+        if recipe is None:
+            raise NotFoundException()
+
+        recipe_ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+            "ingredient", "unit"
+        )
+        display_servings = normalize_servings(servings) if servings is not None else recipe.servings
+        recipe_servings = normalize_servings(recipe.servings)
+
+        entries: list[GroceryItem] = []
+        for recipe_ingredient in recipe_ingredients:
+            scaled_quantity = scale_ingredient_quantity(
+                recipe_ingredient.quantity, display_servings, recipe_servings
+            )
+            entries.append(
+                GroceryItem(
+                    ingredient_id=recipe_ingredient.ingredient.id,
+                    name=recipe_ingredient.ingredient.name,
+                    unit=recipe_ingredient.unit.abbrev,
+                    quantity=scaled_quantity,
+                )
+            )
+
+        existing_list = await load_grocery_list(user_id)
+        already_existing = [
+            item for item in entries
+            if find_grocery_line(existing_list, item["ingredient_id"], item["unit"]) is not None
+        ]
+
+        if already_existing:
+            return Template(
+                template_name="partials/recipe-groceries-verify.html",
+                context={
+                    "request": request,
+                    "recipe_id": recipe_id,
+                    "servings": display_servings,
+                    "already_existing_count": len(already_existing),
+                },
+            )
+
+        await add_items_to_grocery_list(user_id, entries)
+        return Template(
+            template_name="partials/recipe-groceries-added.html",
+            context={
+                "request": request,
+                "recipe_name": recipe.name,
+                "item_count": len(entries),
             },
         )
 
@@ -662,6 +778,15 @@ class RecipeController(Controller):
             template_name="partials/edit-recipe-image.html", context={"recipe": recipe}
         )
 
+    @get(path="/servings-editor/{recipe_id:int}", summary="Servings editor")
+    async def servings_editor(self, request: Request, recipe_id: int) -> Template:
+        """Load the inline editor for servings."""
+        recipe = await self._get_owned_recipe(request, recipe_id)
+
+        return Template(
+            template_name="partials/edit-recipe-servings.html", context={"recipe": recipe}
+        )
+
     @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")
     async def edit_title(
         self,
@@ -744,6 +869,38 @@ class RecipeController(Controller):
                 "messages": messages,
                 "warnings": warnings,
             },
+        )
+
+    @post(path="/edit-servings/{recipe_id:int}", summary="Edit the servings")
+    async def edit_servings(
+        self,
+        request: Request,
+        recipe_id: int,
+        data: Annotated[
+            dict[str, Any], Body(media_type=RequestEncodingType.URL_ENCODED)
+        ],
+    ) -> Template:
+        """Edit the servings and return the updated display."""
+        recipe = await self._get_owned_recipe(request, recipe_id)
+
+        messages: list[str] = []
+        if new_servings_raw := data.get("new_servings"):
+            try:
+                new_servings = int(new_servings_raw)
+                if new_servings >= 1:
+                    recipe.servings = new_servings
+                    await recipe.save()
+                    messages.append(t("message.recipe.servings_updated"))
+                else:
+                    messages.append(t("message.recipe.servings_must_be_positive"))
+            except (ValueError, TypeError):
+                messages.append(t("message.recipe.servings_invalid"))
+        else:
+            messages.append(t("message.recipe.servings_not_saved"))
+
+        return Template(
+            template_name="partials/edited-recipe-servings.html",
+            context={"recipe": recipe, "messages": messages},
         )
 
     @post(path="/{recipe_id:int}/toggle-private", summary="Toggle recipe privacy")

@@ -37,11 +37,6 @@
                 <p class="section-hint">{{ t('recipe.field.image_url_hint') }}</p>
             </div>
 
-            <div class="form-group">
-                <label for="description">{{ t('common.description') }}</label>
-                <textarea id="description" name="description" rows="5" class="form-control"></textarea>
-            </div>
-
             <section class="form-section">
                 <div class="section-heading">
                     <h2 class="section-title">{{ t('common.ingredients') }}</h2>
@@ -53,6 +48,11 @@
                     {{ t('recipe.add.action.add_ingredient') }}
                 </button>
             </section>
+
+            <div class="form-group">
+                <label for="description">{{ t('common.description') }}</label>
+                <textarea id="description" name="description" rows="5" class="form-control"></textarea>
+            </div>
 
             <section class="form-section">
                 <div class="section-heading">
