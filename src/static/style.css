@@ -2279,3 +2279,25 @@ details.form-panel > :not(summary) {
         grid-template-columns: 1fr;
     }
 }
+
+.grocery-item-source-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #ddd;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.9rem;
+    z-index: 1000;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.grocery-item-source-overlay.show {
+    opacity: 1;
+}

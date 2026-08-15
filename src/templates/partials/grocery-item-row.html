@@ -5,8 +5,11 @@
 {% set active_shop_id = ingredient_shop_ids.get(item.ingredient_id) %}
 {% endif %}
 <li class="grocery-item{% if line_key in already_have_line_keys %} grocery-item--muted{% elif line_key in to_check_line_keys %} grocery-item--to-check{% endif %}"
-    id="grocery-line-{{ item.ingredient_id }}-{{ item.unit }}">
-    <div class="grocery-item-row">
+    id="grocery-line-{{ item.ingredient_id }}-{{ item.unit }}"
+    data-ingredient-id="{{ item.ingredient_id }}"
+    data-ingredient-name="{{ item.name }}">
+    <div class="grocery-item-row" onmousedown="window.groceryLongPress && window.groceryLongPress.start(event, this)" onmouseup="window.groceryLongPress && window.groceryLongPress.end(event)" onmouseleave="window.groceryLongPress && window.groceryLongPress.cancel()"
+        ontouchstart="window.groceryLongPress && window.groceryLongPress.start(event, this)" ontouchend="window.groceryLongPress && window.groceryLongPress.end(event)" ontouchcancel="window.groceryLongPress && window.groceryLongPress.cancel()">
         <span class="grocery-item-name">{{ item.name }}</span>
         <div id="grocery-amount-{{ item.ingredient_id }}-{{ item.unit }}" class="grocery-item-amount-wrap">
             {% include "partials/grocery-amount-display.html" %}

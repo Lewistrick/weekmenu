@@ -1,0 +1,4 @@
+<p class="recipe-servings-display">{{ recipe.servings }}</p>
+<button hx-get="{{ base_path }}/recipes/servings-editor/{{ recipe.id }}" hx-target="#recipe-servings" hx-swap="innerHTML"
+    class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_servings') }}" aria-label="{{ t('recipe.edit.aria.edit_servings') }}">{{ t('recipe.edit.action.edit_servings') }}</button>
+<p class="edit-success-message">{{ t('message.recipe.servings_saved') }}</p>

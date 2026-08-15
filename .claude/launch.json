@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "weekmenu",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "litestar", "--app", "src.app:app", "run", "-r"],
+      "port": 8000
+    }
+  ]
+}

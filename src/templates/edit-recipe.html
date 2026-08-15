@@ -40,6 +40,18 @@
 
     <section class="recipe-section">
         <div class="section-heading">
+            <h2 class="section-title">{{ t('common.servings') }}</h2>
+            <p class="section-hint">{{ t('recipe.edit.servings_hint') }}</p>
+        </div>
+        <div id="recipe-servings" class="editable-field">
+            <p class="recipe-servings-display">{{ recipe.servings }}</p>
+            <button hx-get="{{ base_path }}/recipes/servings-editor/{{ recipe.id }}" hx-target="#recipe-servings" hx-swap="innerHTML"
+                class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_servings') }}" aria-label="{{ t('recipe.edit.aria.edit_servings') }}">{{ t('recipe.edit.action.edit_servings') }}</button>
+        </div>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
             <h2 class="section-title">{{ t('common.ingredients') }}</h2>
             <p class="section-hint">{{ t('recipe.edit.ingredients_hint') }}</p>
         </div>

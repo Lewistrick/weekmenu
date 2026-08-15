@@ -1,0 +1,10 @@
+<div class="recipe-groceries-verification">
+    <p>{{ already_existing_count }} {{ t('common.ingredients') }} {{ t('message.recipe.already_in_grocery_list') }}</p>
+    <div class="verification-buttons">
+        <form method="post" hx-post="{{ base_path }}/recipes/{{ recipe_id }}/add-to-groceries?servings={{ servings }}&confirm=1"
+            hx-target="#recipe-groceries-action" hx-swap="outerHTML" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-ghost verification-confirm" title="{{ t('common.confirm') }}">✓</button>
+        </form>
+        <button type="button" class="btn btn-sm btn-ghost verification-cancel" title="{{ t('common.cancel') }}" hx-get="#" hx-on:click="this.parentElement.innerHTML = ''">✕</button>
+    </div>
+</div>
