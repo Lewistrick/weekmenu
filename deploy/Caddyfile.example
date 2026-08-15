@@ -1,0 +1,8 @@
+# Example Caddy site block for self-hosting Weekmenu behind your own reverse proxy.
+# This file is not used by the app Compose stack. Set APP_BASE_PATH to match the path prefix.
+
+example.com {
+	handle /weekmenu* {
+		reverse_proxy 127.0.0.1:8000
+	}
+}

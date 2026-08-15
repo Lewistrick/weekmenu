@@ -40,7 +40,9 @@ Local `uv run` defaults to SQLite at `src/recipes.sqlite3` unless `DATABASE_URL`
 3. One-time data import from an existing SQLite file (after Postgres is healthy):
    `uv run python scripts/migrate_sqlite_to_postgres.py --sqlite data/recipes.sqlite3`
 
-The site is served at `http://<host-IP>/weekmenu` on port **80** (HTTP only for now). Open firewall port 80; leave 8000 closed to the public.
+The Compose stack runs the app and PostgreSQL only. The app listens on `127.0.0.1:8000` (override with `APP_PORT`). Put a reverse proxy in front for HTTPS and any path prefix; set `APP_BASE_PATH` to match (for example `/weekmenu`). See [`deploy/Caddyfile.example`](deploy/Caddyfile.example) for a minimal Caddy snippet. Leave Postgres closed to the public.
+
+When this host uses the shared Docker network `host-edge` for a front-door proxy, Compose expects that network to already exist (start the proxy stack first, or `docker network create host-edge`).
 
 Keep SQLite backups under `data/backups/` before migrating. Compose stores Postgres data in the `pg-data` volume.
 

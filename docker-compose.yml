@@ -4,7 +4,7 @@ services:
     expose:
       - "8000"
     ports:
-      # Localhost-only direct access for debugging; public traffic goes via Caddy :80.
+      # Localhost-only debugging; public HTTPS comes from the host-level proxy.
       - "127.0.0.1:${APP_PORT:-8000}:8000"
     environment:
       APP_BASE_PATH: ${APP_BASE_PATH:-/weekmenu}
@@ -14,16 +14,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: unless-stopped
-
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    depends_on:
-      - app
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - weekmenu
     restart: unless-stopped
 
   postgres:
@@ -42,7 +37,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - default
     restart: unless-stopped
+
+networks:
+  edge:
+    external: true
+    name: host-edge
 
 volumes:
   pg-data:
