@@ -5,6 +5,7 @@ from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Template
 
+from src.admin_info import collect_admin_info
 from src.admin_translations import (
     language_choices,
     list_translation_tree,
@@ -79,6 +80,18 @@ class AdminController(Controller):
         """Render the users admin page with create form and user list."""
         await require_admin(request)
         return await self._render_users_page(request)
+
+    @get("/info")
+    async def info_page(self, request: Request) -> Template:
+        """Render technical runtime information for administrators."""
+        await require_admin(request)
+        return Template(
+            template_name="admin-info.html",
+            context={
+                "request": request,
+                "info": await collect_admin_info(),
+            },
+        )
 
     @post("/users")
     async def create_user(

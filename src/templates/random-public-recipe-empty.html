@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.random_public_recipe') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.random_public_recipe') }}</h1>
+        <p class="page-lead">{{ t('recipe.random_public.lead') }}</p>
+    </header>
+    <p class="search-placeholder">{{ t('recipe.random_public.empty') }}</p>
+</div>
+{% endblock %}

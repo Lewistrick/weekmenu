@@ -1,6 +1,11 @@
 :80 {
-	redir / /weekmenu/
 	handle /weekmenu* {
 		reverse_proxy app:8000
+	}
+	handle /istory* {
+		reverse_proxy istory-frontend:80
+	}
+	handle {
+		respond 404
 	}
 }

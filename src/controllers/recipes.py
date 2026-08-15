@@ -180,6 +180,18 @@ class RecipeController(Controller):
         return missing_rows
 
     @staticmethod
+    async def _recipes_missing_description(owner_id: int) -> list[Recipe]:
+        """Return the owner's recipes with an empty description.
+
+        Args:
+            owner_id: Only inspect recipes owned by this user.
+
+        Returns:
+            Recipes whose description is an empty string, ordered by name.
+        """
+        return await Recipe.filter(owner_id=owner_id, description="").order_by("name")
+
+    @staticmethod
     async def _missing_tags_row(owner_id: int, recipe_id: int) -> dict[str, Any] | None:
         """Return one missing-tags row, or None when the recipe is fully tagged.
 
@@ -324,17 +336,21 @@ class RecipeController(Controller):
 
     @get(path="/random-public", summary="View a random public recipe")
     async def random_public_recipe_page(self, request: Request) -> Template:
-        """Show a random public recipe from other users."""
+        """Show a random public recipe (including the current user's)."""
         user_id = await self._current_user_id(request)
-        recipes = await Recipe.filter(private=False).exclude(owner_id=user_id)
+        recipes = await Recipe.filter(private=False)
         if not recipes:
-            raise NotFoundException()
+            return Template(
+                template_name="random-public-recipe-empty.html",
+                context={"request": request},
+            )
         random_recipe = random.choice(recipes)
         logger.debug(f"Random public recipe: {random_recipe.name}")
         ingredients = await RecipeIngredient.filter(
             recipe=random_recipe.id
         ).select_related("ingredient", "unit")
         await random_recipe.fetch_related("owner", "creator")
+        owns_recipe = await self._user_owns(random_recipe.id, user_id)
 
         return Template(
             template_name="view-recipe.html",
@@ -342,10 +358,12 @@ class RecipeController(Controller):
                 "request": request,
                 "recipe": random_recipe,
                 "ingredients": ingredients,
-                "can_edit": False,
-                "can_import": True,
-                "already_imported": await self._already_imported(
-                    user_id, random_recipe.id
+                "can_edit": owns_recipe,
+                "can_import": not owns_recipe,
+                "already_imported": (
+                    False
+                    if owns_recipe
+                    else await self._already_imported(user_id, random_recipe.id)
                 ),
                 "recipe_tag_groups": await self._recipe_tags_by_category(
                     random_recipe.id
@@ -450,6 +468,18 @@ class RecipeController(Controller):
             context={
                 "request": request,
                 "rows": await self._recipes_missing_any_tag_group(user_id),
+            },
+        )
+
+    @get(path="/missing-description", summary="Find recipes missing a description")
+    async def recipes_missing_description_page(self, request: Request) -> Template:
+        """Show recipes that have an empty description."""
+        user_id = await self._current_user_id(request)
+        return Template(
+            template_name="recipes-missing-description.html",
+            context={
+                "request": request,
+                "recipes": await self._recipes_missing_description(user_id),
             },
         )
 

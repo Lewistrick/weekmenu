@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.recipes_missing_description') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.recipes_missing_description') }}</h1>
+        <p class="page-lead">{{ t('recipes_missing_description.lead') }}</p>
+    </header>
+
+    {% if recipes %}
+    <div class="recipes-missing-tags-list">
+        {% for recipe in recipes %}
+        <article class="form-panel recipes-missing-tags-row">
+            <a href="{{ base_path }}/recipes/view/{{ recipe.id }}" class="recipe-link">#{{ recipe.id }} {{ recipe.name }}</a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="search-placeholder">{{ t('recipes_missing_description.empty') }}</p>
+    {% endif %}
+</div>
+{% endblock %}
