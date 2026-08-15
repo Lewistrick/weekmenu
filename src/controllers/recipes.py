@@ -27,7 +27,6 @@ from src.models import (
 )
 from src.plan_store import (
     add_items_to_grocery_list,
-    find_grocery_line_in_store,
     load_grocery_list,
     load_start_day,
     load_week_menu,
@@ -38,9 +37,7 @@ from src.url_path import path_with_base
 from src.week_menu import (
     GroceryItem,
     assign_recipe_to_unpinned_day,
-    build_grocery_list,
     find_grocery_line,
-    ingredient_in_grocery_list,
     normalize_servings,
     scale_ingredient_quantity,
 )
@@ -386,8 +383,31 @@ class RecipeController(Controller):
             },
         )
 
+    @staticmethod
+    def _display_servings(servings: str | None, recipe: Recipe) -> int:
+        """Resolve the servings to display, always returning a valid integer.
+
+        The optional ``servings`` query value may be absent, empty, or invalid
+        (for example when the recipe view is opened straight from the week menu
+        with no parameter). In every such case we fall back to the recipe's own
+        servings, itself normalized so a missing or malformed stored value still
+        yields a sensible positive number rather than an empty field.
+
+        Args:
+            servings: Raw servings value from the query string, if any.
+            recipe: The recipe whose stored servings act as the fallback.
+
+        Returns:
+            A positive servings integer safe to render and pass back in URLs.
+        """
+        return normalize_servings(
+            servings, default_servings=normalize_servings(recipe.servings)
+        )
+
     @get(path="/view/{recipe_id:int}", summary="Get the page to view a recipe")
-    async def view_recipe_page(self, request: Request, recipe_id: int, servings: int | None = None) -> Template:
+    async def view_recipe_page(
+        self, request: Request, recipe_id: int, servings: str | None = None
+    ) -> Template:
         """Render the read-only recipe detail page."""
         user_id = await self._current_user_id(request)
         recipe = await Recipe.filter(
@@ -400,7 +420,7 @@ class RecipeController(Controller):
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
-        display_servings = normalize_servings(servings) if servings is not None else recipe.servings
+        display_servings = self._display_servings(servings, recipe)
         can_edit = await self._user_owns(recipe.id, user_id)
         return Template(
             template_name="view-recipe.html",
@@ -421,7 +441,7 @@ class RecipeController(Controller):
         summary="Get scaled ingredients for a recipe",
     )
     async def get_scaled_ingredients(
-        self, request: Request, recipe_id: int, servings: int | None = None
+        self, request: Request, recipe_id: int, servings: str | None = None
     ) -> Template:
         """Return recipe ingredients scaled to the given servings."""
         user_id = await self._current_user_id(request)
@@ -434,7 +454,7 @@ class RecipeController(Controller):
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
             "ingredient", "unit"
         )
-        display_servings = normalize_servings(servings) if servings is not None else recipe.servings
+        display_servings = self._display_servings(servings, recipe)
         recipe_servings = normalize_servings(recipe.servings)
 
         scaled_ingredients = []
@@ -458,7 +478,7 @@ class RecipeController(Controller):
         summary="Add recipe ingredients to grocery list",
     )
     async def add_recipe_to_groceries(
-        self, request: Request, recipe_id: int, servings: int | None = None
+        self, request: Request, recipe_id: int, servings: str | None = None
     ) -> Template:
         """Add scaled recipe ingredients to the grocery list."""
         user_id = await self._current_user_id(request)
@@ -468,10 +488,10 @@ class RecipeController(Controller):
         if recipe is None:
             raise NotFoundException()
 
-        recipe_ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
-            "ingredient", "unit"
-        )
-        display_servings = normalize_servings(servings) if servings is not None else recipe.servings
+        recipe_ingredients = await RecipeIngredient.filter(
+            recipe=recipe.id
+        ).select_related("ingredient", "unit")
+        display_servings = self._display_servings(servings, recipe)
         recipe_servings = normalize_servings(recipe.servings)
 
         entries: list[GroceryItem] = []
@@ -490,8 +510,10 @@ class RecipeController(Controller):
 
         existing_list = await load_grocery_list(user_id)
         already_existing = [
-            item for item in entries
-            if find_grocery_line(existing_list, item["ingredient_id"], item["unit"]) is not None
+            item
+            for item in entries
+            if find_grocery_line(existing_list, item["ingredient_id"], item["unit"])
+            is not None
         ]
 
         if already_existing:
@@ -784,7 +806,8 @@ class RecipeController(Controller):
         recipe = await self._get_owned_recipe(request, recipe_id)
 
         return Template(
-            template_name="partials/edit-recipe-servings.html", context={"recipe": recipe}
+            template_name="partials/edit-recipe-servings.html",
+            context={"recipe": recipe},
         )
 
     @post(path="/edit-title/{recipe_id:int}", summary="Edit the title")

@@ -807,6 +807,35 @@ div.search-results {
     flex: 0 0 auto;
 }
 
+/* Beat the `.form-group input { width: 100% }` rule inside the edit form so the
+   narrow number field leaves room for the save button on the same line. */
+.form-group .recipe-servings-input {
+    width: 5rem;
+}
+
+/* Keep the amount, the button, and any saved-message on one aligned row. */
+#recipe-servings {
+    align-items: center;
+    justify-content: flex-start;
+}
+
+#recipe-servings .recipe-servings-display {
+    margin: 0;
+    font-weight: 600;
+}
+
+#recipe-servings .messages {
+    margin: 0;
+}
+
+#recipe-servings .single-message {
+    margin: 0;
+}
+
+#recipe-servings .btn {
+    white-space: nowrap;
+}
+
 .subheader {
     display: flex;
     align-items: center;
