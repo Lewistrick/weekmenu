@@ -2,4 +2,5 @@
 alwaysApply: true
 ---
 
-When editing or creating a page, don't add the plaintext, but make a change in the i18n database table
+- When editing or creating a page, don't add the plaintext, but make a change in the i18n database table
+- Never write a `t('...')` call for a key you haven't added to both `catalog_en.py` and `catalog_nl.py` first

@@ -577,7 +577,9 @@ async def test_week_menu_uses_default_servings_from_user_settings(
 
     assert response.status_code == 200
     assert 'id="servings-monday"' in response.text
-    assert 'name="servings" value="4"' in response.text
+    # Attributes may be split across lines by template formatting, so tolerate
+    # any whitespace between them rather than asserting an exact substring.
+    assert re.search(r'name="servings"\s+value="4"', response.text)
 
 
 @pytest.mark.asyncio

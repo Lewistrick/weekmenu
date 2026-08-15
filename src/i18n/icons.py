@@ -29,6 +29,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "recipe.edit.action.edit_title": "✏️ ",
     "recipe.edit.action.edit_description": "✏️ ",
     "recipe.edit.action.edit_servings": "✏️ ",
+    "recipe.edit.action.save_servings": "💾 ",
     "recipe.edit.action.save_tags": "💾 ",
     "recipes_missing_tags.action.save": "💾 ",
     "recipes_missing_tags.action.cancel": "✕ ",

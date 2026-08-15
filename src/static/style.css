@@ -792,6 +792,21 @@ div.search-results {
     border-top: 1px solid #555;
 }
 
+.recipe-servings-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.recipe-servings-label {
+    font-weight: 600;
+}
+
+.recipe-servings-input {
+    width: 5rem;
+    flex: 0 0 auto;
+}
+
 .subheader {
     display: flex;
     align-items: center;

@@ -15,3 +15,6 @@ Navigation can be done from the home page and the navbar. the navigation options
 2. Prefer semantic, reusable classes (`recipe-link`, `tag-group-chip`, `manage-shop-color-input`) over page-prefixed ones (`week-menu-recipe-link`, `recipes-missing-tags-recipe-link`, `color-input`).
 3. Use generic classes and avoid page-specific classes as much as possible; they are only for layout unique to that page (e.g. `recipes-missing-tags-list` as a container), not for styling common UI elements.
 4. When copying UI from another page, copy the **same class names** from that page’s template — do not recreate the look with new CSS.
+
+### Success/warning messages
+- For success/feedback after an HTMX edit, reuse the existing flash-messages system (pass a messages list from the controller and {% include "partials/flash-messages.html" %} with a message_scope) and never hand-render a translation key as literal display text.

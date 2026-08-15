@@ -15,6 +15,18 @@
             {% include "partials/grocery-amount-display.html" %}
         </div>
     </div>
+    {% set origin = origins.get(item.ingredient_id) if origins else None %}
+    <div class="grocery-item-origin" hidden>
+        {% if origin and origin.recipe_names %}
+        <div class="grocery-item-origin-line">{{ t('grocery.origin.from_recipes') }} {{ origin.recipe_names | join(', ') }}</div>
+        {% endif %}
+        {% if origin and origin.from_weekly %}
+        <div class="grocery-item-origin-line">{{ t('grocery.origin.from_weekly') }}</div>
+        {% endif %}
+        {% if not origin or (not origin.recipe_names and not origin.from_weekly) %}
+        <div class="grocery-item-origin-line">{{ t('grocery.origin.manual') }}</div>
+        {% endif %}
+    </div>
     <div class="shop-chip-row" role="group" aria-label="{{ t('grocery.aria.actions_for_item', item_name=item.name) }}">
         {% for shop in shops %}
         <form method="post" hx-post="{{ base_path }}/week-menu/grocery-list/assign" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"

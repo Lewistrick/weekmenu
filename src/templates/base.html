@@ -85,10 +85,12 @@
                     const li = element.closest('li.grocery-item');
                     if (!li) return;
 
+                    const originSource = li.querySelector('.grocery-item-origin');
+
                     timeout = setTimeout(() => {
                         overlay = document.createElement('div');
                         overlay.className = 'grocery-item-source-overlay';
-                        overlay.innerHTML = '<p>Added from recipe</p>';
+                        overlay.innerHTML = originSource ? originSource.innerHTML : '';
 
                         li.style.position = 'relative';
                         li.appendChild(overlay);

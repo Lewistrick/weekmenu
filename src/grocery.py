@@ -21,6 +21,53 @@ class GroceryGroup(TypedDict):
     entries: list[GroceryItem]
 
 
+class IngredientOrigin(TypedDict):
+    """Reconstructed explanation of why an ingredient is on the grocery list.
+
+    Origins are not stored; they are recomputed from the current week menu and
+    weekly groceries. An ingredient can come from one or more week-menu recipes,
+    from the weekly groceries, from both, or from neither (added manually).
+    """
+
+    recipe_names: list[str]
+    from_weekly: bool
+
+
+def compute_ingredient_origins(
+    recipe_ingredient_ids: dict[int, set[int]],
+    recipe_names: dict[int, str],
+    weekly_ingredient_ids: set[int],
+) -> dict[int, IngredientOrigin]:
+    """Map each ingredient id to how it ended up on the grocery list.
+
+    Args:
+        recipe_ingredient_ids: Week-menu recipe id to the set of ingredient ids
+            it contains.
+        recipe_names: Week-menu recipe id to its display name.
+        weekly_ingredient_ids: Ingredient ids present in the weekly groceries.
+
+    Returns:
+        A mapping of ingredient id to its origin. Ingredient ids that appear in
+        neither source are absent, which callers treat as "added manually".
+    """
+    all_ingredient_ids: set[int] = set(weekly_ingredient_ids)
+    for ingredient_ids in recipe_ingredient_ids.values():
+        all_ingredient_ids |= ingredient_ids
+
+    origins: dict[int, IngredientOrigin] = {}
+    for ingredient_id in all_ingredient_ids:
+        names = sorted(
+            recipe_names[recipe_id]
+            for recipe_id, ingredient_ids in recipe_ingredient_ids.items()
+            if ingredient_id in ingredient_ids and recipe_id in recipe_names
+        )
+        origins[ingredient_id] = IngredientOrigin(
+            recipe_names=names,
+            from_weekly=ingredient_id in weekly_ingredient_ids,
+        )
+    return origins
+
+
 def format_grocery_line(item: GroceryItem) -> str:
     """Format one grocery line as ``{ingredient} - {amount} {unit}``."""
     quantity = format(item["quantity"], "g")

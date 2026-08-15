@@ -12,6 +12,7 @@ from tortoise.expressions import Q
 from src.auth import get_current_user
 from src.catalog import get_or_create_ingredient
 from src.grocery import (
+    compute_ingredient_origins,
     format_grocery_export,
     format_week_menu_export,
     split_grocery_lists,
@@ -365,6 +366,42 @@ class WeekMenuController(Controller):
 
         return build_grocery_list(entries)
 
+    async def _ingredient_origins(self, request: Request) -> dict:
+        """Reconstruct where each grocery ingredient came from.
+
+        Origins are not persisted; they are recomputed from the current week
+        menu (recipe names) and the weekly groceries. Ingredients matching
+        neither source are treated as manually added by the template.
+
+        Returns:
+            A mapping of ingredient id to its :class:`IngredientOrigin`.
+        """
+        user_id = await self._viewer_id(request)
+        default_servings = await self._default_servings(request)
+        menu = await load_week_menu(user_id, default_servings=default_servings)
+        recipe_ids = [
+            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
+        ]
+        recipes_by_id = await self._recipes_by_id(recipe_ids)
+        recipe_names = {rid: recipe.name for rid, recipe in recipes_by_id.items()}
+
+        recipe_ingredient_ids: dict[int, set[int]] = defaultdict(set)
+        if recipe_ids:
+            recipe_ingredients = await RecipeIngredient.filter(
+                recipe_id__in=recipe_ids
+            ).select_related("recipe", "ingredient")
+            for recipe_ingredient in recipe_ingredients:
+                recipe_ingredient_ids[recipe_ingredient.recipe.id].add(
+                    recipe_ingredient.ingredient.id
+                )
+
+        weekly_ingredient_ids = {
+            item["ingredient_id"] for item in await weekly_groceries_as_items(user_id)
+        }
+        return compute_ingredient_origins(
+            dict(recipe_ingredient_ids), recipe_names, weekly_ingredient_ids
+        )
+
     async def _build_grocery_context(
         self,
         request: Request,
@@ -429,6 +466,7 @@ class WeekMenuController(Controller):
             "units": units,
             "grocery_action_message": action_message,
             "grocery_add_reset_form": grocery_add_reset_form,
+            "origins": await self._ingredient_origins(request),
         }
 
     async def _grocery_add_response(
