@@ -69,6 +69,25 @@
     --shadow: rgba(0, 0, 0, 0.25);
     --shadow-strong: rgba(0, 0, 0, 0.35);
     --shadow-overlay: rgba(0, 0, 0, 0.5);
+
+    /* Spacing scale */
+    --space-px: 0.125rem;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-7: 2rem;
+
+    /* Radius scale */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-pill: 999px;
+    --radius-circle: 50%;
 }
 
 body {
@@ -86,10 +105,10 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-4);
     background-color: var(--bg-chrome);
     color: var(--text);
-    padding: 0.65rem 1.75rem 0.65rem 1.25rem;
+    padding: var(--space-3) var(--space-6) var(--space-3) var(--space-5);
     border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -108,7 +127,7 @@ a {
 .navbar-links {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .nav-group {
@@ -129,9 +148,9 @@ a {
     left: 0;
     display: none;
     min-width: 13rem;
-    padding: 0.4rem;
+    padding: var(--space-2);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface-alt);
     z-index: 10;
 }
@@ -139,7 +158,7 @@ a {
 .nav-group[open] .nav-group-menu {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-1);
 }
 
 .nav-group--right .nav-group-menu {
@@ -150,8 +169,8 @@ a {
 .nav-link {
     color: var(--text);
     text-decoration: none;
-    padding: 0.45rem 0.85rem;
-    border-radius: 6px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background-color: var(--bg-surface);
     font-size: 0.9rem;
@@ -179,26 +198,26 @@ a {
 
 .single-message {
     background-color: var(--success-bg);
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--success-border);
-    margin: 5px;
-    padding: 5px;
+    margin: var(--space-1);
+    padding: var(--space-1);
 }
 
 .warning-message {
     background-color: var(--warn-bg);
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--warn-border);
     color: var(--warn-text);
-    margin: 5px;
-    padding: 5px;
+    margin: var(--space-1);
+    padding: var(--space-1);
 }
 
 .flash-banner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .flash-banner-text {
@@ -207,16 +226,16 @@ a {
 }
 
 div.search-results {
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     display: inline-block;
-    margin-right: 10px;
-    padding: 5px;
+    margin-right: var(--space-2);
+    padding: var(--space-1);
     vertical-align: text-top;
 }
 
 .container {
     margin: 0 15%;
-    padding: 1rem;
+    padding: var(--space-4);
 }
 
 .content-page,
@@ -226,13 +245,13 @@ div.search-results {
 }
 
 .page-header {
-    margin-bottom: 1.75rem;
-    padding-bottom: 1rem;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
     border-bottom: 1px solid var(--border);
 }
 
 .page-title-main {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--space-2);
     font-size: 1.75rem;
     font-weight: 600;
     color: var(--text-strong);
@@ -248,16 +267,16 @@ div.search-results {
 .quick-actions {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .action-card {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem 1.1rem;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-4);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface);
     text-decoration: none;
     color: inherit;
@@ -283,23 +302,23 @@ div.search-results {
 
 .search-panel,
 .form-panel {
-    padding: 1.25rem;
+    padding: var(--space-5);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface);
 }
 
 .field-label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text);
 }
 
 .form-control {
-    padding: 0.55rem 0.65rem;
-    border-radius: 6px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border-strong);
     background-color: var(--bg-control-hover);
     color: var(--text);
@@ -315,7 +334,7 @@ div.search-results {
 }
 
 .search-results-panel {
-    margin-top: 1rem;
+    margin-top: var(--space-4);
 }
 
 .search-placeholder {
@@ -326,21 +345,21 @@ div.search-results {
 
 .search-result-list {
     list-style: none;
-    margin: 0.75rem 0 0;
+    margin: var(--space-3) 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .search-result-item {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: var(--space-3);
     width: 100%;
-    padding: 0.75rem 0.9rem;
+    padding: var(--space-3) var(--space-4);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-raised);
     color: var(--text-heading);
     text-align: left;
@@ -366,30 +385,30 @@ div.search-results {
 }
 
 .form-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
 }
 
 .search-panel .form-section {
-    margin-top: 1.25rem;
+    margin-top: var(--space-5);
 }
 
 .tag-group-fieldset {
-    margin: 0 0 1rem;
+    margin: 0 0 var(--space-4);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
 }
 
 .tag-group-fieldset legend {
-    padding: 0 0.35rem;
+    padding: 0 var(--space-1);
     color: var(--text-heading);
 }
 
 .tag-group-chip {
     display: inline-flex;
     align-items: center;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
     background-color: var(--tag-bg, #2563eb);
     color: var(--tag-fg, #ffffff);
     border: 1px solid var(--veil-chip-border);
@@ -398,7 +417,7 @@ div.search-results {
 }
 
 .tag-group-chip--small {
-    padding: 0.15rem 0.45rem;
+    padding: var(--space-px) var(--space-2);
     font-size: 0.8rem;
 }
 
@@ -409,34 +428,34 @@ div.search-results {
 .tag-options {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin: 0.75rem 0;
+    gap: var(--space-3);
+    margin: var(--space-3) 0;
 }
 
 .tag-option {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
     font-size: 0.9rem;
 }
 
 .recipes-missing-tags-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .recipes-missing-tags-row {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .recipes-missing-tags-groups {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem;
+    gap: var(--space-2);
 }
 
 .missing-tags-group-slot {
@@ -458,30 +477,30 @@ div.search-results {
 
 .missing-tags-group-editor {
     flex: 1 1 100%;
-    padding: 0.65rem 0.75rem;
+    padding: var(--space-3) var(--space-3);
     border: 1px solid var(--border-strong);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface);
 }
 
 .missing-tags-group-editor-form {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: var(--space-3);
 }
 
 .manage-tag-form {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0.65rem;
+    gap: var(--space-3);
     margin: 0;
 }
 
 .manage-tag-form-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
     flex-wrap: wrap;
 }
 
@@ -497,7 +516,7 @@ div.search-results {
 
 .manage-tag-label {
     width: 6rem;
-    margin-top: 0.45rem;
+    margin-top: var(--space-2);
     margin-bottom: 0;
     text-align: left;
 }
@@ -528,19 +547,19 @@ div.search-results {
     display: flex;
     align-items: end;
     justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
 }
 
 .week-menu-start-day {
     display: flex;
     align-items: flex-start;
-    gap: 0.6rem;
+    gap: var(--space-2);
 }
 
 .week-menu-start-day .field-label {
     margin-bottom: 0;
-    margin-top: 0.45rem;
+    margin-top: var(--space-2);
 }
 
 .week-menu-start-day .form-control {
@@ -548,20 +567,20 @@ div.search-results {
 }
 
 .week-menu-options {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
 }
 
 .week-menu-options-header {
-    margin-bottom: 0.65rem;
+    margin-bottom: var(--space-3);
 }
 
 .week-menu-constraints-summary {
-    padding: 0.5rem 0.65rem;
-    margin-bottom: 0.75rem;
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-3);
 }
 
 .week-menu-constraints-summary .subheader {
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--space-1);
 }
 
 .week-menu-constraints-summary .subheader .section-title {
@@ -572,15 +591,15 @@ div.search-results {
 .week-menu-constraints-summary-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-1);
 }
 
 .week-menu-constraint-readonly {
     display: grid;
     grid-template-columns: minmax(7rem, 9rem) 1fr;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.1rem 0;
+    gap: var(--space-3);
+    padding: var(--space-px) 0;
 }
 
 .week-menu-constraint-readonly .tag-group-chip {
@@ -595,7 +614,7 @@ div.search-results {
 }
 
 .week-menu-options-header .section-title {
-    margin: 0 0 0.2rem;
+    margin: 0 0 var(--space-1);
     font-size: 0.95rem;
 }
 
@@ -608,24 +627,24 @@ div.search-results {
 .week-menu-constraints-form {
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: var(--space-2);
 }
 
 .week-menu-constraints-form .form-actions {
-    margin-top: 0.35rem;
+    margin-top: var(--space-1);
 }
 
 .week-menu-constraint-row {
     display: grid;
     grid-template-columns: minmax(6rem, 8rem) minmax(9rem, 1.4fr) 1fr;
-    gap: 0.5rem;
+    gap: var(--space-2);
     align-items: center;
 }
 
 .week-menu-constraint-extra {
     display: grid;
     grid-template-columns: minmax(8rem, 1fr) 4.5rem;
-    gap: 0.5rem;
+    gap: var(--space-2);
     min-width: 0;
 }
 
@@ -668,17 +687,17 @@ div.search-results {
 .week-menu-panel {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: var(--space-2);
 }
 
 .week-menu-day {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.3rem 0.55rem;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface);
 }
 
@@ -690,7 +709,7 @@ div.search-results {
 .week-menu-move {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: var(--space-px);
     flex: 0 0 auto;
 }
 
@@ -715,7 +734,7 @@ div.search-results {
     flex: 1 1 auto;
     display: flex;
     align-items: baseline;
-    gap: 0.6rem;
+    gap: var(--space-2);
     min-width: 0;
 }
 
@@ -730,7 +749,7 @@ div.search-results {
 .week-menu-day-actions {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
     flex: 0 0 auto;
 }
 
@@ -772,24 +791,24 @@ div.search-results {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.65rem;
+    gap: var(--space-3);
 }
 
 .week-menu-footer-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
     border-top: 1px solid var(--border);
 }
 
 .btn-action {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 1.15rem;
-    border-radius: 10px;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-lg);
     font-size: 0.95rem;
     font-weight: 600;
     text-decoration: none;
@@ -832,7 +851,7 @@ div.search-results {
 .week-menu-day-servings {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: var(--space-2);
     flex: 0 0 auto;
 }
 
@@ -844,23 +863,23 @@ div.search-results {
 
 .week-menu-servings-input {
     width: 3.6rem;
-    padding: 0.3rem 0.4rem;
+    padding: var(--space-1) var(--space-2);
     font-size: 0.85rem;
 }
 
 .toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
 }
 
 .grocery-add-weekly-form {
-    margin-top: 0.65rem;
+    margin-top: var(--space-3);
 }
 
 .content-divider {
-    margin: 0 0 1rem;
+    margin: 0 0 var(--space-4);
     border: none;
     border-top: 1px solid var(--border);
 }
@@ -868,7 +887,7 @@ div.search-results {
 .recipe-servings-section {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .recipe-servings-label {
@@ -913,14 +932,14 @@ div.search-results {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .form-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .form-actions--end {
@@ -928,7 +947,7 @@ div.search-results {
 }
 
 .grocery-column .subheader {
-    margin-top: 1.25rem;
+    margin-top: var(--space-5);
 }
 
 .subheader .grocery-subsection-title {
@@ -958,7 +977,7 @@ div.search-results {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .grocery-generate-choice {
@@ -979,7 +998,7 @@ div.search-results {
 .grocery-inline-confirm {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
 }
 
 .grocery-inline-confirm-label {
@@ -1000,7 +1019,7 @@ div.search-results {
 }
 
 .grocery-clear-list-icon {
-    margin-right: 0.25rem;
+    margin-right: var(--space-1);
 }
 
 .grocery-check-all-trigger {
@@ -1020,7 +1039,7 @@ div.search-results {
 }
 
 .grocery-shop-group .subheader {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .subheader .grocery-shop-title {
@@ -1030,7 +1049,7 @@ div.search-results {
 .grocery-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1rem;
+    gap: var(--space-4);
     align-items: start;
 }
 
@@ -1043,17 +1062,17 @@ div.search-results {
 }
 
 .grocery-subsection-title {
-    margin: 1.25rem 0 0.5rem;
+    margin: var(--space-5) 0 var(--space-2);
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-muted);
 }
 
 .grocery-shop-group {
-    margin-bottom: 1rem;
-    padding: 0.75rem;
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
     border: 1px solid color-mix(in srgb, var(--shop-bg, #2563eb) 65%, var(--bg-body));
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background-color: var(--shop-bg, #2563eb);
     color: var(--shop-fg, #ffffff);
 }
@@ -1075,8 +1094,8 @@ div.search-results {
 .grocery-shop-title {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0 0 0.5rem;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
     font-size: 1rem;
     color: var(--shop-fg, #e8e8e8);
 }
@@ -1084,10 +1103,10 @@ div.search-results {
 .grocery-item {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
-    padding: 0.5rem 0.65rem;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface);
 }
 
@@ -1095,7 +1114,7 @@ div.search-results {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--space-3);
     width: 100%;
 }
 
@@ -1104,9 +1123,9 @@ div.search-results {
 }
 
 .grocery-item-amount {
-    padding: 0.15rem 0.35rem;
+    padding: var(--space-px) var(--space-1);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--link);
     font: inherit;
@@ -1124,20 +1143,20 @@ div.search-results {
 .grocery-amount-form {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
     flex-wrap: wrap;
     justify-content: flex-end;
 }
 
 .grocery-amount-input {
     width: 4.5rem;
-    padding: 0.25rem 0.4rem;
+    padding: var(--space-1) var(--space-2);
     font-size: 0.85rem;
 }
 
 .grocery-unit-select {
     width: 4.5rem;
-    padding: 0.25rem 0.4rem;
+    padding: var(--space-1) var(--space-2);
     font-size: 0.85rem;
 }
 
@@ -1170,17 +1189,17 @@ div.search-results {
 }
 
 .grocery-copy-section {
-    margin-top: 1.25rem;
+    margin-top: var(--space-5);
 }
 
 .grocery-copy-section .subheader {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .shop-chip-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem;
+    gap: var(--space-1);
     width: 100%;
 }
 
@@ -1196,7 +1215,7 @@ div.search-results {
     height: 2rem;
     padding: 0;
     border: 1px solid var(--veil-chip-border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.85rem;
     font-weight: 700;
     line-height: 1;
@@ -1244,9 +1263,9 @@ div.search-results {
 .plaintext-export {
     width: 100%;
     min-height: 8rem;
-    padding: 0.75rem;
+    padding: var(--space-3);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-surface-alt);
     color: inherit;
     font-family: inherit;
@@ -1257,21 +1276,21 @@ div.search-results {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.65rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 .manage-shop-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .manage-shop-edit-form {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0.65rem;
+    gap: var(--space-3);
     margin-bottom: 0;
 }
 
@@ -1283,14 +1302,14 @@ div.search-results {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .manage-shop-color-input {
     width: 3rem;
     min-width: 3rem;
     height: 2.25rem;
-    padding: 0.15rem;
+    padding: var(--space-px);
 }
 
 .manage-shop-ingredient-grid {
@@ -1300,32 +1319,32 @@ div.search-results {
 .manage-shop-ingredient-tile {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: var(--space-3);
 }
 
 .manage-shop-ingredient-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .manage-shop-ingredient-meta {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
     flex-shrink: 0;
 }
 
 .manage-shop-assignment-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: var(--space-5);
 }
 
 .manage-shop-assignment-group-title {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0 0 0.75rem;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-heading);
@@ -1341,7 +1360,7 @@ div.search-results {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-1);
 }
 
 .weekly-grocery-list {
@@ -1350,11 +1369,11 @@ div.search-results {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: var(--space-1);
 }
 
 .weekly-grocery-list .ingredient-input {
-    padding: 0.35rem 0.5rem;
+    padding: var(--space-1) var(--space-2);
 }
 
 .weekly-grocery-row {
@@ -1375,7 +1394,7 @@ div.search-results {
 .ingredient-unit-pair-list {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: var(--space-3);
 }
 
 .form-panel.is-incomplete {
@@ -1393,24 +1412,24 @@ details.form-panel > summary::-webkit-details-marker {
 }
 
 details.form-panel > summary .section-hint {
-    margin-left: 0.35rem;
+    margin-left: var(--space-1);
 }
 
 details.form-panel > :not(summary) {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
     border-top: 1px solid var(--veil-border);
 }
 
 .recipe-link + .section-hint {
-    margin-left: 0.35rem;
+    margin-left: var(--space-1);
 }
 
 .ingredient-unit-pair-summary {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.65rem 1rem;
+    gap: var(--space-3) var(--space-4);
 }
 
 .ingredient-unit-pair-name {
@@ -1422,7 +1441,7 @@ details.form-panel > :not(summary) {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem;
+    gap: var(--space-2);
     flex: 1 1 auto;
 }
 
@@ -1432,14 +1451,14 @@ details.form-panel > :not(summary) {
 
 .unit-chip {
     display: inline-block;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
+    padding: var(--space-px) var(--space-2);
+    border-radius: var(--radius-pill);
     background-color: var(--bg-surface-alt);
     border: 1px solid var(--border-strong);
 }
 
 .ingredient-unit-target-fieldset {
-    margin: 0.75rem 0 0;
+    margin: var(--space-3) 0 0;
     padding: 0;
     border: 0;
 }
@@ -1447,20 +1466,20 @@ details.form-panel > :not(summary) {
 .ingredient-unit-target-option {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    margin-right: 1rem;
+    gap: var(--space-1);
+    margin-right: var(--space-4);
 }
 
 .ingredient-unit-conversion-input {
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
 }
 
 .ingredient-unit-ratio-input {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem 0.65rem;
-    margin-top: 0.35rem;
+    gap: var(--space-2) var(--space-3);
+    margin-top: var(--space-1);
 }
 
 .ingredient-unit-amount-input {
@@ -1476,15 +1495,15 @@ details.form-panel > :not(summary) {
 
 .ingredient-unit-ratio-equals {
     color: var(--text-muted);
-    padding: 0 0.15rem;
+    padding: 0 var(--space-px);
 }
 
 .form-panel .form-actions {
-    margin-top: 0.85rem;
+    margin-top: var(--space-3);
 }
 
 .ingredient-unit-conversion-message {
-    margin-bottom: 0.65rem;
+    margin-bottom: var(--space-3);
 }
 
 .recipe-id-link {
@@ -1506,21 +1525,21 @@ details.form-panel > :not(summary) {
 .ingredient-merge-form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .ingredient-merge-selectors {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .ingredient-merge-message {
-    margin-bottom: 0.65rem;
+    margin-bottom: var(--space-3);
 }
 
 .ingredient-merge-search-results {
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
 }
 
 .ingredient-merge-search .search-result-id {
@@ -1540,7 +1559,7 @@ details.form-panel > :not(summary) {
 
 .data-table th,
 .data-table td {
-    padding: 0.5rem 0.65rem;
+    padding: var(--space-2) var(--space-3);
     text-align: left;
     border-bottom: 1px solid var(--border);
 }
@@ -1562,25 +1581,25 @@ details.form-panel > :not(summary) {
     top: calc(100% - 0.2rem);
     z-index: 20;
     width: min(22rem, calc(100% - 1.1rem));
-    margin-top: 0.1rem;
-    padding: 0.5rem;
+    margin-top: var(--space-px);
+    padding: var(--space-2);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-inset);
     box-shadow: 0 6px 16px var(--shadow-strong);
 }
 
 .week-menu-search-results {
-    margin-top: 0.3rem;
+    margin-top: var(--space-1);
 }
 
 .week-menu-day-search .field-label {
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
     font-size: 0.8rem;
 }
 
 .week-menu-day-search .form-control {
-    padding: 0.4rem 0.5rem;
+    padding: var(--space-2) var(--space-2);
     font-size: 0.85rem;
 }
 
@@ -1603,19 +1622,19 @@ details.form-panel > :not(summary) {
 .ingredients-container {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 .success-message {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    padding: 0.85rem 1rem;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding: var(--space-3) var(--space-4);
     border: 1px solid var(--success-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--success-bg);
 }
 
@@ -1625,7 +1644,7 @@ details.form-panel > :not(summary) {
 }
 
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
     display: flex;
     flex-direction: column;
 }
@@ -1633,18 +1652,18 @@ details.form-panel > :not(summary) {
 .form-group--inline {
     flex-direction: row;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .form-group label {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
     font-weight: bold;
 }
 
 .form-group input,
 .form-group textarea {
-    padding: 0.5rem;
-    border-radius: 4px;
+    padding: var(--space-2);
+    border-radius: var(--radius-xs);
     border: 1px solid var(--border-strong);
     background-color: var(--bg-control-hover);
     color: var(--text);
@@ -1659,11 +1678,11 @@ details.form-panel > :not(summary) {
 .ingredient-input {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     margin: 0;
-    padding: 0.65rem;
+    padding: var(--space-3);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-raised);
 }
 
@@ -1671,10 +1690,10 @@ details.form-panel > :not(summary) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    padding: 0.5rem 1rem;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-4);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.2;
@@ -1684,7 +1703,7 @@ details.form-panel > :not(summary) {
 }
 
 .btn-sm {
-    padding: 0.35rem 0.75rem;
+    padding: var(--space-1) var(--space-3);
     font-size: 0.85rem;
 }
 
@@ -1748,13 +1767,13 @@ details.form-panel > :not(summary) {
 }
 
 .recipe-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.25rem;
+    margin-bottom: var(--space-7);
+    padding-bottom: var(--space-5);
     border-bottom: 1px solid var(--border);
 }
 
 .recipe-image-wrap {
-    margin: 0 0 1.5rem;
+    margin: 0 0 var(--space-6);
 }
 
 .recipe-image {
@@ -1764,18 +1783,18 @@ details.form-panel > :not(summary) {
     width: auto;
     height: auto;
     object-fit: contain;
-    border-radius: 0.35rem;
+    border-radius: var(--radius-sm);
 }
 
 .recipe-image-url {
-    margin: 0.5rem 0 0;
+    margin: var(--space-2) 0 0;
     font-size: 0.85rem;
     color: var(--text-muted);
     word-break: break-all;
 }
 
 .recipe-owner-line {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--space-2);
     font-size: 0.9rem;
     color: var(--text-muted);
 }
@@ -1789,18 +1808,18 @@ details.form-panel > :not(summary) {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
 }
 
 .recipe-title-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .home-group-section {
-    margin-top: 1.5rem;
+    margin-top: var(--space-6);
 }
 
 .recipe-title-main,
@@ -1813,21 +1832,21 @@ details.form-panel > :not(summary) {
 }
 
 .recipe-section {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-7);
 }
 
 .recipe-tag-groups {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
 }
 
 .recipe-tag-group {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: var(--space-2);
 }
 
 .recipe-description,
@@ -1848,7 +1867,7 @@ details.form-panel > :not(summary) {
 }
 
 .section-title {
-    margin: 0 0 0.25rem;
+    margin: 0 0 var(--space-1);
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-heading);
@@ -1862,7 +1881,7 @@ details.form-panel > :not(summary) {
 
 .recipe-ingredient-list {
     margin: 0;
-    padding-left: 1.25rem;
+    padding-left: var(--space-5);
     line-height: 1.6;
 }
 
@@ -1870,17 +1889,17 @@ details.form-panel > :not(summary) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.75rem;
-    padding-bottom: 1rem;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
     border-bottom: 1px solid var(--border);
 }
 
 .page-mode-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
     background-color: var(--accent-veil);
     border: 1px solid var(--accent);
     color: var(--link);
@@ -1894,11 +1913,11 @@ details.form-panel > :not(summary) {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--space-4);
+    padding: var(--space-4);
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .editable-field--stacked {
@@ -1911,7 +1930,7 @@ details.form-panel > :not(summary) {
 }
 
 .recipe-section--danger {
-    padding-top: 1rem;
+    padding-top: var(--space-4);
     border-top: 1px solid var(--border);
 }
 
@@ -1923,12 +1942,12 @@ details.form-panel > :not(summary) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin: 0.5rem 0;
-    padding: 0.65rem 0.85rem;
+    gap: var(--space-4);
+    margin: var(--space-2) 0;
+    padding: var(--space-3) var(--space-3);
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .ingredient-span {
@@ -1939,14 +1958,14 @@ details.form-panel > :not(summary) {
 .ingredient-actions {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
     flex-shrink: 0;
 }
 
 .recipe-status {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--space-2);
     font-size: 0.9rem;
     color: var(--text);
 }
@@ -1954,10 +1973,10 @@ details.form-panel > :not(summary) {
 .status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.25rem 0.55rem;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
     border: 1px solid var(--border-strong);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background-color: var(--veil-light);
 }
 
@@ -1968,12 +1987,12 @@ details.form-panel > :not(summary) {
 .recipe-status-editor {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-1);
     max-width: 20rem;
-    padding: 1rem;
+    padding: var(--space-4);
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .recipe-status-toggle {
@@ -1985,7 +2004,7 @@ details.form-panel > :not(summary) {
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--space-3);
     width: 100%;
     font-weight: normal;
 }
@@ -2008,7 +2027,7 @@ details.form-panel > :not(summary) {
     cursor: pointer;
     inset: 0;
     background-color: var(--border-strong);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     transition: background-color 0.2s ease;
 }
 
@@ -2020,7 +2039,7 @@ details.form-panel > :not(summary) {
     left: 0.2rem;
     top: 0.2rem;
     background-color: var(--text-invert);
-    border-radius: 50%;
+    border-radius: var(--radius-circle);
     transition: transform 0.2s ease;
 }
 
@@ -2039,7 +2058,7 @@ details.form-panel > :not(summary) {
 
     .navbar {
         flex-wrap: wrap;
-        padding: 0.75rem 1rem;
+        padding: var(--space-3) var(--space-4);
     }
 
     .navbar-links {
@@ -2095,13 +2114,13 @@ details.form-panel > :not(summary) {
     .week-menu-day {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.45rem;
+        gap: var(--space-2);
     }
 
     .week-menu-day-primary {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
+        gap: var(--space-2);
         min-width: 0;
     }
 
@@ -2109,8 +2128,8 @@ details.form-panel > :not(summary) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.5rem;
-        padding-left: 2.2rem;
+        gap: var(--space-2);
+        padding-left: var(--space-7);
         position: relative;
     }
 
@@ -2147,26 +2166,26 @@ details.form-panel > :not(summary) {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
+    padding: var(--space-6);
 }
 
 .auth-card {
     width: 100%;
     max-width: 22rem;
-    padding: 1.75rem;
+    padding: var(--space-6);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     background-color: var(--bg-surface);
     box-shadow: 0 10px 30px var(--shadow-strong);
 }
 
 .auth-title {
-    margin: 0 0 0.25rem;
+    margin: 0 0 var(--space-1);
     font-size: 1.5rem;
 }
 
 .auth-subtitle {
-    margin: 0 0 1.25rem;
+    margin: 0 0 var(--space-5);
     color: var(--text-muted);
     font-size: 0.9rem;
 }
@@ -2174,21 +2193,21 @@ details.form-panel > :not(summary) {
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-1);
 }
 
 .auth-form .field-label {
-    margin-top: 0.6rem;
+    margin-top: var(--space-2);
 }
 
 .auth-submit {
-    margin-top: 1.1rem;
+    margin-top: var(--space-4);
     width: 100%;
     justify-content: center;
 }
 
 .auth-switch {
-    margin: 1.1rem 0 0;
+    margin: var(--space-4) 0 0;
     font-size: 0.85rem;
     color: var(--text-muted);
     text-align: center;
@@ -2207,7 +2226,7 @@ details.form-panel > :not(summary) {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.4rem;
+    gap: var(--space-2);
     max-width: 22rem;
 }
 
@@ -2216,17 +2235,17 @@ details.form-panel > :not(summary) {
 }
 
 .profile-form .btn {
-    margin-top: 0.6rem;
+    margin-top: var(--space-2);
 }
 
 .profile-detail {
-    margin: 0 0 0.75rem;
+    margin: 0 0 var(--space-3);
 }
 
 .admin-temp-password {
     display: inline-block;
-    margin-left: 0.35rem;
-    padding: 0.15rem 0.4rem;
+    margin-left: var(--space-1);
+    padding: var(--space-px) var(--space-2);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     user-select: all;
 }
@@ -2245,8 +2264,8 @@ details.form-panel > :not(summary) {
 .include-public {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
-    margin: 0.75rem 0 0;
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
     font-size: 0.9rem;
     color: var(--text-muted);
     cursor: pointer;
@@ -2269,35 +2288,35 @@ details.form-panel > :not(summary) {
 .translations-group-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem 1rem;
-    margin-top: 0.5rem;
+    gap: var(--space-3) var(--space-4);
+    margin-top: var(--space-2);
 }
 
 .translations-group-filter {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
     font-size: 0.9rem;
     color: var(--text-muted);
     cursor: pointer;
 }
 
 .translations-incomplete-toggle {
-    margin-top: 1rem;
+    margin-top: var(--space-4);
     max-width: 22rem;
 }
 
 .translations-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-top: 1.25rem;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
 }
 
 .translations-group {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: var(--space-3);
     margin: 0;
 }
 
@@ -2311,7 +2330,7 @@ details.form-panel > :not(summary) {
 
 .translations-group-heading {
     margin: 0;
-    padding-bottom: 0.35rem;
+    padding-bottom: var(--space-1);
     border-bottom: 1px solid var(--border);
 }
 
@@ -2324,13 +2343,13 @@ details.form-panel > :not(summary) {
 .translations-group-body {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .translations-row {
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
     background: var(--bg-surface-alt);
 }
 
@@ -2345,7 +2364,7 @@ details.form-panel > :not(summary) {
 .translations-row-form {
     display: grid;
     grid-template-columns: minmax(8rem, 1.2fr) minmax(10rem, 1.4fr) minmax(10rem, 1.4fr) auto;
-    gap: 0.75rem;
+    gap: var(--space-3);
     align-items: end;
 }
 
@@ -2360,7 +2379,7 @@ details.form-panel > :not(summary) {
 .translations-row-field {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: var(--space-1);
     margin: 0;
 }
 
@@ -2404,8 +2423,8 @@ details.form-panel > :not(summary) {
     transform: translate(-50%, -50%);
     background-color: var(--overlay-bg);
     color: var(--text);
-    padding: 0.75rem 1rem;
-    border-radius: 0.25rem;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-xs);
     font-size: 0.9rem;
     z-index: 1000;
     white-space: nowrap;

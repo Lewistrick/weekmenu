@@ -4,14 +4,22 @@ Goal: move from page-specific CSS classes to a small, reusable design system so
 the app feels consistent everywhere, and fold the most repetitive HTMX partials
 into a few generic building blocks.
 
-Status: **Phase 1 (CSS color tokens) DONE.** Everything else is not started.
+Status: **Phase 1 (colours) DONE. Phase 2 (spacing + radius) DONE.** Phases 3-4
+and Part 2 (partials) not started.
 
-Phase 1 result: `:root` added with 53 tokens; all 51 remaining hex literals are
-either token definitions (39) or per-user DB colour fallbacks (12,
-`var(--tag/shop-*, #...)`, deliberately kept). Zero raw colour literals remain in
-the rules. Three intentional consolidations to watch: success flash
+Phase 1 result: `:root` added with 53 colour tokens; all remaining hex literals
+are either token definitions or per-user DB colour fallbacks
+(`var(--tag/shop-*, #...)`, deliberately kept). Zero raw colour literals remain
+in the rules. Three intentional consolidations: success flash
 (`.single-message`) now uses the success palette, the amber clear-list button
 folded onto the `--warn*` tokens, and the toggle "on" green is now `--success`.
+
+Phase 2 result: added `--space-px/1..7` (0.125/0.25/0.5/0.75/1/1.25/1.5/2rem) and
+`--radius-xs/sm/md/lg/xl/pill/circle`. Snapped 262 spacing values (padding /
+margin / gap) and 36 radius values to the nearest token, ties resolving to the
+lower step (so 1.75rem->1.5, 0.65rem->0.75, 10px->0.5rem). Scope was strictly
+spacing + radius; widths, heights, font-size, line-height and positioning are
+untouched. Token values are globally tunable in `:root` after visual review.
 
 ---
 
