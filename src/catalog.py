@@ -79,6 +79,26 @@ async def get_or_create_ingredient(owner_id: int, name: str) -> tuple[Ingredient
     return await Ingredient.create(owner_id=owner_id, name=normalized), True
 
 
+async def get_or_create_unit(owner_id: int, query: str) -> tuple[Unit, bool]:
+    """Return a unit owned by ``owner_id``, creating it when no match exists.
+
+    Searches by abbreviation, singular, and plural label. When nothing
+    matches, a new unit is created with ``query`` as the abbreviation.
+
+    Args:
+        owner_id: Owner whose units should be searched.
+        query: Abbreviation or label to look up.
+
+    Returns:
+        The matching (or newly created) unit and whether it was created.
+    """
+    normalized = query.strip()
+    existing = await Unit.find(normalized, owner_id=owner_id)
+    if existing is not None:
+        return existing, False
+    return await Unit.create(owner_id=owner_id, abbrev=normalized), True
+
+
 async def get_or_create_tag_category(
     owner_id: int,
     name: str,
