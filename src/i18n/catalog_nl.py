@@ -94,7 +94,7 @@ TEXTS: dict[str, str] = {
     "profile.action.save_email": "E-mailadres opslaan",
     "profile.section.settings": "Instellingen",
     "profile.field.language": "Taal",
-    "profile.field.default_servings": "Standaard aantal eters",
+    "profile.field.default_servings": "Standaard aantal porties",
     "profile.action.save_settings": "Instellingen opslaan",
     "profile.section.change_password": "Wijzig wachtwoord",
     "profile.field.current_password": "Huidig wachtwoord",
@@ -106,7 +106,7 @@ TEXTS: dict[str, str] = {
     "profile.action.delete_account": "Account verwijderen",
     # common
     "common.search": "Zoeken",
-    "common.servings": "Eters",
+    "common.servings": "Porties",
     "common.description": "Bereiding",
     "common.ingredients": "Ingrediënten",
     "common.tags": "Tags",
