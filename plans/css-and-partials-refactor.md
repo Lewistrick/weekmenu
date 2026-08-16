@@ -4,8 +4,22 @@ Goal: move from page-specific CSS classes to a small, reusable design system so
 the app feels consistent everywhere, and fold the most repetitive HTMX partials
 into a few generic building blocks.
 
-Status: **Phase 1 (colours) DONE. Phase 2 (spacing + radius) DONE.** Phases 3-4
-and Part 2 (partials) not started.
+Status: **Phase 1 (colours), Phase 2 (spacing + radius), Phase 3 (components)
+DONE.** Phase 4 and Part 2 (partials) not started.
+
+Phase 3 finding: the component layer was in better shape than assumed. Buttons
+were already layered on a base `.btn` in the markup (`class="btn btn-sm icon-btn"`
+etc.), forms already share `.form-control` / `.form-group`, and there is only one
+table style. So Phase 3 did not need a big overhaul. The real duplication was two
+repeated shapes, now folded into shared primitives (CSS-only, no template change,
+so the exact-class-string tests stay green):
+- `.surface` - the border + `--radius-md` + `--bg-surface` box, previously
+  repeated verbatim across 8 feature rules (cards, panels, week-menu days,
+  grocery items, editors).
+- `.chip` - the inline-flex + pill-radius shape, previously in 4 pill rules.
+35 duplicated declarations removed; both primitives are available as reusable
+classes for new markup. Minor intentional shift: `.missing-tags-group-editor`
+border moves from `--border-strong` to `--border` to match the other cards.
 
 Phase 1 result: `:root` added with 53 colour tokens; all remaining hex literals
 are either token definitions or per-user DB colour fallbacks

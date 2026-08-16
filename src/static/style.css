@@ -101,6 +101,34 @@ a {
     color: inherit;
 }
 
+/* Reusable primitives (Phase 3): the surface-box and chip/pill shapes,
+   defined once and shared by the feature classes listed here. */
+.surface,
+.action-card,
+.search-panel,
+.form-panel,
+.missing-tags-group-editor,
+.week-menu-day,
+.grocery-item,
+.editable-field,
+.edit-ingredient-row,
+.recipe-status-editor {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.chip,
+.tag-group-chip,
+.unit-chip,
+.status-pill,
+.page-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+}
+
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -275,9 +303,6 @@ div.search-results {
     flex-direction: column;
     gap: var(--space-1);
     padding: var(--space-4) var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-surface);
     text-decoration: none;
     color: inherit;
     transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -303,9 +328,6 @@ div.search-results {
 .search-panel,
 .form-panel {
     padding: var(--space-5);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-surface);
 }
 
 .field-label {
@@ -405,10 +427,7 @@ div.search-results {
 }
 
 .tag-group-chip {
-    display: inline-flex;
-    align-items: center;
     padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-pill);
     background-color: var(--tag-bg, #2563eb);
     color: var(--tag-fg, #ffffff);
     border: 1px solid var(--veil-chip-border);
@@ -478,9 +497,6 @@ div.search-results {
 .missing-tags-group-editor {
     flex: 1 1 100%;
     padding: var(--space-3) var(--space-3);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-surface);
 }
 
 .missing-tags-group-editor-form {
@@ -696,9 +712,6 @@ div.search-results {
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-surface);
 }
 
 .week-menu-day-primary,
@@ -1105,9 +1118,6 @@ div.search-results {
     flex-direction: column;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-surface);
 }
 
 .grocery-item-row {
@@ -1450,9 +1460,7 @@ details.form-panel > :not(summary) {
 }
 
 .unit-chip {
-    display: inline-block;
     padding: var(--space-px) var(--space-2);
-    border-radius: var(--radius-pill);
     background-color: var(--bg-surface-alt);
     border: 1px solid var(--border-strong);
 }
@@ -1896,10 +1904,7 @@ details.form-panel > :not(summary) {
 }
 
 .page-mode-badge {
-    display: inline-flex;
-    align-items: center;
     padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-pill);
     background-color: var(--accent-veil);
     border: 1px solid var(--accent);
     color: var(--link);
@@ -1915,9 +1920,6 @@ details.form-panel > :not(summary) {
     justify-content: space-between;
     gap: var(--space-4);
     padding: var(--space-4);
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
 }
 
 .editable-field--stacked {
@@ -1945,9 +1947,6 @@ details.form-panel > :not(summary) {
     gap: var(--space-4);
     margin: var(--space-2) 0;
     padding: var(--space-3) var(--space-3);
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
 }
 
 .ingredient-span {
@@ -1971,12 +1970,9 @@ details.form-panel > :not(summary) {
 }
 
 .status-pill {
-    display: inline-flex;
-    align-items: center;
     gap: var(--space-1);
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius-pill);
     background-color: var(--veil-light);
 }
 
@@ -1990,9 +1986,6 @@ details.form-panel > :not(summary) {
     gap: var(--space-1);
     max-width: 20rem;
     padding: var(--space-4);
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
 }
 
 .recipe-status-toggle {
