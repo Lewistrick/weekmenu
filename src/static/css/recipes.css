@@ -1,3 +1,99 @@
+/* Recipe search layout */
+
+.recipe-search-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.recipe-search-filters {
+    order: 1;
+}
+
+.recipe-search-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    order: 0;
+}
+
+.recipe-search-filter-details {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.recipe-search-filter-summary {
+    padding: var(--space-3) var(--space-4);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-heading);
+    cursor: pointer;
+    list-style: none;
+}
+
+.recipe-search-filter-summary::-webkit-details-marker {
+    display: none;
+}
+
+.recipe-search-filter-summary::before {
+    content: "\25B6";
+    display: inline-block;
+    margin-right: var(--space-2);
+    font-size: 0.7rem;
+    transition: transform 0.15s ease;
+}
+
+.recipe-search-filter-details[open] > .recipe-search-filter-summary::before {
+    transform: rotate(90deg);
+}
+
+.recipe-search-filter-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+@media (min-width: 769px) {
+    .recipe-search-layout {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .recipe-search-filters {
+        order: 0;
+        flex: 0 0 16rem;
+        position: sticky;
+        top: var(--space-4);
+    }
+
+    .recipe-search-filter-details {
+        /* Force open on desktop: remove toggle behavior */
+    }
+
+    .recipe-search-filter-summary {
+        pointer-events: none;
+    }
+
+    .recipe-search-filter-summary::before {
+        display: none;
+    }
+
+    .recipe-search-filter-body {
+        display: flex !important;
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .recipe-search-main {
+        order: 1;
+        flex: 1;
+        min-width: 0;
+    }
+}
+
 .recipe-link {
     color: var(--link);
     text-decoration: none;
