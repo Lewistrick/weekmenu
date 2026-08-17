@@ -5,7 +5,8 @@ the app feels consistent everywhere, and fold the most repetitive HTMX partials
 into a few generic building blocks.
 
 Status: **Phase 1 (colours), Phase 2 (spacing + radius), Phase 3 (components),
-Phase 4 (dead selectors + file split) DONE.** Part 2 (partials) not started.
+Phase 4 (dead selectors + file split) DONE. Part 2A (shared inline-confirm) and
+Part 2B (field-editor macros) DONE.** Part 2C (OOB flash) was absorbed into 2B.
 
 Phase 3 finding: the component layer was in better shape than assumed. Buttons
 were already layered on a base `.btn` in the markup (`class="btn btn-sm icon-btn"`
@@ -28,6 +29,25 @@ monolithic `style.css` (2432 lines) into 9 files under `src/static/css/` using
 (373), grocery (443), recipes (227), auth (83), admin (130). Media queries are
 distributed to their feature files. `style.css` is now 9 `@import` lines only;
 no change to `base.html` or the static route needed.
+
+Part 2A result: renamed `grocery-inline-confirm-*` CSS classes to shared
+`inline-confirm-*` (moved from `css/grocery.css` to `css/components.css`).
+Generalized the partial into `partials/inline-confirm.html` with support for both
+`hx-post` (grocery bulk actions) and plain `<a href>` (recipe delete). Moved the
+duplicated toggle JS from `grocery-list.html` and `edit-recipe.html` into
+`base.html` (one copy). Deleted old `partials/grocery-inline-confirm.html`.
+The `grocery-generate-actions.html` variant (2-choice confirm) kept its own
+pattern; not forced into the shared partial.
+
+Part 2B result: created `partials/_field_macros.html` with `editable_display`
+macro (handles display content via `{% call %}`, edit button, flash messages, and
+optional flash warnings). Rewrote 4 `edited-recipe-*.html` partials from ~7-17
+lines each down to ~4-line macro calls. Rewrote `edit-recipe.html` to use the
+same macro for its initial display states, eliminating the drift between initial
+and after-save button styling. Edit form partials (4 `edit-recipe-*.html`) kept
+as-is since their form content differs enough that a macro would be forced.
+Part 2C (OOB flash) was not needed: the macro absorbs the per-partial
+`message_scope` threading, which was the main pain point.
 
 Phase 1 result: `:root` added with 53 colour tokens; all remaining hex literals
 are either token definitions or per-user DB colour fallbacks
