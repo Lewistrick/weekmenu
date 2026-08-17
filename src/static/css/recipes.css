@@ -1,0 +1,227 @@
+.recipe-link {
+    color: var(--link);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.recipe-link:hover {
+    color: var(--text-invert);
+    text-decoration: underline;
+}
+
+.recipe-servings-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.recipe-servings-label {
+    font-weight: 600;
+}
+
+.recipe-servings-input {
+    width: 5rem;
+    flex: 0 0 auto;
+}
+
+/* Beat the `.form-group input { width: 100% }` rule inside the edit form so the
+   narrow number field leaves room for the save button on the same line. */
+
+.form-group .recipe-servings-input {
+    width: 5rem;
+}
+
+#recipe-servings .recipe-servings-display {
+    margin: 0;
+    font-weight: 600;
+}
+
+.recipe-link + .section-hint {
+    margin-left: var(--space-1);
+}
+
+.recipe-id-link {
+    color: var(--link);
+    text-decoration: underline;
+}
+
+.recipe-id-link:hover {
+    color: var(--link);
+}
+
+.recipe-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.recipe-header {
+    margin-bottom: var(--space-7);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.recipe-image-wrap {
+    margin: 0 0 var(--space-6);
+}
+
+.recipe-image {
+    display: block;
+    max-width: 100%;
+    max-height: 28rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+}
+
+.recipe-image-url {
+    margin: var(--space-2) 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.recipe-owner-line {
+    margin: 0 0 var(--space-2);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.recipe-owner-line strong {
+    color: var(--text-heading);
+    font-weight: 600;
+}
+
+.recipe-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
+}
+
+.recipe-title-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.recipe-title-main,
+.recipe-title-display {
+    margin: 0;
+    font-size: 1.75rem;
+    line-height: 1.25;
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+.recipe-section {
+    margin-bottom: var(--space-7);
+}
+
+.recipe-tag-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+}
+
+.recipe-tag-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.recipe-description,
+.recipe-description-display {
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.recipe-description a,
+.recipe-description-display a {
+    color: var(--link);
+    text-decoration: underline;
+}
+
+.recipe-description a:hover,
+.recipe-description-display a:hover {
+    color: var(--text-invert);
+}
+
+.recipe-ingredient-list {
+    margin: 0;
+    padding-left: var(--space-5);
+    line-height: 1.6;
+}
+
+.editable-field {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4);
+}
+
+.editable-field--stacked {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.editable-field--stacked .btn {
+    align-self: flex-start;
+}
+
+.recipe-section--danger {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+.edit-ingredient-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin: var(--space-2) 0;
+    padding: var(--space-3) var(--space-3);
+}
+
+.recipe-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.recipe-status-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-width: 20rem;
+    padding: var(--space-4);
+}
+
+.recipe-status-toggle {
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .recipe-title-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .edit-ingredient-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+.recipe-import-note {
+    align-self: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}

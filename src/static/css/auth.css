@@ -1,0 +1,83 @@
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 22rem;
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-surface);
+    box-shadow: 0 10px 30px var(--shadow-strong);
+}
+
+.auth-title {
+    margin: 0 0 var(--space-1);
+    font-size: 1.5rem;
+}
+
+.auth-subtitle {
+    margin: 0 0 var(--space-5);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.auth-form .field-label {
+    margin-top: var(--space-2);
+}
+
+.auth-submit {
+    margin-top: var(--space-4);
+    width: 100%;
+    justify-content: center;
+}
+
+.auth-switch {
+    margin: var(--space-4) 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.auth-switch a {
+    color: var(--link);
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    max-width: 22rem;
+}
+
+.profile-form .form-control {
+    width: 100%;
+}
+
+.profile-form .btn {
+    margin-top: var(--space-2);
+}
+
+.profile-detail {
+    margin: 0 0 var(--space-3);
+}
+
+.admin-temp-password {
+    display: inline-block;
+    margin-left: var(--space-1);
+    padding: var(--space-px) var(--space-2);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    user-select: all;
+}

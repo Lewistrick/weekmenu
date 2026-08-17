@@ -4,8 +4,8 @@ Goal: move from page-specific CSS classes to a small, reusable design system so
 the app feels consistent everywhere, and fold the most repetitive HTMX partials
 into a few generic building blocks.
 
-Status: **Phase 1 (colours), Phase 2 (spacing + radius), Phase 3 (components)
-DONE.** Phase 4 and Part 2 (partials) not started.
+Status: **Phase 1 (colours), Phase 2 (spacing + radius), Phase 3 (components),
+Phase 4 (dead selectors + file split) DONE.** Part 2 (partials) not started.
 
 Phase 3 finding: the component layer was in better shape than assumed. Buttons
 were already layered on a base `.btn` in the markup (`class="btn btn-sm icon-btn"`
@@ -20,6 +20,14 @@ so the exact-class-string tests stay green):
 35 duplicated declarations removed; both primitives are available as reusable
 classes for new markup. Minor intentional shift: `.missing-tags-group-editor`
 border moves from `--border-strong` to `--border` to match the other cards.
+
+Phase 4 result: removed 4 dead selectors (`.surface`, `.chip` from grouped
+rules, `div.search-results` and `.recipe-title` as standalone blocks). Split the
+monolithic `style.css` (2432 lines) into 9 files under `src/static/css/` using
+`@import`: tokens (91), base (27), layout (154), components (894), week-menu
+(373), grocery (443), recipes (227), auth (83), admin (130). Media queries are
+distributed to their feature files. `style.css` is now 9 `@import` lines only;
+no change to `base.html` or the static route needed.
 
 Phase 1 result: `:root` added with 53 colour tokens; all remaining hex literals
 are either token definitions or per-user DB colour fallbacks

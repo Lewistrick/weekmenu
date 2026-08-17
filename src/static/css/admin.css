@@ -1,0 +1,130 @@
+.translations-group-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.translations-group-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.translations-incomplete-toggle {
+    margin-top: var(--space-4);
+    max-width: 22rem;
+}
+
+.translations-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+}
+
+.translations-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+}
+
+.translations-group .translations-group {
+    background-color: var(--bg-body);
+}
+
+.translations-group .translations-group .translations-group {
+    background-color: var(--bg-surface-alt);
+}
+
+.translations-group-heading {
+    margin: 0;
+    padding-bottom: var(--space-1);
+    border-bottom: 1px solid var(--border);
+}
+
+.translations-group[data-depth="1"] > .translations-group-heading,
+.translations-group[data-depth="2"] > .translations-group-heading,
+.translations-group[data-depth="3"] > .translations-group-heading {
+    font-size: 1.05rem;
+}
+
+.translations-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.translations-row {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    background: var(--bg-surface-alt);
+}
+
+.translations-row.is-dirty {
+    border-color: var(--border-hover);
+}
+
+.translations-row--incomplete {
+    border-left: 3px solid var(--warn-strong);
+}
+
+.translations-row-form {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.2fr) minmax(10rem, 1.4fr) minmax(10rem, 1.4fr) auto;
+    gap: var(--space-3);
+    align-items: end;
+}
+
+.translations-row-key {
+    display: block;
+    align-self: center;
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.translations-row-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+}
+
+.translations-row-input {
+    min-height: 2.35rem;
+    max-height: 12rem;
+    resize: none;
+    overflow-y: hidden;
+    line-height: 1.4;
+    field-sizing: content;
+}
+
+.translations-row-input:focus {
+    overflow-y: auto;
+}
+
+.translations-row-form .form-actions {
+    min-height: 2.25rem;
+}
+
+.translations-row-save:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.translations-row-saved {
+    font-size: 0.85rem;
+    color: var(--success-text);
+}
+
+@media (max-width: 900px) {
+    .translations-row-form {
+        grid-template-columns: 1fr;
+    }
+}
