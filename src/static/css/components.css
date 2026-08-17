@@ -892,3 +892,25 @@ details.form-panel > :not(summary) {
     color: var(--text-muted);
     cursor: pointer;
 }
+
+.inline-confirm-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.inline-confirm[hidden],
+.inline-confirm-trigger[hidden] {
+    display: none !important;
+}
+
+.inline-confirm {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.inline-confirm-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}

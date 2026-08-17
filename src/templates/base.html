@@ -76,6 +76,24 @@
     </div>
 
     <script>
+        document.addEventListener("click", (event) => {
+            const trigger = event.target.closest(".inline-confirm-trigger");
+            if (trigger) {
+                const confirm = document.getElementById(trigger.dataset.confirmId);
+                if (!confirm) return;
+                trigger.hidden = true;
+                confirm.hidden = false;
+                return;
+            }
+            const cancel = event.target.closest(".inline-confirm-cancel");
+            if (cancel) {
+                const confirm = document.getElementById(cancel.dataset.confirmId);
+                const trigger = document.getElementById(cancel.dataset.triggerId);
+                if (confirm) confirm.hidden = true;
+                if (trigger) trigger.hidden = false;
+            }
+        });
+
         window.groceryLongPress = (() => {
             let timeout = null;
             let overlay = null;

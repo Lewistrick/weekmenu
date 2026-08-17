@@ -40,27 +40,6 @@
     white-space: nowrap;
 }
 
-.grocery-inline-confirm-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
-
-.grocery-inline-confirm[hidden],
-.grocery-inline-confirm-trigger[hidden] {
-    display: none !important;
-}
-
-.grocery-inline-confirm {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-}
-
-.grocery-inline-confirm-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
 
 .grocery-clear-list-trigger {
     color: var(--warn-text);

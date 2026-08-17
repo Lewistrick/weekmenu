@@ -1,0 +1,33 @@
+<div class="inline-confirm-wrap">
+    <button type="button" class="btn btn-sm inline-confirm-trigger {{ trigger_class | default('grocery-clear-list-trigger') }}"
+        id="{{ trigger_id }}" data-confirm-id="{{ confirm_id }}"
+        title="{{ trigger_label }}" aria-label="{{ trigger_label }}">
+        {% if trigger_icon | default("") %}
+        <span class="grocery-clear-list-icon" aria-hidden="true">{{ trigger_icon }}</span>
+        {% endif %}
+        <span>{{ trigger_label }}</span>
+    </button>
+    <div class="inline-confirm" id="{{ confirm_id }}" hidden>
+        <span class="inline-confirm-label">{{ confirm_label }}</span>
+        {% if confirm_href %}
+        <a href="{{ confirm_href }}"
+            class="shop-chip-btn shop-chip-btn--warn"
+            title="{{ t('common.confirm') }}" aria-label="{{ t('common.confirm') }}">
+            ✓
+        </a>
+        {% else %}
+        <form method="post" hx-post="{{ confirm_action }}" hx-target="{{ hx_target }}" hx-swap="{{ hx_swap | default('outerHTML show:none') }}"
+            class="grocery-bulk-form">
+            <button type="submit" class="shop-chip-btn shop-chip-btn--warn"
+                title="{{ t('common.confirm') }}" aria-label="{{ t('common.confirm') }}">
+                ✓
+            </button>
+        </form>
+        {% endif %}
+        <button type="button" class="shop-chip-btn shop-chip-btn--clear inline-confirm-cancel"
+            data-confirm-id="{{ confirm_id }}" data-trigger-id="{{ trigger_id }}"
+            title="{{ t('common.cancel') }}" aria-label="{{ t('common.cancel') }}">
+            ✕
+        </button>
+    </div>
+</div>

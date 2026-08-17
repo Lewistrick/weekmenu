@@ -115,46 +115,9 @@
             <h2 class="section-title">{{ t('recipe.edit.section.delete') }}</h2>
             <p class="section-hint">{{ t('recipe.edit.delete_hint') }}</p>
         </div>
-        <div class="grocery-inline-confirm-wrap">
-            <button type="button" class="btn btn-danger btn-sm grocery-inline-confirm-trigger"
-                id="delete-trigger" data-confirm-id="delete-confirm"
-                title="{{ t('recipe.edit.aria.delete_recipe') }}" aria-label="{{ t('recipe.edit.aria.delete_recipe') }}">
-                {{ t('recipe.edit.action.delete') }}
-            </button>
-            <div class="grocery-inline-confirm" id="delete-confirm" hidden>
-                <span class="grocery-inline-confirm-label">{{ t('common.confirm') }}?</span>
-                <a href="{{ base_path }}/recipes/delete-confirmation/{{ recipe.id }}"
-                    class="shop-chip-btn shop-chip-btn--warn"
-                    title="{{ t('common.confirm') }}" aria-label="{{ t('common.confirm') }}">
-                    ✓
-                </a>
-                <button type="button" class="shop-chip-btn shop-chip-btn--clear grocery-inline-confirm-cancel"
-                    data-confirm-id="delete-confirm" data-trigger-id="delete-trigger"
-                    title="{{ t('common.cancel') }}" aria-label="{{ t('common.cancel') }}">
-                    ✕
-                </button>
-            </div>
-        </div>
+        {% with trigger_id="delete-trigger", confirm_id="delete-confirm", trigger_label=t('recipe.edit.action.delete'), trigger_class="btn-danger", confirm_label=t('common.confirm') ~ "?", confirm_href=base_path ~ "/recipes/delete-confirmation/" ~ recipe.id %}
+        {% include "partials/inline-confirm.html" %}
+        {% endwith %}
     </section>
 </div>
-
-<script>
-    document.addEventListener("click", (event) => {
-        const trigger = event.target.closest(".grocery-inline-confirm-trigger");
-        if (trigger) {
-            const confirm = document.getElementById(trigger.dataset.confirmId);
-            if (!confirm) return;
-            trigger.hidden = true;
-            confirm.hidden = false;
-            return;
-        }
-        const cancel = event.target.closest(".grocery-inline-confirm-cancel");
-        if (cancel) {
-            const confirm = document.getElementById(cancel.dataset.confirmId);
-            const trigger = document.getElementById(cancel.dataset.triggerId);
-            if (confirm) confirm.hidden = true;
-            if (trigger) trigger.hidden = false;
-        }
-    });
-</script>
 {% endblock %}

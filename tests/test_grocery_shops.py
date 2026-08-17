@@ -853,7 +853,7 @@ async def test_grocery_list_mark_all_uses_inline_confirmation(
     assert f"mark-all-shop-{shop.id}-confirm" in response.text
     assert f"mark-all-shop-{shop.id}-trigger" in response.text
     assert "grocery-check-all-trigger" in response.text
-    assert "grocery-inline-confirm-wrap" in response.text
+    assert "inline-confirm-wrap" in response.text
     assert "Check all?" in response.text
     assert f"/week-menu/grocery-list/shop/{shop.id}/already-have" in response.text
     assert "grocery-shop-mark-all" not in response.text
@@ -1133,7 +1133,7 @@ async def test_grocery_list_empty_confirm_starts_hidden(
     assert "clear-already-have-confirm" in response.text
     assert "clear-already-have-trigger" in response.text
     assert "grocery-clear-list-trigger" in response.text
-    assert "grocery-inline-confirm-wrap" in response.text
+    assert "inline-confirm-wrap" in response.text
 
 
 @pytest.mark.asyncio
