@@ -1,0 +1,13 @@
+{% macro editable_display(section_id, editor_endpoint, edit_label, edit_aria, scope, show_warnings=false) %}
+{{ caller() }}
+<button hx-get="{{ editor_endpoint }}" hx-target="#{{ section_id }}" hx-swap="innerHTML"
+    class="btn btn-secondary btn-sm" type="button" title="{{ edit_aria }}" aria-label="{{ edit_aria }}">{{ edit_label }}</button>
+{% with message_scope=scope %}
+{% include "partials/flash-messages.html" %}
+{% endwith %}
+{% if show_warnings %}
+{% with warning_scope=scope %}
+{% include "partials/flash-warnings.html" %}
+{% endwith %}
+{% endif %}
+{% endmacro %}

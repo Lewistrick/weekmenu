@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/_field_macros.html" import editable_display %}
 
 {% block title %}{{ t('app.title.edit_recipe', recipe_name=recipe.name) }}{% endblock %}
 
@@ -15,9 +16,9 @@
             <p class="section-hint">{{ t('recipe.edit.title_hint') }}</p>
         </div>
         <div id="recipe-title" class="editable-field">
+            {% call editable_display("recipe-title", base_path ~ "/recipes/title-editor/" ~ recipe.id, t('recipe.edit.action.edit_title'), t('recipe.edit.aria.edit_title'), "recipe-title") %}
             <h2 class="recipe-title-display">{{ recipe.name }}</h2>
-            <button hx-get="{{ base_path }}/recipes/title-editor/{{ recipe.id }}" hx-target="#recipe-title" hx-swap="innerHTML"
-                class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_title') }}" aria-label="{{ t('recipe.edit.aria.edit_title') }}">{{ t('recipe.edit.action.edit_title') }}</button>
+            {% endcall %}
         </div>
     </section>
 
@@ -27,14 +28,14 @@
             <p class="section-hint">{{ t('recipe.edit.image_hint') }}</p>
         </div>
         <div id="recipe-image" class="editable-field editable-field--stacked">
+            {% call editable_display("recipe-image", base_path ~ "/recipes/image-editor/" ~ recipe.id, t('recipe.edit.action.edit_image'), t('recipe.edit.aria.edit_image'), "recipe-image") %}
             {% if recipe.image_url %}
             <img src="{{ recipe.image_url }}" alt="" class="recipe-image" loading="lazy">
             <p class="recipe-image-url">{{ recipe.image_url }}</p>
             {% else %}
             <p class="search-placeholder">{{ t('recipe.edit.image_none') }}</p>
             {% endif %}
-            <button hx-get="{{ base_path }}/recipes/image-editor/{{ recipe.id }}" hx-target="#recipe-image" hx-swap="innerHTML"
-                class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_image') }}" aria-label="{{ t('recipe.edit.aria.edit_image') }}">{{ t('recipe.edit.action.edit_image') }}</button>
+            {% endcall %}
         </div>
     </section>
 
@@ -44,9 +45,9 @@
             <p class="section-hint">{{ t('recipe.edit.servings_hint') }}</p>
         </div>
         <div id="recipe-servings" class="editable-field">
+            {% call editable_display("recipe-servings", base_path ~ "/recipes/servings-editor/" ~ recipe.id, t('recipe.edit.action.edit_servings'), t('recipe.edit.aria.edit_servings'), "recipe-servings") %}
             <p class="recipe-servings-display">{{ recipe.servings }}</p>
-            <button hx-get="{{ base_path }}/recipes/servings-editor/{{ recipe.id }}" hx-target="#recipe-servings" hx-swap="innerHTML"
-                class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_servings') }}" aria-label="{{ t('recipe.edit.aria.edit_servings') }}">{{ t('recipe.edit.action.edit_servings') }}</button>
+            {% endcall %}
         </div>
     </section>
 
@@ -64,9 +65,9 @@
             <p class="section-hint">{{ t('recipe.edit.description_hint') }}</p>
         </div>
         <div id="recipe-desc" class="editable-field editable-field--stacked">
+            {% call editable_display("recipe-desc", base_path ~ "/recipes/desc-editor/" ~ recipe.id, t('recipe.edit.action.edit_description'), t('recipe.edit.aria.edit_description'), "recipe-desc") %}
             <div class="recipe-description recipe-description-display">{{ recipe.description | markdown | safe }}</div>
-            <button hx-get="{{ base_path }}/recipes/desc-editor/{{ recipe.id }}" hx-target="#recipe-desc" hx-swap="innerHTML"
-                class="btn btn-secondary btn-sm" type="button" title="{{ t('recipe.edit.aria.edit_description') }}" aria-label="{{ t('recipe.edit.aria.edit_description') }}">{{ t('recipe.edit.action.edit_description') }}</button>
+            {% endcall %}
         </div>
     </section>
 
@@ -115,9 +116,9 @@
             <h2 class="section-title">{{ t('recipe.edit.section.delete') }}</h2>
             <p class="section-hint">{{ t('recipe.edit.delete_hint') }}</p>
         </div>
-        <button hx-get="{{ base_path }}/recipes/delete/{{ recipe.id }}" hx-target="#delete-confirmation" hx-swap="innerHTML"
-            class="btn btn-danger btn-sm" type="button" title="{{ t('recipe.edit.aria.delete_recipe') }}" aria-label="{{ t('recipe.edit.aria.delete_recipe') }}">{{ t('recipe.edit.action.delete') }}</button>
-        <div id="delete-confirmation"></div>
+        {% with trigger_id="delete-trigger", confirm_id="delete-confirm", trigger_label=t('recipe.edit.action.delete'), trigger_class="btn-danger", confirm_label=t('common.confirm') ~ "?", confirm_href=base_path ~ "/recipes/delete-confirmation/" ~ recipe.id %}
+        {% include "partials/inline-confirm.html" %}
+        {% endwith %}
     </section>
 </div>
 {% endblock %}

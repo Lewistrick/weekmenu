@@ -1,0 +1,91 @@
+:root {
+    /* Backgrounds */
+    --bg-body: #333333;
+    --bg-chrome: #222222;
+    --bg-surface: #3d3d3d;
+    --bg-surface-alt: #2f2f2f;
+    --bg-raised: #444444;
+    --bg-raised-hover: #454545;
+    --bg-inset: #353535;
+    --bg-control: #4a4a4a;
+    --bg-control-hover: #555555;
+    --bg-warn-inset: #3a3428;
+
+    /* Veils & overlay */
+    --veil-light: rgba(255, 255, 255, 0.06);
+    --veil-border: rgba(255, 255, 255, 0.12);
+    --veil-chip-border: rgba(255, 255, 255, 0.15);
+    --overlay-bg: rgba(0, 0, 0, 0.9);
+
+    /* Borders */
+    --border: #555555;
+    --border-strong: #666666;
+    --border-hover: #777777;
+    --border-subtle: #444444;
+
+    /* Text */
+    --text: #dddddd;
+    --text-strong: #f2f2f2;
+    --text-heading: #e8e8e8;
+    --text-muted: #b5b5b5;
+    --text-subtle: #999999;
+    --text-invert: #ffffff;
+
+    /* Accent (brand blue) */
+    --accent: #5a9fd4;
+    --accent-hover: #4a8fc4;
+    --accent-ring: rgba(90, 159, 212, 0.2);
+    --accent-veil: rgba(90, 159, 212, 0.15);
+    --link: #b8d9f0;
+    --brand-blue: #2563eb;
+    --brand-blue-dark: #1d4ed8;
+    --brand-blue-light: #3b82f6;
+
+    /* Success (green) */
+    --success: #22c55e;
+    --success-strong: #16a34a;
+    --success-darker: #15803d;
+    --success-border: #4d7a4d;
+    --success-bg: rgba(40, 167, 69, 0.12);
+    --success-text: #86efac;
+
+    /* Warning (amber) */
+    --warn: #d97706;
+    --warn-strong: #b45309;
+    --warn-bright: #f59e0b;
+    --warn-text: #fbbf24;
+    --warn-border: #d4a017;
+    --warn-bg: rgba(255, 193, 7, 0.12);
+    --warn-bg-strong: rgba(217, 119, 6, 0.2);
+
+    /* Danger (red) */
+    --danger-border: #a94442;
+    --danger-border-hover: #c9302c;
+    --danger-text: #f5b7b1;
+    --danger-bg: rgba(169, 68, 66, 0.2);
+
+    /* Shadows */
+    --shadow-weak: rgba(0, 0, 0, 0.22);
+    --shadow: rgba(0, 0, 0, 0.25);
+    --shadow-strong: rgba(0, 0, 0, 0.35);
+    --shadow-overlay: rgba(0, 0, 0, 0.5);
+
+    /* Spacing scale */
+    --space-px: 0.125rem;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-7: 2rem;
+
+    /* Radius scale */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-pill: 999px;
+    --radius-circle: 50%;
+}

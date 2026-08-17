@@ -354,3 +354,125 @@ async def test_edit_recipe_page_uses_change_trigger_for_status_toggles(
 
     assert response.status_code == 200
     assert 'hx-trigger="change"' in response.text
+
+
+@pytest.mark.asyncio
+async def test_edit_page_shows_inline_delete_confirmation(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """The edit page should show an inline confirm for delete, not an HTMX partial."""
+    recipe = await Recipe.create(
+        name="Delete Me",
+        description="Test",
+        prep_time_minutes=5,
+        cook_time_minutes=10,
+        servings=2,
+        owner=default_user,
+    )
+
+    response = await test_client.get(f"/recipes/edit/{recipe.id}")
+
+    assert response.status_code == 200
+    assert 'id="delete-trigger"' in response.text
+    assert 'id="delete-confirm"' in response.text
+    assert "inline-confirm-trigger" in response.text
+    assert "inline-confirm-cancel" in response.text
+    assert f"/recipes/delete-confirmation/{recipe.id}" in response.text
+
+
+@pytest.mark.asyncio
+async def test_add_recipe_creates_ingredients_with_unknown_unit(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Creating a recipe with a brand-new unit should auto-create the unit."""
+    response = await test_client.post(
+        "/recipes",
+        data={
+            "name": "__pytest_new_unit__",
+            "servings": "2",
+            "description": "Has ingredients",
+            "prep_time_minutes": "10",
+            "cook_time_minutes": "20",
+            "quantity[]": "200",
+            "unit[]": "bushels",
+            "ingredient_name[]": "wheat",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303, 307, 308}
+    recipe = await Recipe.filter(name="__pytest_new_unit__").order_by("-id").first()
+    assert recipe is not None
+
+    recipe_ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+        "ingredient", "unit"
+    )
+    assert len(recipe_ingredients) == 1
+    assert recipe_ingredients[0].ingredient.name == "wheat"
+    assert recipe_ingredients[0].unit.abbrev == "bushels"
+    assert recipe_ingredients[0].quantity == 200.0
+
+
+@pytest.mark.asyncio
+async def test_add_recipe_creates_multiple_ingredients(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Creating a recipe with multiple ingredients should persist all of them."""
+    body = (
+        "name=__pytest_multi_ing__&servings=4"
+        "&description=Multi-ingredient+recipe"
+        "&prep_time_minutes=10&cook_time_minutes=20"
+        "&quantity[]=200&unit[]=g&ingredient_name[]=potatoes"
+        "&quantity[]=100&unit[]=ml&ingredient_name[]=milk"
+    )
+    response = await test_client.post(
+        "/recipes",
+        content=body,
+        headers={"content-type": "application/x-www-form-urlencoded"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303, 307, 308}
+    recipe = await Recipe.filter(name="__pytest_multi_ing__").order_by("-id").first()
+    assert recipe is not None
+
+    recipe_ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
+        "ingredient", "unit"
+    )
+    assert len(recipe_ingredients) == 2
+
+    by_name = {ri.ingredient.name: ri for ri in recipe_ingredients}
+    assert by_name["potatoes"].quantity == 200.0
+    assert by_name["potatoes"].unit.abbrev == "g"
+    assert by_name["milk"].quantity == 100.0
+    assert by_name["milk"].unit.abbrev == "ml"
+
+
+@pytest.mark.asyncio
+async def test_add_ingredient_creates_unknown_unit(
+    test_client: AsyncTestClient,
+    recipe: Recipe,
+) -> None:
+    """Adding an ingredient with an unknown unit should auto-create that unit."""
+    response = await test_client.post(
+        f"/recipes/{recipe.id}/ingredients/add",
+        data={"quantity": "3", "unit": "cups", "ingredient": "flour"},
+    )
+
+    assert response.status_code == 200
+    assert "Ingredient added" in response.text
+
+    created_unit = await Unit.filter(abbrev="cups").first()
+    assert created_unit is not None
+
+    recipe_ingredient = (
+        await RecipeIngredient.filter(recipe=recipe.id)
+        .select_related("unit", "ingredient")
+        .first()
+    )
+    assert recipe_ingredient is not None
+    assert recipe_ingredient.unit.abbrev == "cups"
+    assert recipe_ingredient.ingredient.name == "flour"

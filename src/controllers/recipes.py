@@ -14,7 +14,11 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise.expressions import Q
 
 from src.auth import get_current_user
-from src.catalog import copy_recipe_catalog, get_or_create_ingredient
+from src.catalog import (
+    copy_recipe_catalog,
+    get_or_create_ingredient,
+    get_or_create_unit,
+)
 from src.i18n.service import t
 from src.models import (
     Ingredient,
@@ -23,7 +27,6 @@ from src.models import (
     RecipeTag,
     Tag,
     TagCategory,
-    Unit,
 )
 from src.plan_store import (
     add_items_to_grocery_list,
@@ -768,15 +771,6 @@ class RecipeController(Controller):
             },
         )
 
-    @get(path="/delete/{recipe_id:int}", summary="Show the delete confirmation")
-    async def delete_recipe_partial(self, request: Request, recipe_id: int) -> Template:
-        """Return the inline delete-confirmation partial."""
-        await self._get_owned_recipe(request, recipe_id)
-        return Template(
-            template_name="partials/delete-confirmation.html",
-            context={"recipe_id": recipe_id},
-        )
-
     @get(path="/title-editor/{recipe_id:int}", summary="Title editor")
     async def title_editor(self, request: Request, recipe_id: int) -> Template:
         """Just load the element to edit the title."""
@@ -1055,12 +1049,8 @@ class RecipeController(Controller):
             valid = False
 
         if unit_abbrev is not None:
-            unit = await Unit.find(unit_abbrev, owner_id=user_id)
-            if unit:
-                recipe_ingredient.unit = unit
-            else:
-                messages.append(t("message.recipe.unit_not_found"))
-                valid = False
+            unit, _ = await get_or_create_unit(user_id, str(unit_abbrev))
+            recipe_ingredient.unit = unit
         else:
             messages.append(t("message.recipe.no_unit"))
             valid = False
@@ -1166,31 +1156,26 @@ class RecipeController(Controller):
         elif not unit_abbrev:
             messages.append(t("message.recipe.no_unit_selected"))
         else:
-            unit = await Unit.find(unit_abbrev, owner_id=user_id)
-            if not unit:
-                messages.append(
-                    t("message.recipe.unit_not_found_named", unit=unit_abbrev)
+            try:
+                unit, _ = await get_or_create_unit(user_id, str(unit_abbrev))
+                ingredient, _ = await get_or_create_ingredient(
+                    user_id, str(ingredient_name)
                 )
-            else:
-                try:
-                    ingredient, _ = await get_or_create_ingredient(
-                        user_id, str(ingredient_name)
+                existing = await RecipeIngredient.filter(
+                    recipe=recipe_id, ingredient=ingredient.id
+                ).first()
+                if existing:
+                    messages.append(t("message.recipe.ingredient_duplicate_edit"))
+                else:
+                    await RecipeIngredient.create(
+                        recipe=recipe,
+                        ingredient=ingredient,
+                        quantity=float(quantity),
+                        unit=unit,
                     )
-                    existing = await RecipeIngredient.filter(
-                        recipe=recipe_id, ingredient=ingredient.id
-                    ).first()
-                    if existing:
-                        messages.append(t("message.recipe.ingredient_duplicate_edit"))
-                    else:
-                        await RecipeIngredient.create(
-                            recipe=recipe,
-                            ingredient=ingredient,
-                            quantity=float(quantity),
-                            unit=unit,
-                        )
-                        messages.append(t("message.recipe.ingredient_added"))
-                except (ValueError, TypeError) as e:
-                    messages.append(t("message.recipe.error", error=e))
+                    messages.append(t("message.recipe.ingredient_added"))
+            except (ValueError, TypeError) as e:
+                messages.append(t("message.recipe.error", error=e))
 
         # Reload ingredients for display
         ingredients = await RecipeIngredient.filter(recipe=recipe.id).select_related(
@@ -1459,38 +1444,21 @@ class RecipeController(Controller):
         for tag_id in set(valid_tag_ids):
             await RecipeTag.create(recipe=recipe, tag_id=tag_id)
 
-        messages = []
         for ing_dict in ingredients:
             logger.debug(f"Adding ingredient: {ing_dict['name']}")
-            ingredient, ing_created = await get_or_create_ingredient(
-                owner_id, ing_dict["name"]
-            )
-            if ing_created:
-                messages.append(
-                    t("message.recipe.new_ingredient", name=ingredient.name)
-                )
+            ingredient, _ = await get_or_create_ingredient(owner_id, ing_dict["name"])
 
-            logger.debug(
-                f"Finding unit by abbreviation/singular/plural: {ing_dict['unit']}"
-            )
-            unit = await Unit.find(ing_dict["unit"], owner_id=owner_id)
-            if unit is None:
-                messages.append(
-                    t(
-                        "message.recipe.ingredient_not_added",
-                        name=ingredient.name,
-                        unit=ing_dict["unit"],
-                    )
-                )
+            unit_str = ing_dict["unit"].strip()
+            if not unit_str:
                 continue
 
-            quantity = ing_dict["quantity"]
+            unit, _ = await get_or_create_unit(owner_id, unit_str)
 
             logger.debug("Listing ingredient in recipe")
             recipe_ing = await RecipeIngredient.create(
                 recipe=recipe,
                 ingredient=ingredient,
-                quantity=quantity,
+                quantity=ing_dict["quantity"],
                 unit=unit,
             )
             logger.info(f"Added ingredient to recipe: {recipe_ing}")
