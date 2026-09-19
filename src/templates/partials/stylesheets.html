@@ -1,0 +1,4 @@
+{# The CSS modules imported by static/style.css, each with its own cache-busting version. #}
+{% for href in stylesheets %}
+<link rel="stylesheet" href="{{ base_path }}/static/{{ href }}">
+{% endfor %}

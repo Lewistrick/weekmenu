@@ -1,0 +1,27 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: var(--bg-body);
+    color: var(--text);
+}
+
+a {
+    color: inherit;
+}
+
+/* Reusable primitives (Phase 3): the surface-box and chip/pill shapes,
+   defined once and shared by the feature classes listed here. */
+
+.action-card,
+.search-panel,
+.form-panel,
+.missing-tags-group-editor,
+.week-menu-day,
+.grocery-item,
+.editable-field,
+.edit-ingredient-row,
+.recipe-status-editor {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}

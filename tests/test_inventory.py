@@ -605,7 +605,9 @@ async def test_inventory_rows_use_shared_item_row_layout(
     assert page.text.count('class="ingredient-input item-row"') == 2
     assert page.text.count('class="item-row-actions"') == 2
     assert "<time" not in page.text
-    assert "/static/style.css?v=" in page.text
+    # Each CSS module the hub imports is linked with its own cache buster.
+    assert "/static/css/tokens.css?v=" in page.text
+    assert "/static/css/components.css?v=" in page.text
 
 
 @pytest.mark.asyncio

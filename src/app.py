@@ -1,6 +1,7 @@
 """Litestar application entry point and global middleware."""
 
 import os
+import re
 from pathlib import Path
 from typing import cast
 
@@ -114,6 +115,24 @@ async def require_authentication(request: Request) -> Response | None:
 
 
 STYLESHEET_PATH = Path("src/static/style.css")
+_CSS_IMPORT = re.compile(r'@import\s+"([^"]+)"')
+
+
+def stylesheet_hrefs() -> list[str]:
+    """Return the CSS modules the ``style.css`` hub imports, with cache busters.
+
+    Pages link each module directly (in hub order) so every file carries its
+    own ``?v=<mtime>``; an ``@import`` inside the hub could not be versioned,
+    and browsers would keep serving a stale cached module.
+
+    Returns:
+        Paths relative to the static root, e.g. ``css/tokens.css?v=1789...``.
+    """
+    hrefs: list[str] = []
+    for relative in _CSS_IMPORT.findall(STYLESHEET_PATH.read_text(encoding="utf-8")):
+        module = STYLESHEET_PATH.parent / relative
+        hrefs.append(f"{relative}?v={int(module.stat().st_mtime)}")
+    return hrefs
 
 
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
@@ -129,9 +148,8 @@ def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     template_engine.engine.globals["url"] = (  # ty: ignore[invalid-assignment]
         path_with_base
     )
-    # Changes whenever the stylesheet changes, so browsers drop a cached copy.
-    template_engine.engine.globals["static_version"] = str(  # ty: ignore[invalid-assignment]
-        int(STYLESHEET_PATH.stat().st_mtime)
+    template_engine.engine.globals["stylesheets"] = (  # ty: ignore[invalid-assignment]
+        stylesheet_hrefs()
     )
 
 
