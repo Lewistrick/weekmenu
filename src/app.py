@@ -113,6 +113,9 @@ async def require_authentication(request: Request) -> Response | None:
     return None
 
 
+STYLESHEET_PATH = Path("src/static/style.css")
+
+
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     """Register custom Jinja filters and globals."""
     template_engine.engine.filters["markdown"] = render_markdown
@@ -125,6 +128,10 @@ def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     )
     template_engine.engine.globals["url"] = (  # ty: ignore[invalid-assignment]
         path_with_base
+    )
+    # Changes whenever the stylesheet changes, so browsers drop a cached copy.
+    template_engine.engine.globals["static_version"] = str(  # ty: ignore[invalid-assignment]
+        int(STYLESHEET_PATH.stat().st_mtime)
     )
 
 

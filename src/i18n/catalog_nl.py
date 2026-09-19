@@ -371,7 +371,6 @@ TEXTS: dict[str, str] = {
     "inventory.sort.updated_desc": "Laatst bijgewerkt (nieuwste eerst)",
     "inventory.sort.updated_asc": "Laatst bijgewerkt (oudste eerst)",
     "inventory.sort.name": "Naam (A–Z)",
-    "inventory.updated_at": "Bijgewerkt {date}",
     "inventory.aria.save": "Opslaan",
     "inventory.aria.delete": "Verwijderen",
     "inventory.empty": "Je voorraad is leeg. Voeg hierboven toe wat je in huis hebt, of markeer artikelen op de boodschappenlijst als 'Heb ik al'.",

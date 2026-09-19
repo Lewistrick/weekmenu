@@ -375,7 +375,6 @@ TEXTS: dict[str, str] = {
     "inventory.sort.updated_desc": "Last updated (newest first)",
     "inventory.sort.updated_asc": "Last updated (oldest first)",
     "inventory.sort.name": "Name (A–Z)",
-    "inventory.updated_at": "Updated {date}",
     "inventory.aria.save": "Save",
     "inventory.aria.delete": "Delete",
     "inventory.empty": "Your inventory is empty. Add what you have at home above, or mark items as 'Already have' on the grocery list.",

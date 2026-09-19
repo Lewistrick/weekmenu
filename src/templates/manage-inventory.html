@@ -23,7 +23,7 @@
         <form method="post" action="{{ base_path }}/inventory" class="inline-form">
             <input type="hidden" name="sort" value="{{ sort }}" />
             <div class="form-group">
-                <div class="ingredient-input">
+                <div class="ingredient-input item-row">
                     <input type="text" name="ingredient" class="form-control" placeholder="{{ t('common.name') }}" required />
                     <input type="number" name="quantity" class="form-control" placeholder="{{ t('common.amount') }}" min="0"
                         step="any" required />
@@ -32,8 +32,10 @@
                         <option value="{{ unit.abbrev }}">{{ unit.abbrev }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.add') }}"
-                        aria-label="{{ t('inventory.aria.add') }}">➕</button>
+                    <div class="item-row-actions">
+                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.add') }}"
+                            aria-label="{{ t('inventory.aria.add') }}">➕</button>
+                    </div>
                 </div>
             </div>
         </form>
@@ -58,7 +60,7 @@
             <li class="editable-list-item" id="inventory-item-{{ row.id }}">
                 <form method="post" action="{{ base_path }}/inventory/{{ row.id }}" class="inline-form">
                     <input type="hidden" name="sort" value="{{ sort }}" />
-                    <div class="ingredient-input">
+                    <div class="ingredient-input item-row">
                         <input type="text" name="ingredient" class="form-control" value="{{ row.name }}" required
                             aria-label="{{ t('common.name') }}" />
                         <input type="number" name="quantity" class="form-control" value="{{ '%g' | format(row.quantity) }}"
@@ -73,13 +75,11 @@
                             </option>
                             {% endfor %}
                         </select>
-                        <time class="section-hint row-meta" datetime="{{ row.updated_at.isoformat() }}"
-                            title="{{ row.updated_at.strftime('%Y-%m-%d %H:%M') }}">
-                            {{ t('inventory.updated_at', date=row.updated_at.strftime('%d-%m-%Y')) }}
-                        </time>
-                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.save') }}" aria-label="{{ t('inventory.aria.save') }}">💾</button>
-                        <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/inventory/{{ row.id }}?sort={{ sort }}"
-                            hx-target="body" hx-swap="innerHTML" title="{{ t('inventory.aria.delete') }}" aria-label="{{ t('inventory.aria.delete') }}">🗑️</button>
+                        <div class="item-row-actions">
+                            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.save') }}" aria-label="{{ t('inventory.aria.save') }}">💾</button>
+                            <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/inventory/{{ row.id }}?sort={{ sort }}"
+                                hx-target="body" hx-swap="innerHTML" title="{{ t('inventory.aria.delete') }}" aria-label="{{ t('inventory.aria.delete') }}">🗑️</button>
+                        </div>
                     </div>
                 </form>
             </li>

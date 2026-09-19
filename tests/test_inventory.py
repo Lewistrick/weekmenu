@@ -590,3 +590,19 @@ async def test_unit_used_by_inventory_is_in_use(
     _ingredient, item = await _stock(default_user, "oil", 1, abbrev="l")
 
     assert await unit_is_in_use(owner_id=default_user.id, unit_id=item.unit_id)
+
+
+@pytest.mark.asyncio
+async def test_inventory_rows_use_shared_item_row_layout(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Rows use the shared item-row grid, without a visible timestamp."""
+    await _stock(default_user, "pasta", 250)
+
+    page = await test_client.get("/inventory")
+
+    assert page.text.count('class="ingredient-input item-row"') == 2
+    assert page.text.count('class="item-row-actions"') == 2
+    assert "<time" not in page.text
+    assert "/static/style.css?v=" in page.text

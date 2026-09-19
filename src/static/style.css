@@ -1391,7 +1391,7 @@ div.search-results {
 }
 
 /* A list of rows that are each an inline edit form (weekly groceries,
-   inventory): one compact .ingredient-input row per item. */
+   inventory): one compact .item-row per item. */
 .editable-list {
     list-style: none;
     margin: 0;
@@ -1407,18 +1407,6 @@ div.search-results {
 
 .editable-list-item {
     margin: 0;
-}
-
-/* Small, non-wrapping metadata at the end of a row (e.g. a timestamp). */
-.row-meta {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-    .editable-list .ingredient-input {
-        flex-wrap: wrap;
-    }
 }
 
 .ingredient-input > .form-control[name="abbrev"] {
@@ -1723,6 +1711,35 @@ details.form-panel > :not(summary) {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background-color: var(--bg-raised);
+}
+
+/* Name / amount / unit / buttons row (inventory, weekly groceries). One line
+   on wide screens; on phones the name gets its own first line. Must follow
+   .ingredient-input, whose box styling it reuses. */
+.item-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6rem 5.5rem auto;
+    align-items: center;
+}
+
+.item-row > .form-control {
+    width: 100%;
+    min-width: 0;
+}
+
+.item-row-actions {
+    display: flex;
+    gap: var(--space-1);
+}
+
+@media (max-width: 640px) {
+    .item-row {
+        grid-template-columns: minmax(0, 1fr) 5.5rem auto;
+    }
+
+    .item-row > :first-child {
+        grid-column: 1 / -1;
+    }
 }
 
 .btn {
