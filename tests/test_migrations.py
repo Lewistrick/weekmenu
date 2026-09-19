@@ -143,3 +143,24 @@ async def test_migrations_add_must_change_password(tmp_path: Path) -> None:
 
     assert "must_change_password" in _table_columns(db_file, "user")
     assert "is_admin" in _table_columns(db_file, "user")
+
+
+@pytest.mark.asyncio
+async def test_migrations_add_inventory(tmp_path: Path) -> None:
+    """All migrations together should create inventory storage."""
+    db_file = tmp_path / "migrated.sqlite3"
+    sqlite3.connect(db_file).close()
+
+    for migration_path in MIGRATION_FILES:
+        await _apply_migration(db_file, migration_path)
+
+    assert {
+        "id",
+        "owner_id",
+        "ingredient_id",
+        "unit_id",
+        "quantity",
+        "created_at",
+        "updated_at",
+    }.issubset(_table_columns(db_file, "inventoryitem"))
+    assert "inventory_quantity" in _table_columns(db_file, "grocerylistitem")

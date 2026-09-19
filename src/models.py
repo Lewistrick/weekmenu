@@ -7,6 +7,7 @@ from tortoise.fields import (
     CASCADE,
     SET_NULL,
     BooleanField,
+    DatetimeField,
     FloatField,
     ForeignKeyField,
     IntField,
@@ -166,6 +167,31 @@ class WeeklyGrocery(Model):
     unit = ForeignKeyField("models.Unit", related_name="weekly_groceries")
 
 
+class InventoryItem(Model):
+    """An amount of one ingredient (in one unit) a user has in stock at home.
+
+    When a grocery list is generated, lines fully covered by inventory are moved
+    to the already-have list and the amount is reserved (subtracted) from here.
+    """
+
+    id = IntField(primary_key=True)
+    owner = ForeignKeyField(
+        "models.User", related_name="inventory_items", on_delete=CASCADE
+    )
+    ingredient = ForeignKeyField(
+        "models.Ingredient", related_name="inventory_items", on_delete=CASCADE
+    )
+    unit = ForeignKeyField("models.Unit", related_name="inventory_items")
+    quantity = FloatField(default=0)
+    created_at = DatetimeField(auto_now_add=True)
+    updated_at = DatetimeField(auto_now=True)
+
+    class Meta:
+        """Database constraints for inventory items."""
+
+        unique_together = (("owner", "ingredient", "unit"),)
+
+
 class User(Model):
     """An application user who owns recipes and shopping preferences."""
 
@@ -259,6 +285,7 @@ class GroceryListItem(Model):
     unit = ForeignKeyField("models.Unit", related_name="grocery_list_items")
     quantity = FloatField(required=True)
     status = TextField(default="active")
+    inventory_quantity = FloatField(default=0)
     shop = ForeignKeyField(
         "models.Shop",
         related_name="grocery_list_items",

@@ -18,6 +18,7 @@ from src.grocery import (
     split_grocery_lists,
 )
 from src.i18n.service import t
+from src.inventory import ensure_inventory_item
 from src.models import (
     Ingredient,
     Recipe,
@@ -33,11 +34,13 @@ from src.plan_store import (
     empty_to_check_list,
     find_grocery_line_in_store,
     has_grocery_list_items,
+    is_grocery_line_reserved,
     is_grocery_list_initialized,
     load_already_have_line_keys,
     load_grocery_line_shops,
     load_grocery_list,
     load_include_public,
+    load_inventory_line_keys,
     load_start_day,
     load_tag_constraints,
     load_to_check_line_keys,
@@ -53,6 +56,7 @@ from src.plan_store import (
     save_tag_constraints,
     save_week_menu,
     set_grocery_line_shop,
+    sync_inventory_reservations,
     unmark_already_have_line,
     unmark_to_check_line,
     update_grocery_line,
@@ -65,6 +69,7 @@ from src.week_menu import (
     TagGroupConstraint,
     build_day_rows,
     build_grocery_list,
+    grocery_line_key,
     hydrate_grocery_item_names,
     is_valid_day,
     merge_grocery_items,
@@ -366,6 +371,39 @@ class WeekMenuController(Controller):
 
         return build_grocery_list(entries)
 
+    @staticmethod
+    async def _reserve_inventory_message(
+        user_id: int, line_keys: set[str]
+    ) -> str | None:
+        """Reserve inventory for the given lines and describe what moved.
+
+        Returns:
+            A flash message when any line moved to the already-have list.
+        """
+        count = await sync_inventory_reservations(user_id, line_keys)
+        if not count:
+            return None
+        noun = (
+            t("message.week_menu.noun_grocery")
+            if count == 1
+            else t("message.week_menu.noun_groceries")
+        )
+        return t("message.week_menu.reserved_from_inventory", count=count, noun=noun)
+
+    async def _replace_grocery_list(self, request: Request, user_id: int) -> str | None:
+        """Regenerate the grocery list from the week menu and reserve inventory.
+
+        Returns:
+            A flash message when inventory moved lines to the already-have list.
+        """
+        items = await self._grocery_items_from_week_menu(request)
+        await reset_grocery_plan(user_id)
+        await save_grocery_list(user_id, items)
+        return await self._reserve_inventory_message(
+            user_id,
+            {grocery_line_key(item["ingredient_id"], item["unit"]) for item in items},
+        )
+
     async def _ingredient_origins(self, request: Request) -> dict:
         """Reconstruct where each grocery ingredient came from.
 
@@ -422,9 +460,12 @@ class WeekMenuController(Controller):
             )
             pop_grocery_suppress_preserve(request)
         else:
-            grocery_items = await self._grocery_items_from_week_menu(request)
-            await reset_grocery_plan(user_id)
-            await save_grocery_list(user_id, grocery_items)
+            inventory_message = await self._replace_grocery_list(request, user_id)
+            grocery_items = await hydrate_grocery_item_names(
+                user_id, await load_grocery_list(user_id)
+            )
+            if action_message is None:
+                action_message = inventory_message
 
         if action_message is None:
             action_message = pop_grocery_action_flash(request)
@@ -463,6 +504,7 @@ class WeekMenuController(Controller):
             "line_shop_ids": line_shop_ids,
             "already_have_line_keys": already_have_line_keys,
             "to_check_line_keys": to_check_line_keys,
+            "inventory_line_keys": await load_inventory_line_keys(user_id),
             "units": units,
             "grocery_action_message": action_message,
             "grocery_add_reset_form": grocery_add_reset_form,
@@ -720,17 +762,29 @@ class WeekMenuController(Controller):
         form_data = await request.form()
         mode = str(form_data.get("mode", "")).strip()
         if mode == "replace":
-            items = await self._grocery_items_from_week_menu(request)
-            await reset_grocery_plan(user_id)
-            await save_grocery_list(user_id, items)
+            inventory_message = await self._replace_grocery_list(request, user_id)
             set_grocery_suppress_preserve(request)
         elif mode == "merge":
             existing = await load_grocery_list(user_id)
             new_items = await self._grocery_items_from_week_menu(request)
             await save_grocery_list(user_id, merge_grocery_items(existing, new_items))
+            existing_keys = {
+                grocery_line_key(item["ingredient_id"], item["unit"])
+                for item in existing
+            }
+            inventory_message = await self._reserve_inventory_message(
+                user_id,
+                {
+                    grocery_line_key(item["ingredient_id"], item["unit"])
+                    for item in new_items
+                }
+                - existing_keys,
+            )
             set_grocery_suppress_preserve(request)
         else:
             raise NotFoundException()
+        if inventory_message:
+            set_grocery_action_flash(request, inventory_message)
         return Redirect(
             path=path_with_base("/week-menu/grocery-list"),
             status_code=HTTP_303_SEE_OTHER,
@@ -867,6 +921,7 @@ class WeekMenuController(Controller):
         await self._require_grocery_line(user_id, ingredient_id, unit)
         await mark_already_have_line(user_id, ingredient_id, unit)
         await unmark_to_check_line(user_id, ingredient_id, unit)
+        await ensure_inventory_item(user_id, ingredient_id, unit)
         return await self._grocery_list_response(request)
 
     @post(
@@ -995,6 +1050,7 @@ class WeekMenuController(Controller):
         new_unit = str(form_data.get("unit", "")).strip()
         if quantity is None or not new_unit:
             raise NotFoundException()
+        was_reserved = await is_grocery_line_reserved(user_id, ingredient_id, unit)
         hydrated_items = await hydrate_grocery_item_names(
             user_id, await load_grocery_list(user_id)
         )
@@ -1008,6 +1064,10 @@ class WeekMenuController(Controller):
         )
         if not success:
             raise NotFoundException()
+        if was_reserved and new_unit != unit:
+            await sync_inventory_reservations(
+                user_id, {grocery_line_key(ingredient_id, new_unit)}
+            )
         if merge_message or new_unit != unit:
             return await self._refresh_grocery_list_response(
                 request, action_message=merge_message

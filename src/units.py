@@ -4,7 +4,13 @@ from collections import defaultdict
 from typing import TypedDict
 
 from src.i18n.service import t
-from src.models import GroceryListItem, RecipeIngredient, Unit, WeeklyGrocery
+from src.models import (
+    GroceryListItem,
+    InventoryItem,
+    RecipeIngredient,
+    Unit,
+    WeeklyGrocery,
+)
 
 
 class UnitRecipeUsage(TypedDict):
@@ -26,6 +32,7 @@ class UnitRow(TypedDict):
     recipe_usages: list[UnitRecipeUsage]
     weekly_grocery_names: list[str]
     grocery_list_names: list[str]
+    inventory_names: list[str]
 
 
 def _normalize_text(value: object) -> str:
@@ -73,6 +80,7 @@ async def load_units(owner_id: int) -> list[UnitRow]:
     recipe_names: dict[tuple[int, int], str] = {}
     weekly_by_unit: dict[int, set[str]] = defaultdict(set)
     grocery_list_by_unit: dict[int, set[str]] = defaultdict(set)
+    inventory_by_unit: dict[int, set[str]] = defaultdict(set)
 
     if unit_ids:
         recipe_ingredients = await RecipeIngredient.filter(
@@ -105,6 +113,15 @@ async def load_units(owner_id: int) -> list[UnitRow]:
                 str(grocery_row["ingredient__name"])
             )
 
+        inventory_rows = await InventoryItem.filter(
+            owner_id=owner_id,
+            unit_id__in=unit_ids,
+        ).values("unit_id", "ingredient__name")
+        for inventory_row in inventory_rows:
+            inventory_by_unit[int(inventory_row["unit_id"])].add(
+                str(inventory_row["ingredient__name"])
+            )
+
     return [
         UnitRow(
             id=row.id,
@@ -117,6 +134,7 @@ async def load_units(owner_id: int) -> list[UnitRow]:
             recipe_usages=_recipe_usages_for_unit(row.id, usages_by_unit, recipe_names),
             weekly_grocery_names=sorted(weekly_by_unit[row.id]),
             grocery_list_names=sorted(grocery_list_by_unit[row.id]),
+            inventory_names=sorted(inventory_by_unit[row.id]),
         )
         for row in rows
     ]
@@ -134,7 +152,9 @@ async def unit_is_in_use(*, owner_id: int, unit_id: int) -> bool:
         return True
     if await WeeklyGrocery.filter(owner_id=owner_id, unit_id=unit_id).exists():
         return True
-    return await GroceryListItem.filter(user_id=owner_id, unit_id=unit_id).exists()
+    if await GroceryListItem.filter(user_id=owner_id, unit_id=unit_id).exists():
+        return True
+    return await InventoryItem.filter(owner_id=owner_id, unit_id=unit_id).exists()
 
 
 async def add_unit(

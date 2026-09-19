@@ -47,12 +47,12 @@
             <h2 class="section-title">{{ t('weekly_groceries.section.yours') }}</h2>
         </div>
         {% if weekly_groceries %}
-        <ul class="weekly-grocery-list">
+        <ul class="editable-list">
             {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
             {% for row in weekly_groceries %}
-            <li class="weekly-grocery-row">
+            <li class="editable-list-item">
                 <form method="post" action="{{ base_path }}/weekly-groceries/{{ row.id }}"
-                    class="inline-form weekly-grocery-edit-form">
+                    class="inline-form">
                     <div class="ingredient-input">
                             <input type="text" name="ingredient" class="form-control" value="{{ row.name }}"
                                 required />

@@ -3,6 +3,7 @@
 KEY_PREFIX_ICONS: dict[str, str] = {
     "nav.week_menu": "🗓️ ",
     "nav.grocery_list": "🛒 ",
+    "nav.inventory": "📦 ",
     "nav.recipes": "🍽️ ",
     "nav.find_recipe": "🔎 ",
     "nav.add_recipe": "➕ ",

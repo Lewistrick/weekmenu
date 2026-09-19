@@ -10,6 +10,7 @@ from src.i18n.service import t
 from src.models import (
     GroceryListItem,
     Ingredient,
+    InventoryItem,
     RecipeIngredient,
     Unit,
     WeeklyGrocery,
@@ -358,15 +359,51 @@ async def _convert_grocery_list_items(
             ingredient_id=ingredient_id,
             unit_id=target_unit_id,
         )
+        new_reserved = row.inventory_quantity * multiplier
         if existing is not None:
             existing.quantity += new_quantity
+            existing.inventory_quantity += new_reserved
             await existing.save()
             await row.delete()
         else:
             await GroceryListItem.filter(id=row.id).update(
                 unit_id=target_unit_id,
                 quantity=new_quantity,
+                inventory_quantity=new_reserved,
             )
+        converted += 1
+    return converted
+
+
+async def _convert_inventory_items(
+    owner_id: int,
+    ingredient_id: int,
+    source_unit_id: int,
+    target_unit_id: int,
+    multiplier: float,
+) -> int:
+    """Convert inventory items from source unit to target unit."""
+    converted = 0
+    source_rows = await InventoryItem.filter(
+        owner_id=owner_id,
+        ingredient_id=ingredient_id,
+        unit_id=source_unit_id,
+    )
+    for row in source_rows:
+        new_quantity = row.quantity * multiplier
+        existing = await InventoryItem.get_or_none(
+            owner_id=owner_id,
+            ingredient_id=ingredient_id,
+            unit_id=target_unit_id,
+        )
+        if existing is not None:
+            existing.quantity += new_quantity
+            await existing.save()
+            await row.delete()
+        else:
+            row.unit_id = target_unit_id
+            row.quantity = new_quantity
+            await row.save()
         converted += 1
     return converted
 
@@ -486,7 +523,15 @@ async def convert_ingredient_unit(
         multiplier,
     )
 
-    list_lines_converted = weekly_count + grocery_count
+    inventory_count = await _convert_inventory_items(
+        owner_id,
+        ingredient_id,
+        source_unit_id,
+        target_unit_id,
+        multiplier,
+    )
+
+    list_lines_converted = weekly_count + grocery_count + inventory_count
     if not recipe_ids and list_lines_converted == 0:
         return IngredientUnitConversionResult(
             ok=False,

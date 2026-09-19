@@ -4,6 +4,7 @@ from src.i18n.service import t
 from src.models import (
     GroceryListItem,
     Ingredient,
+    InventoryItem,
     Unit,
     UserPreference,
     WeekMenuSlot,
@@ -30,6 +31,9 @@ from src.week_menu import (
 GROCERY_STATUS_ACTIVE = "active"
 GROCERY_STATUS_TO_CHECK = "to_check"
 GROCERY_STATUS_ALREADY_HAVE = "already_have"
+
+# Tolerance for float comparisons between grocery and inventory amounts.
+QUANTITY_EPSILON = 1e-9
 
 
 async def ensure_user_preference(user_id: int) -> UserPreference:
@@ -281,11 +285,13 @@ async def save_grocery_list(user_id: int, items: list[GroceryItem]) -> None:
 
     for key, row in existing_by_key.items():
         if key not in seen_keys:
+            await _release_inventory_reservation(user_id, row)
             await row.delete()
 
     preference = await ensure_user_preference(user_id)
     preference.grocery_list_initialized = True
     await preference.save()
+    await sync_inventory_reservations(user_id)
 
 
 async def clear_grocery_list(user_id: int) -> None:
@@ -340,6 +346,8 @@ async def _set_grocery_status(
     row = await _get_grocery_row(user_id, ingredient_id, unit)
     if row is None:
         return
+    if status != GROCERY_STATUS_ALREADY_HAVE:
+        await _release_inventory_reservation(user_id, row)
     row.status = status
     await row.save()
 
@@ -354,6 +362,7 @@ async def unmark_already_have_line(user_id: int, ingredient_id: int, unit: str) 
     row = await _get_grocery_row(user_id, ingredient_id, unit)
     if row is None or row.status != GROCERY_STATUS_ALREADY_HAVE:
         return
+    await _release_inventory_reservation(user_id, row)
     row.status = GROCERY_STATUS_ACTIVE
     await row.save()
 
@@ -381,6 +390,11 @@ async def clear_to_check(user_id: int) -> None:
 
 async def clear_already_have(user_id: int) -> None:
     """Return every already-have grocery line to active sorting."""
+    reserved_rows = await GroceryListItem.filter(
+        user_id=user_id, inventory_quantity__gt=0
+    ).select_related("ingredient", "unit")
+    for row in reserved_rows:
+        await _release_inventory_reservation(user_id, row)
     await GroceryListItem.filter(
         user_id=user_id, status=GROCERY_STATUS_ALREADY_HAVE
     ).update(status=GROCERY_STATUS_ACTIVE)
@@ -393,6 +407,7 @@ async def set_grocery_line_shop(
     row = await _get_grocery_row(user_id, ingredient_id, unit)
     if row is None:
         return
+    await _release_inventory_reservation(user_id, row)
     await GroceryListItem.filter(id=row.id).update(
         shop_id=shop_id,
         status=GROCERY_STATUS_ACTIVE,
@@ -405,10 +420,15 @@ async def clear_grocery_line_shops(user_id: int) -> None:
 
 
 async def reset_grocery_plan(user_id: int) -> None:
-    """Clear grocery-list sorting state for a freshly generated list."""
+    """Clear grocery-list sorting state for a freshly generated list.
+
+    Inventory reserved by the previous list counts as used: it stays
+    subtracted from the inventory and is no longer linked to a grocery line.
+    """
     await GroceryListItem.filter(user_id=user_id).update(
         status=GROCERY_STATUS_ACTIVE,
         shop_id=None,
+        inventory_quantity=0,
     )
 
 
@@ -447,7 +467,10 @@ async def empty_to_check_list(user_id: int) -> None:
 
 
 async def empty_already_have_list(user_id: int) -> None:
-    """Remove already-have groceries from the plan entirely."""
+    """Remove already-have groceries from the plan entirely.
+
+    Inventory reserved by these lines counts as used and is not put back.
+    """
     await GroceryListItem.filter(
         user_id=user_id, status=GROCERY_STATUS_ALREADY_HAVE
     ).delete()
@@ -596,3 +619,130 @@ async def migrate_json_user_settings(
     preference.language = language
     preference.default_servings = servings
     await preference.save()
+
+
+def _clean_quantity(value: float) -> float:
+    """Strip float noise from an amount computed by adding or subtracting."""
+    return max(0.0, round(value, 6))
+
+
+async def _release_inventory_reservation(user_id: int, row: GroceryListItem) -> None:
+    """Put the amount a grocery line reserved back into the inventory.
+
+    ``row`` must have its ingredient and unit loaded (``select_related``).
+    """
+    reserved = float(row.inventory_quantity or 0)
+    if reserved <= 0:
+        return
+    inventory = await InventoryItem.get_or_none(
+        owner_id=user_id, ingredient_id=row.ingredient.id, unit_id=row.unit.id
+    )
+    if inventory is None:
+        await InventoryItem.create(
+            owner_id=user_id,
+            ingredient_id=row.ingredient.id,
+            unit_id=row.unit.id,
+            quantity=_clean_quantity(reserved),
+        )
+    else:
+        inventory.quantity = _clean_quantity(inventory.quantity + reserved)
+        await inventory.save()
+    row.inventory_quantity = 0
+    await GroceryListItem.filter(id=row.id).update(inventory_quantity=0)
+
+
+async def sync_inventory_reservations(
+    user_id: int, reserve_line_keys: set[str] | None = None
+) -> int:
+    """Keep grocery lines and inventory reservations consistent.
+
+    Lines that already reserved inventory are re-checked against their current
+    amount (the reserved amount counts as available): when the inventory still
+    covers the line it stays on the already-have list, otherwise the
+    reservation is put back and the line returns to active sorting.
+
+    Active lines named in ``reserve_line_keys`` that the inventory fully covers
+    move to the already-have list and reserve (subtract) their amount.
+
+    Args:
+        user_id: Owner of the grocery list and inventory.
+        reserve_line_keys: Grocery line keys that may newly reserve inventory.
+
+    Returns:
+        The number of lines that newly reserved inventory.
+    """
+    rows = await GroceryListItem.filter(user_id=user_id).select_related(
+        "ingredient", "unit"
+    )
+    inventory_by_key = {
+        (row.ingredient.id, row.unit.id): row
+        for row in await InventoryItem.filter(owner_id=user_id).select_related(
+            "ingredient", "unit"
+        )
+    }
+    reserve_line_keys = reserve_line_keys or set()
+    newly_reserved = 0
+    for row in rows:
+        reserved = float(row.inventory_quantity or 0)
+        quantity = float(row.quantity)
+        key = (row.ingredient.id, row.unit.id)
+        inventory = inventory_by_key.get(key)
+        if reserved > 0:
+            if (
+                row.status == GROCERY_STATUS_ALREADY_HAVE
+                and abs(reserved - quantity) <= QUANTITY_EPSILON
+            ):
+                continue
+            available = reserved + (inventory.quantity if inventory else 0)
+            covered = (
+                row.status == GROCERY_STATUS_ALREADY_HAVE
+                and available + QUANTITY_EPSILON >= quantity
+            )
+            new_stock = available - quantity if covered else available
+            if inventory is None:
+                inventory = await InventoryItem.create(
+                    owner_id=user_id,
+                    ingredient_id=row.ingredient.id,
+                    unit_id=row.unit.id,
+                    quantity=_clean_quantity(new_stock),
+                )
+                inventory_by_key[key] = inventory
+            else:
+                inventory.quantity = _clean_quantity(new_stock)
+                await inventory.save()
+            row.inventory_quantity = quantity if covered else 0
+            if not covered and row.status == GROCERY_STATUS_ALREADY_HAVE:
+                row.status = GROCERY_STATUS_ACTIVE
+            await row.save()
+            continue
+
+        line_key = grocery_line_key(row.ingredient.id, row.unit.abbrev)
+        if (
+            line_key not in reserve_line_keys
+            or row.status != GROCERY_STATUS_ACTIVE
+            or quantity <= 0
+            or inventory is None
+            or inventory.quantity + QUANTITY_EPSILON < quantity
+        ):
+            continue
+        inventory.quantity = _clean_quantity(inventory.quantity - quantity)
+        await inventory.save()
+        row.inventory_quantity = quantity
+        row.status = GROCERY_STATUS_ALREADY_HAVE
+        await row.save()
+        newly_reserved += 1
+    return newly_reserved
+
+
+async def load_inventory_line_keys(user_id: int) -> set[str]:
+    """Load grocery line keys whose amount is reserved from the inventory."""
+    rows = await GroceryListItem.filter(
+        user_id=user_id, inventory_quantity__gt=0
+    ).select_related("ingredient", "unit")
+    return {grocery_line_key(row.ingredient.id, row.unit.abbrev) for row in rows}
+
+
+async def is_grocery_line_reserved(user_id: int, ingredient_id: int, unit: str) -> bool:
+    """Return whether one grocery line currently reserves inventory."""
+    row = await _get_grocery_row(user_id, ingredient_id, unit)
+    return row is not None and row.inventory_quantity > 0

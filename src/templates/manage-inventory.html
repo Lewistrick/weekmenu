@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.inventory') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.inventory') }}</h1>
+        <p class="page-lead">{{ t('inventory.lead') }}</p>
+    </header>
+
+    {% with message_scope="inventory" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% with warning_scope="inventory" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">{{ t('inventory.section.add') }}</h2>
+        </div>
+        <form method="post" action="{{ base_path }}/inventory" class="inline-form">
+            <input type="hidden" name="sort" value="{{ sort }}" />
+            <div class="form-group">
+                <div class="ingredient-input">
+                    <input type="text" name="ingredient" class="form-control" placeholder="{{ t('common.name') }}" required />
+                    <input type="number" name="quantity" class="form-control" placeholder="{{ t('common.amount') }}" min="0"
+                        step="any" required />
+                    <select name="unit" class="form-control grocery-unit-select" required aria-label="{{ t('common.unit') }}">
+                        {% for unit in units %}
+                        <option value="{{ unit.abbrev }}">{{ unit.abbrev }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.add') }}"
+                        aria-label="{{ t('inventory.aria.add') }}">➕</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">{{ t('inventory.section.yours') }}</h2>
+            <form method="get" action="{{ base_path }}/inventory" class="inline-field">
+                <label class="field-label" for="inventory-sort">{{ t('inventory.sort.label') }}</label>
+                <select id="inventory-sort" name="sort" class="form-control" onchange="this.form.submit()">
+                    {% for option in sort_options %}
+                    <option value="{{ option }}" {% if option == sort %}selected{% endif %}>{{ t('inventory.sort.' ~ option) }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        {% if inventory_items %}
+        <ul class="editable-list">
+            {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
+            {% for row in inventory_items %}
+            <li class="editable-list-item" id="inventory-item-{{ row.id }}">
+                <form method="post" action="{{ base_path }}/inventory/{{ row.id }}" class="inline-form">
+                    <input type="hidden" name="sort" value="{{ sort }}" />
+                    <div class="ingredient-input">
+                        <input type="text" name="ingredient" class="form-control" value="{{ row.name }}" required
+                            aria-label="{{ t('common.name') }}" />
+                        <input type="number" name="quantity" class="form-control" value="{{ '%g' | format(row.quantity) }}"
+                            min="0" step="any" required aria-label="{{ t('common.amount') }}" />
+                        <select name="unit" class="form-control grocery-unit-select" required aria-label="{{ t('common.unit') }}">
+                            {% if row.unit not in unit_abbrevs %}
+                            <option value="{{ row.unit }}" selected>{{ row.unit }}</option>
+                            {% endif %}
+                            {% for unit in units %}
+                            <option value="{{ unit.abbrev }}" {% if unit.abbrev == row.unit %}selected{% endif %}>
+                                {{ unit.abbrev }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <time class="section-hint row-meta" datetime="{{ row.updated_at.isoformat() }}"
+                            title="{{ row.updated_at.strftime('%Y-%m-%d %H:%M') }}">
+                            {{ t('inventory.updated_at', date=row.updated_at.strftime('%d-%m-%Y')) }}
+                        </time>
+                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.save') }}" aria-label="{{ t('inventory.aria.save') }}">💾</button>
+                        <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/inventory/{{ row.id }}?sort={{ sort }}"
+                            hx-target="body" hx-swap="innerHTML" title="{{ t('inventory.aria.delete') }}" aria-label="{{ t('inventory.aria.delete') }}">🗑️</button>
+                    </div>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="search-placeholder">{{ t('inventory.empty') }}</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

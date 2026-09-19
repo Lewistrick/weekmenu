@@ -8,6 +8,7 @@ from src.i18n.service import t
 from src.models import (
     GroceryListItem,
     Ingredient,
+    InventoryItem,
     RecipeIngredient,
     Unit,
     UserIngredientShop,
@@ -210,12 +211,40 @@ async def _merge_grocery_list_items(
         )
         if matching_unit is not None:
             matching_unit.quantity += row.quantity
+            matching_unit.inventory_quantity += row.inventory_quantity
             await matching_unit.save()
             await row.delete()
         else:
             await GroceryListItem.filter(id=row.id).update(
                 ingredient_id=target_ingredient_id
             )
+
+
+async def _merge_inventory_items(
+    owner_id: int,
+    source_ingredient_id: int,
+    target_ingredient_id: int,
+) -> None:
+    """Reassign source inventory items to the target ingredient."""
+    source_rows = await InventoryItem.filter(
+        owner_id=owner_id,
+        ingredient_id=source_ingredient_id,
+    ).select_related("unit")
+    for row in source_rows:
+        unit = row.unit
+        assert unit is not None
+        matching_unit = await InventoryItem.get_or_none(
+            owner_id=owner_id,
+            ingredient_id=target_ingredient_id,
+            unit_id=unit.id,
+        )
+        if matching_unit is not None:
+            matching_unit.quantity += row.quantity
+            await matching_unit.save()
+            await row.delete()
+        else:
+            row.ingredient_id = target_ingredient_id
+            await row.save()
 
 
 async def _merge_shop_assignments(
@@ -285,6 +314,7 @@ async def merge_ingredients(
     await _merge_grocery_list_items(
         owner_id, source_ingredient_id, target_ingredient_id
     )
+    await _merge_inventory_items(owner_id, source_ingredient_id, target_ingredient_id)
     await _merge_shop_assignments(owner_id, source_ingredient_id, target_ingredient_id)
 
     await source.delete()

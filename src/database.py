@@ -7,6 +7,14 @@ from tortoise import Tortoise
 
 from src.db_config import is_postgres_url
 
+# ``generate_schemas`` only creates missing tables, so columns added to existing
+# tables after the Postgres database was first created are added here. Each
+# statement must be idempotent.
+POSTGRES_COLUMN_PATCHES = (
+    'ALTER TABLE "grocerylistitem" ADD COLUMN IF NOT EXISTS '
+    '"inventory_quantity" DOUBLE PRECISION NOT NULL DEFAULT 0',
+)
+
 
 def ensure_not_using_production_db_in_tests() -> None:
     """Block accidental production database use while pytest is running."""
@@ -32,6 +40,9 @@ async def init_database(config: dict) -> None:
     db_url = str(config["connections"]["default"])
     if is_postgres_url(db_url):
         await Tortoise.generate_schemas(safe=True)
+        connection = Tortoise.get_connection("default")
+        for statement in POSTGRES_COLUMN_PATCHES:
+            await connection.execute_script(statement)
         return
 
     command = Command(

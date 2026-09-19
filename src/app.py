@@ -27,6 +27,7 @@ from src.controllers.auth import AuthController
 from src.controllers.elements import ElementController
 from src.controllers.ingredient_merge import IngredientMergeController
 from src.controllers.ingredient_units import IngredientUnitMergeController
+from src.controllers.inventory import InventoryController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
 from src.controllers.shops import ShopController
@@ -197,6 +198,7 @@ _app_route_handlers: list = [
     ShopController,
     WeekMenuController,
     WeeklyGroceryController,
+    InventoryController,
     AdminController,
     ElementController,
     static_files_router,

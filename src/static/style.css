@@ -349,6 +349,23 @@ div.search-results {
     font-size: 0.95rem;
 }
 
+/* A label and a single control side by side (e.g. a sort select). */
+.inline-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+}
+
+.inline-field .field-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.inline-field .form-control {
+    width: auto;
+}
+
 .form-control:focus {
     outline: none;
     border-color: var(--accent);
@@ -1373,7 +1390,9 @@ div.search-results {
     gap: var(--space-1);
 }
 
-.weekly-grocery-list {
+/* A list of rows that are each an inline edit form (weekly groceries,
+   inventory): one compact .ingredient-input row per item. */
+.editable-list {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -1382,12 +1401,24 @@ div.search-results {
     gap: var(--space-1);
 }
 
-.weekly-grocery-list .ingredient-input {
+.editable-list .ingredient-input {
     padding: var(--space-1) var(--space-2);
 }
 
-.weekly-grocery-row {
+.editable-list-item {
     margin: 0;
+}
+
+/* Small, non-wrapping metadata at the end of a row (e.g. a timestamp). */
+.row-meta {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .editable-list .ingredient-input {
+        flex-wrap: wrap;
+    }
 }
 
 .ingredient-input > .form-control[name="abbrev"] {
@@ -1895,6 +1926,7 @@ details.form-panel > :not(summary) {
 
 .section-heading {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
