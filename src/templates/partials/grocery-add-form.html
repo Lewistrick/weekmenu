@@ -4,27 +4,23 @@
             <h2 class="section-title">{{ t('grocery.section.add_groceries') }}</h2>
         </div>
         <form hx-post="{{ base_path }}/week-menu/grocery-list/add" hx-target="#grocery-list-body" hx-swap="outerHTML show:none"
-            class="form-panel grocery-add-form">
-            <div class="form-group">
-                <label for="grocery-ingredient">{{ t('common.name') }}</label>
-                <input type="text" id="grocery-ingredient" name="ingredient" class="form-control" required />
-            </div>
-            <div class="form-group">
-                <label for="grocery-quantity">{{ t('common.amount') }}</label>
-                <input type="number" id="grocery-quantity" name="quantity" class="form-control" min="0.01" step="any" required />
-            </div>
-            <div class="form-group">
-                <label for="grocery-unit">{{ t('common.unit') }}</label>
-                <select id="grocery-unit" name="unit" class="form-control" required>
+            class="inline-form">
+            <div class="ingredient-input item-row">
+                <input type="text" id="grocery-ingredient" name="ingredient" class="form-control"
+                    placeholder="{{ t('common.name') }}" aria-label="{{ t('common.name') }}" required />
+                <input type="number" id="grocery-quantity" name="quantity" class="form-control" min="0.01" step="any"
+                    placeholder="{{ t('common.amount') }}" aria-label="{{ t('common.amount') }}" required />
+                <select id="grocery-unit" name="unit" class="form-control grocery-unit-select" required
+                    aria-label="{{ t('common.unit') }}">
                     {% for unit in units %}
                     <option value="{{ unit.abbrev }}">{{ unit.abbrev }}</option>
                     {% endfor %}
                 </select>
+                <div class="item-row-actions">
+                    <button type="submit" class="btn btn-sm icon-btn" title="{{ t('common.add') }}"
+                        aria-label="{{ t('common.add') }}">➕</button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-action">
-                <span class="btn-action-icon" aria-hidden="true">➕</span>
-                <span>{{ t('common.add') }}</span>
-            </button>
         </form>
     </section>
     <hr class="content-divider">

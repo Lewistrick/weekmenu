@@ -606,3 +606,37 @@ async def test_inventory_rows_use_shared_item_row_layout(
     assert page.text.count('class="item-row-actions"') == 2
     assert "<time" not in page.text
     assert "/static/style.css?v=" in page.text
+
+
+@pytest.mark.asyncio
+async def test_delete_asks_confirmation_only_when_amount_is_positive(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Items with stock get the site-wide inline confirm; empty ones delete directly."""
+    _pasta, stocked = await _stock(default_user, "pasta", 250)
+    _salt, empty = await _stock(default_user, "salt", 0)
+
+    page = await test_client.get("/inventory")
+
+    stocked_row = page.text.split(f'id="inventory-item-{stocked.id}"', 1)[1]
+    stocked_row = stocked_row.split("</li>", 1)[0]
+    empty_row = page.text.split(f'id="inventory-item-{empty.id}"', 1)[1]
+    empty_row = empty_row.split("</li>", 1)[0]
+    assert "inline-confirm-trigger" in stocked_row
+    assert 'class="inline-confirm"' in stocked_row
+    assert "inline-confirm-cancel" in stocked_row
+    assert "inline-confirm" not in empty_row
+    assert f'hx-delete="/inventory/{empty.id}?sort=updated_desc"' in empty_row
+
+
+@pytest.mark.asyncio
+async def test_grocery_add_form_uses_shared_item_row(
+    test_client: AsyncTestClient,
+) -> None:
+    """The grocery page's add form uses the same row layout as inventory."""
+    page = await test_client.get("/week-menu/grocery-list")
+
+    form = page.text.split('id="grocery-add-form"', 1)[1].split("</form>", 1)[0]
+    assert 'class="ingredient-input item-row"' in form
+    assert 'class="item-row-actions"' in form

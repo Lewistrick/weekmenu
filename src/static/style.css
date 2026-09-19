@@ -349,21 +349,28 @@ div.search-results {
     font-size: 0.95rem;
 }
 
-/* A label and a single control side by side (e.g. a sort select). */
+/* A label and a single control side by side (e.g. a sort select). The
+   control shrinks to fit narrow screens instead of overflowing them. */
 .inline-field {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    min-width: 0;
+    max-width: 100%;
     margin: 0;
 }
 
 .inline-field .field-label {
+    flex-shrink: 0;
     margin-bottom: 0;
     white-space: nowrap;
 }
 
 .inline-field .form-control {
     width: auto;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 1 auto;
 }
 
 .form-control:focus {
@@ -1014,24 +1021,24 @@ div.search-results {
     white-space: nowrap;
 }
 
-.grocery-inline-confirm-wrap {
+.inline-confirm-wrap {
     display: flex;
     align-items: center;
     justify-content: flex-end;
 }
 
-.grocery-inline-confirm[hidden],
-.grocery-inline-confirm-trigger[hidden] {
+.inline-confirm[hidden],
+.inline-confirm-trigger[hidden] {
     display: none !important;
 }
 
-.grocery-inline-confirm {
+.inline-confirm {
     display: flex;
     align-items: center;
     gap: var(--space-1);
 }
 
-.grocery-inline-confirm-label {
+.inline-confirm-label {
     font-size: 0.85rem;
     color: var(--text-muted);
 }
@@ -1398,7 +1405,7 @@ div.search-results {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: var(--space-3);
 }
 
 .editable-list .ingredient-input {
@@ -1735,6 +1742,11 @@ details.form-panel > :not(summary) {
 @media (max-width: 640px) {
     .item-row {
         grid-template-columns: minmax(0, 1fr) 5.5rem auto;
+    }
+
+    /* Keep an inline confirm in a row compact; the ✓/✕ titles explain it. */
+    .item-row-actions .inline-confirm-label {
+        display: none;
     }
 
     .item-row > :first-child {

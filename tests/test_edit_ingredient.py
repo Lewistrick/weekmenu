@@ -376,8 +376,8 @@ async def test_edit_page_shows_inline_delete_confirmation(
     assert response.status_code == 200
     assert 'id="delete-trigger"' in response.text
     assert 'id="delete-confirm"' in response.text
-    assert "grocery-inline-confirm-trigger" in response.text
-    assert "grocery-inline-confirm-cancel" in response.text
+    assert "inline-confirm-trigger" in response.text
+    assert "inline-confirm-cancel" in response.text
     assert f"/recipes/delete-confirmation/{recipe.id}" in response.text
 
 

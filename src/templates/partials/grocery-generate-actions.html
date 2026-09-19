@@ -7,7 +7,7 @@
         <span>{{ t('grocery.generate.action') }}</span>
     </button>
     <div class="grocery-generate-choices" id="grocery-generate-choices" hidden>
-        <span class="grocery-inline-confirm-label">{{ t('grocery.generate.confirm') }}</span>
+        <span class="inline-confirm-label">{{ t('grocery.generate.confirm') }}</span>
         <form method="post" action="{{ base_path }}/week-menu/grocery-list/generate" class="grocery-bulk-form">
             <input type="hidden" name="mode" value="replace">
             <button type="submit" class="btn btn-sm btn-ghost grocery-generate-choice"

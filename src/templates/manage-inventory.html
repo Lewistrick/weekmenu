@@ -77,8 +77,28 @@
                         </select>
                         <div class="item-row-actions">
                             <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.save') }}" aria-label="{{ t('inventory.aria.save') }}">💾</button>
-                            <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ base_path }}/inventory/{{ row.id }}?sort={{ sort }}"
+                            {% set delete_url = base_path ~ "/inventory/" ~ row.id ~ "?sort=" ~ sort %}
+                            {% if row.quantity > 0 %}
+                            {% set trigger_id = "inventory-delete-trigger-" ~ row.id %}
+                            {% set confirm_id = "inventory-delete-confirm-" ~ row.id %}
+                            <div class="inline-confirm-wrap">
+                                <button type="button" class="btn btn-sm icon-btn inline-confirm-trigger"
+                                    id="{{ trigger_id }}" data-confirm-id="{{ confirm_id }}"
+                                    title="{{ t('inventory.aria.delete') }}" aria-label="{{ t('inventory.aria.delete') }}">🗑️</button>
+                                <div class="inline-confirm" id="{{ confirm_id }}" hidden>
+                                    <span class="inline-confirm-label">{{ t('common.confirm') }}?</span>
+                                    <button type="button" class="shop-chip-btn shop-chip-btn--warn"
+                                        hx-delete="{{ delete_url }}" hx-target="body" hx-swap="innerHTML"
+                                        title="{{ t('common.confirm') }}" aria-label="{{ t('common.confirm') }}">✓</button>
+                                    <button type="button" class="shop-chip-btn shop-chip-btn--clear inline-confirm-cancel"
+                                        data-confirm-id="{{ confirm_id }}" data-trigger-id="{{ trigger_id }}"
+                                        title="{{ t('common.cancel') }}" aria-label="{{ t('common.cancel') }}">✕</button>
+                                </div>
+                            </div>
+                            {% else %}
+                            <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ delete_url }}"
                                 hx-target="body" hx-swap="innerHTML" title="{{ t('inventory.aria.delete') }}" aria-label="{{ t('inventory.aria.delete') }}">🗑️</button>
+                            {% endif %}
                         </div>
                     </div>
                 </form>
