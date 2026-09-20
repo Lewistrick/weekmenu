@@ -461,8 +461,10 @@
 
 /* Name / amount / unit / buttons row (inventory, weekly groceries, grocery
    add form). One line on wide screens; on phones the name gets its own first
-   line. Must follow .ingredient-input, whose box styling it reuses. */
-.item-row {
+   line. Composed with .ingredient-input for the box; the compound selector
+   keeps the grid winning over that rule's `display: flex` whatever the
+   source order is. */
+.ingredient-input.item-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 6rem 5.5rem auto;
     align-items: center;
@@ -479,7 +481,7 @@
 }
 
 @media (max-width: 640px) {
-    .item-row {
+    .ingredient-input.item-row {
         grid-template-columns: minmax(0, 1fr) 5.5rem auto;
     }
 

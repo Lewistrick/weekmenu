@@ -1,6 +1,7 @@
 """Tests for inventory management and its link to the grocery list."""
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from litestar.testing import AsyncTestClient
@@ -642,3 +643,16 @@ async def test_grocery_add_form_uses_shared_item_row(
     form = page.text.split('id="grocery-add-form"', 1)[1].split("</form>", 1)[0]
     assert 'class="ingredient-input item-row"' in form
     assert 'class="item-row-actions"' in form
+
+
+def test_item_row_grid_wins_over_ingredient_input_flex() -> None:
+    """The row grid must outrank `.ingredient-input`'s flex, whatever the order.
+
+    Both classes sit on the same element. With a plain `.item-row` selector the
+    two rules tie on specificity, so the one later in components.css wins and
+    the two-line phone layout silently disappears.
+    """
+    css = Path("src/static/css/components.css").read_text(encoding="utf-8")
+
+    assert ".ingredient-input.item-row {\n    display: grid;" in css
+    assert "\n.item-row {" not in css
