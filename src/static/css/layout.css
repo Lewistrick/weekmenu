@@ -147,8 +147,23 @@
     }
 
     .navbar-links {
+        position: relative;
         order: 3;
         width: 100%;
         flex-wrap: wrap;
+    }
+
+    /* Dropdowns open as a full-width panel below the links row instead of
+       under their own button, so they can't run off either screen edge
+       wherever the button wraps to. Three classes deep so this outranks
+       `.nav-group--right .nav-group-menu` regardless of source order. */
+    .navbar-links .nav-group {
+        position: static;
+    }
+
+    .navbar-links .nav-group .nav-group-menu {
+        left: 0;
+        right: 0;
+        min-width: 0;
     }
 }
