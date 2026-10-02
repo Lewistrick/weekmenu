@@ -99,6 +99,32 @@ class Ingredient(Model):
     id = IntField(primary_key=True)
     name = TextField(required=True)
     owner = ForeignKeyField("models.User", related_name="ingredients")
+    category = ForeignKeyField(
+        "models.IngredientCategory",
+        related_name="ingredients",
+        null=True,
+        on_delete=SET_NULL,
+    )
+
+
+class IngredientCategory(Model):
+    """A user-defined grocery category (vegetables, freezer, ...).
+
+    Lists group items by category in ``sort_order``, so shopping and checking
+    the cupboards can go one section at a time.
+    """
+
+    id = IntField(primary_key=True)
+    owner = ForeignKeyField(
+        "models.User", related_name="ingredient_categories", on_delete=CASCADE
+    )
+    name = TextField(required=True)
+    sort_order = IntField(default=0)
+
+    class Meta:
+        """Database constraints for ingredient categories."""
+
+        unique_together = (("owner", "name"),)
 
 
 class TagCategory(Model):
@@ -230,6 +256,7 @@ class UserPreference(Model):
     start_day = TextField(default="monday")
     include_public = BooleanField(default=False)
     grocery_list_initialized = BooleanField(default=False)
+    categories_seeded = BooleanField(default=False)
 
 
 class WeekMenuSlot(Model):

@@ -54,44 +54,23 @@
             </form>
         </div>
         {% if inventory_items %}
+        {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
+        {% if inventory_sections %}
+        {% for section in inventory_sections %}
+        <h3 class="category-heading">{{ section.name }}</h3>
         <ul class="editable-list">
-            {% set unit_abbrevs = units | map(attribute='abbrev') | list %}
-            {% for row in inventory_items %}
-            <li class="editable-list-item" id="inventory-item-{{ row.id }}">
-                <form method="post" action="{{ base_path }}/inventory/{{ row.id }}" class="inline-form">
-                    <input type="hidden" name="sort" value="{{ sort }}" />
-                    <div class="ingredient-input item-row">
-                        <input type="text" name="ingredient" class="form-control" value="{{ row.name }}" required
-                            aria-label="{{ t('common.name') }}" />
-                        <input type="number" name="quantity" class="form-control" value="{{ '%g' | format(row.quantity) }}"
-                            min="0" step="any" required aria-label="{{ t('common.amount') }}" />
-                        <select name="unit" class="form-control grocery-unit-select" required aria-label="{{ t('common.unit') }}">
-                            {% if row.unit not in unit_abbrevs %}
-                            <option value="{{ row.unit }}" selected>{{ row.unit }}</option>
-                            {% endif %}
-                            {% for unit in units %}
-                            <option value="{{ unit.abbrev }}" {% if unit.abbrev == row.unit %}selected{% endif %}>
-                                {{ unit.abbrev }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <div class="item-row-actions">
-                            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('inventory.aria.save') }}" aria-label="{{ t('inventory.aria.save') }}">💾</button>
-                            {% set delete_url = base_path ~ "/inventory/" ~ row.id ~ "?sort=" ~ sort %}
-                            {% if row.quantity > 0 %}
-                            {% with trigger_id="inventory-delete-trigger-" ~ row.id, confirm_id="inventory-delete-confirm-" ~ row.id, trigger_label=t('inventory.aria.delete'), trigger_icon="🗑️", trigger_icon_only=true, trigger_class="icon-btn", confirm_label=t('common.confirm') ~ "?", confirm_action=delete_url, hx_method="delete", hx_target="body", hx_swap="innerHTML" %}
-                            {% include "partials/inline-confirm.html" %}
-                            {% endwith %}
-                            {% else %}
-                            <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ delete_url }}"
-                                hx-target="body" hx-swap="innerHTML" title="{{ t('inventory.aria.delete') }}" aria-label="{{ t('inventory.aria.delete') }}">🗑️</button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </form>
-            </li>
+            {% for row in section.entries %}
+            {% include "partials/inventory-item-row.html" %}
             {% endfor %}
         </ul>
+        {% endfor %}
+        {% else %}
+        <ul class="editable-list">
+            {% for row in inventory_items %}
+            {% include "partials/inventory-item-row.html" %}
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% else %}
         <p class="search-placeholder">{{ t('inventory.empty') }}</p>
         {% endif %}

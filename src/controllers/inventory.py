@@ -6,8 +6,14 @@ from litestar.response import Template
 from loguru import logger
 
 from src.auth import get_current_user
+from src.categories import (
+    group_by_category,
+    load_categories,
+    load_ingredient_category_ids,
+)
 from src.i18n.service import t
 from src.inventory import (
+    INVENTORY_SORT_CATEGORY,
     INVENTORY_SORTS,
     add_inventory_item,
     delete_inventory_item,
@@ -43,11 +49,22 @@ class InventoryController(Controller):
         """Render the inventory management page."""
         owner_id = await self._owner_id(request)
         active_sort = normalize_inventory_sort(sort)
+        items = await load_inventory(owner_id, active_sort)
+        sections = []
+        if active_sort == INVENTORY_SORT_CATEGORY:
+            sections = group_by_category(
+                items,
+                await load_ingredient_category_ids(owner_id),
+                await load_categories(owner_id),
+                uncategorised_label=t("categories.uncategorised"),
+                always=True,
+            )
         return Template(
             template_name="manage-inventory.html",
             context={
                 "request": request,
-                "inventory_items": await load_inventory(owner_id, active_sort),
+                "inventory_items": items,
+                "inventory_sections": sections,
                 "units": await Unit.filter(owner_id=owner_id).order_by("abbrev"),
                 "sort": active_sort,
                 "sort_options": INVENTORY_SORTS,

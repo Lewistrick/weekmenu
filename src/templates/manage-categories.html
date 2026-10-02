@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.categories') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.categories') }}</h1>
+        <p class="page-lead">{{ t('categories.lead') }}</p>
+    </header>
+
+    {% with message_scope="categories" %}
+    {% include "partials/flash-messages.html" %}
+    {% endwith %}
+    {% with warning_scope="categories" %}
+    {% include "partials/flash-warnings.html" %}
+    {% endwith %}
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">{{ t('categories.section.add') }}</h2>
+        </div>
+        <form method="post" action="{{ base_path }}/categories" class="inline-form">
+            <div class="form-group">
+                <div class="ingredient-input item-row item-row--two">
+                    <input type="text" name="name" class="form-control" placeholder="{{ t('common.name') }}"
+                        aria-label="{{ t('common.name') }}" required />
+                    <div class="item-row-actions">
+                        <button type="submit" class="btn btn-sm icon-btn" title="{{ t('categories.aria.add') }}"
+                            aria-label="{{ t('categories.aria.add') }}">➕</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="recipe-section">
+        <div class="section-heading">
+            <h2 class="section-title">{{ t('categories.section.yours') }}</h2>
+            <p class="section-hint">{{ t('categories.hint.order') }}</p>
+        </div>
+        {% if categories %}
+        <ul class="editable-list">
+            {% for category in categories %}
+            <li class="editable-list-item" id="category-{{ category.id }}">
+                <form method="post" action="{{ base_path }}/categories/{{ category.id }}" class="inline-form">
+                    <div class="ingredient-input item-row item-row--two">
+                        <input type="text" name="name" class="form-control" value="{{ category.name }}" required
+                            aria-label="{{ t('common.name') }}" />
+                        <div class="item-row-actions">
+                            <button type="button" class="btn btn-sm icon-btn"
+                                hx-post="{{ base_path }}/categories/{{ category.id }}/move/up" hx-target="body" hx-swap="innerHTML"
+                                {% if loop.first %}disabled{% endif %}
+                                title="{{ t('categories.aria.move_up') }}" aria-label="{{ t('categories.aria.move_up') }}">↑</button>
+                            <button type="button" class="btn btn-sm icon-btn"
+                                hx-post="{{ base_path }}/categories/{{ category.id }}/move/down" hx-target="body" hx-swap="innerHTML"
+                                {% if loop.last %}disabled{% endif %}
+                                title="{{ t('categories.aria.move_down') }}" aria-label="{{ t('categories.aria.move_down') }}">↓</button>
+                            <button type="submit" class="btn btn-sm icon-btn" title="{{ t('categories.aria.save') }}"
+                                aria-label="{{ t('categories.aria.save') }}">💾</button>
+                            {% set delete_url = base_path ~ "/categories/" ~ category.id %}
+                            {% if category.ingredient_count > 0 %}
+                            {% with trigger_id="category-delete-trigger-" ~ category.id, confirm_id="category-delete-confirm-" ~ category.id, trigger_label=t('categories.aria.delete'), trigger_icon="🗑️", trigger_icon_only=true, trigger_class="icon-btn", confirm_label=t('common.confirm') ~ "?", confirm_action=delete_url, hx_method="delete", hx_target="body", hx_swap="innerHTML" %}
+                            {% include "partials/inline-confirm.html" %}
+                            {% endwith %}
+                            {% else %}
+                            <button type="button" class="btn btn-sm icon-btn" hx-delete="{{ delete_url }}"
+                                hx-target="body" hx-swap="innerHTML" title="{{ t('categories.aria.delete') }}"
+                                aria-label="{{ t('categories.aria.delete') }}">🗑️</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="search-placeholder">{{ t('categories.empty') }}</p>
+        {% endif %}
+    </section>
+
+    {% include "partials/category-assignments.html" %}
+</div>
+{% endblock %}

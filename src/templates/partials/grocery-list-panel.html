@@ -20,11 +20,9 @@
             {% endif %}
         </div>
         {% if to_check_items %}
-        <ul class="grocery-list grocery-list--to-check">
-            {% for item in to_check_items %}
-            {% include "partials/grocery-item-row.html" %}
-            {% endfor %}
-        </ul>
+        {% with list_items=to_check_items, list_sections=to_check_sections, list_class="grocery-list grocery-list--to-check" %}
+        {% include "partials/grocery-item-sections.html" %}
+        {% endwith %}
         {% else %}
         <p class="search-placeholder">{{ t('grocery.to_check.empty') }}</p>
         {% endif %}
@@ -66,11 +64,9 @@
                 {% include "partials/inline-confirm.html" %}
                 {% endwith %}
             </div>
-            <ul class="grocery-list">
-                {% for item in group.entries %}
-                {% include "partials/grocery-item-row.html" %}
-                {% endfor %}
-            </ul>
+            {% with list_items=group.entries, list_sections=group.sections, list_class="grocery-list" %}
+            {% include "partials/grocery-item-sections.html" %}
+            {% endwith %}
         </div>
         {% endfor %}
         {% else %}

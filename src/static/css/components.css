@@ -499,6 +499,27 @@
     margin: 0;
 }
 
+/* Two-cell row: a wide name/label cell and an auto-width control or button
+   cell. Stays on one line on phones (overrides the item-row phone layout). */
+.ingredient-input.item-row.item-row--two {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ingredient-input.item-row.item-row--two > :first-child {
+    grid-column: auto;
+    overflow-wrap: anywhere;
+}
+
+/* Heading over a run of list items that share an ingredient category. */
+.category-heading {
+    margin: var(--space-3) 0 var(--space-2);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
 .ingredient-input > .form-control[name="abbrev"] {
     min-width: 0;
     flex: 0 1 4.5rem;

@@ -118,6 +118,12 @@
     color: var(--text-heading);
 }
 
+/* Category headings sit on the shop colour, so follow its text colour. */
+.grocery-shop-group .category-heading {
+    color: inherit;
+    opacity: 0.85;
+}
+
 .grocery-shop-group .grocery-item-name {
     color: var(--text-heading);
 }

@@ -14,6 +14,7 @@ KEY_PREFIX_ICONS: dict[str, str] = {
     "nav.settings": "⚙️ ",
     "nav.tag_groups": "🏷️ ",
     "nav.shops": "🏪 ",
+    "nav.categories": "🗂️ ",
     "nav.week_menu_constraints": "🎛️ ",
     "nav.weekly_groceries": "🧺 ",
     "nav.units": "📏 ",

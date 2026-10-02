@@ -1,0 +1,33 @@
+<section id="category-assignments" class="recipe-section">
+    <div class="section-heading">
+        <h2 class="section-title">{{ t('categories.section.assign') }}</h2>
+        <p class="section-hint">{{ t('categories.hint.assign') }}</p>
+    </div>
+    {% if assignment_groups %}
+    {% for group in assignment_groups %}
+    <h3 class="category-heading">
+        {{ group.category.name if group.category else t('categories.uncategorised') }} ({{ group.rows | length }})
+    </h3>
+    <ul class="editable-list">
+        {% for row in group.rows %}
+        <li class="editable-list-item">
+            <div class="ingredient-input item-row item-row--two">
+                <label for="ingredient-category-{{ row.id }}">{{ row.name }}</label>
+                <select id="ingredient-category-{{ row.id }}" name="category_id" class="form-control"
+                    hx-post="{{ base_path }}/categories/ingredient/{{ row.id }}" hx-trigger="change"
+                    hx-target="#category-assignments" hx-swap="outerHTML"
+                    aria-label="{{ t('categories.aria.category_for', ingredient_name=row.name) }}">
+                    <option value="" {% if row.category_id is none %}selected{% endif %}>{{ t('categories.option.none') }}</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if row.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+    {% else %}
+    <p class="search-placeholder">{{ t('categories.assign.empty') }}</p>
+    {% endif %}
+</section>

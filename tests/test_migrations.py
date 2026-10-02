@@ -164,3 +164,19 @@ async def test_migrations_add_inventory(tmp_path: Path) -> None:
         "updated_at",
     }.issubset(_table_columns(db_file, "inventoryitem"))
     assert "inventory_quantity" in _table_columns(db_file, "grocerylistitem")
+
+
+@pytest.mark.asyncio
+async def test_migrations_add_ingredient_categories(tmp_path: Path) -> None:
+    """All migrations together should create ingredient category storage."""
+    db_file = tmp_path / "migrated.sqlite3"
+    sqlite3.connect(db_file).close()
+
+    for migration_path in MIGRATION_FILES:
+        await _apply_migration(db_file, migration_path)
+
+    assert {"id", "owner_id", "name", "sort_order"}.issubset(
+        _table_columns(db_file, "ingredientcategory")
+    )
+    assert "category_id" in _table_columns(db_file, "ingredient")
+    assert "categories_seeded" in _table_columns(db_file, "userpreference")

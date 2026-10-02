@@ -18,10 +18,13 @@ from src.models import InventoryItem, Unit
 INVENTORY_SORT_UPDATED_DESC = "updated_desc"
 INVENTORY_SORT_UPDATED_ASC = "updated_asc"
 INVENTORY_SORT_NAME = "name"
+# Alphabetical within each category; the caller adds the category headings.
+INVENTORY_SORT_CATEGORY = "category"
 INVENTORY_SORTS = (
     INVENTORY_SORT_UPDATED_DESC,
     INVENTORY_SORT_UPDATED_ASC,
     INVENTORY_SORT_NAME,
+    INVENTORY_SORT_CATEGORY,
 )
 
 
@@ -83,7 +86,7 @@ async def load_inventory(
         )
         for row in rows
     ]
-    if sort == INVENTORY_SORT_NAME:
+    if sort in (INVENTORY_SORT_NAME, INVENTORY_SORT_CATEGORY):
         prepared.sort(key=lambda row: (row["name"].lower(), row["unit"].lower()))
     return prepared
 

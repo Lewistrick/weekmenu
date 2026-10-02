@@ -316,6 +316,16 @@ async def merge_ingredients(
     )
     await _merge_inventory_items(owner_id, source_ingredient_id, target_ingredient_id)
     await _merge_shop_assignments(owner_id, source_ingredient_id, target_ingredient_id)
+    # The target keeps its own category; it only inherits the source's.
+    source_category_id = (
+        await Ingredient.filter(id=source_ingredient_id).values_list(
+            "category_id", flat=True
+        )
+    )[0]
+    if source_category_id is not None:
+        await Ingredient.filter(
+            id=target_ingredient_id, category_id__isnull=True
+        ).update(category_id=source_category_id)
 
     await source.delete()
 

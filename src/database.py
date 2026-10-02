@@ -13,6 +13,10 @@ from src.db_config import is_postgres_url
 POSTGRES_COLUMN_PATCHES = (
     'ALTER TABLE "grocerylistitem" ADD COLUMN IF NOT EXISTS '
     '"inventory_quantity" DOUBLE PRECISION NOT NULL DEFAULT 0',
+    'ALTER TABLE "ingredient" ADD COLUMN IF NOT EXISTS "category_id" INT '
+    'REFERENCES "ingredientcategory" ("id") ON DELETE SET NULL',
+    'ALTER TABLE "userpreference" ADD COLUMN IF NOT EXISTS '
+    '"categories_seeded" BOOLEAN NOT NULL DEFAULT FALSE',
 )
 
 

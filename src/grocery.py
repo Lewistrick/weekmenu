@@ -3,6 +3,7 @@
 from collections import defaultdict
 from typing import Any, TypedDict
 
+from src.categories import CategorySection
 from src.shops import ShopInfo
 from src.week_menu import GroceryItem, grocery_line_key, resolve_grocery_line_shop_id
 
@@ -19,6 +20,8 @@ class GroceryGroup(TypedDict):
     background_color: str
     letter: str
     entries: list[GroceryItem]
+    # Filled by the caller from the user's categories; empty = show flat.
+    sections: list[CategorySection]
 
 
 class IngredientOrigin(TypedDict):
@@ -128,6 +131,7 @@ def split_grocery_lists(
                 background_color=shop["background_color"],
                 letter=shop["letter"],
                 entries=sorted(entries, key=lambda entry: entry["name"].lower()),
+                sections=[],
             )
         )
 

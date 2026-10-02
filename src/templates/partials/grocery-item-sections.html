@@ -1,0 +1,18 @@
+{# Grocery rows under category headings, or one flat list when nothing is categorised.
+   Expects: list_items, list_sections (from group_by_category), list_class. #}
+{% if list_sections %}
+{% for section in list_sections %}
+<h4 class="category-heading">{{ section.name }}</h4>
+<ul class="{{ list_class }}">
+    {% for item in section.entries %}
+    {% include "partials/grocery-item-row.html" %}
+    {% endfor %}
+</ul>
+{% endfor %}
+{% else %}
+<ul class="{{ list_class }}">
+    {% for item in list_items %}
+    {% include "partials/grocery-item-row.html" %}
+    {% endfor %}
+</ul>
+{% endif %}

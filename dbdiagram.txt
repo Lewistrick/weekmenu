@@ -20,9 +20,23 @@ Table grocerylistitem {
 Table ingredient {
   id int [pk, increment]
   name text [not null]
+  category_id int
   owner_id int [not null]
 
   Note: 'Any ingredient (to add quantity and unit, see RecipeIngredient).'
+}
+
+Table ingredientcategory {
+  id int [pk, increment]
+  name text [not null]
+  sort_order int [not null, default: 0]
+  owner_id int [not null]
+
+  indexes {
+    (owner_id, name) [unique]
+  }
+
+  Note: 'A user-defined grocery category (vegetables, freezer, ...).'
 }
 
 Table inventoryitem {
@@ -155,6 +169,7 @@ Table userpreference {
   start_day text [not null, default: 'monday']
   include_public boolean [not null, default: false]
   grocery_list_initialized boolean [not null, default: false]
+  categories_seeded boolean [not null, default: false]
   user_id int [not null, unique]
 
   Note: 'Per-user account and week-menu preferences persisted in the database.'
@@ -204,7 +219,9 @@ Ref: grocerylistitem.ingredient_id > ingredient.id [delete: cascade]
 Ref: grocerylistitem.shop_id > shop.id [delete: set null]
 Ref: grocerylistitem.unit_id > unit.id [delete: cascade]
 Ref: grocerylistitem.user_id > user.id [delete: cascade]
+Ref: ingredient.category_id > ingredientcategory.id [delete: set null]
 Ref: ingredient.owner_id > user.id [delete: cascade]
+Ref: ingredientcategory.owner_id > user.id [delete: cascade]
 Ref: inventoryitem.ingredient_id > ingredient.id [delete: cascade]
 Ref: inventoryitem.owner_id > user.id [delete: cascade]
 Ref: inventoryitem.unit_id > unit.id [delete: cascade]

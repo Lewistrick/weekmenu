@@ -10,6 +10,11 @@ from loguru import logger
 from tortoise.expressions import Q
 
 from src.auth import get_current_user
+from src.categories import (
+    group_by_category,
+    load_categories,
+    load_ingredient_category_ids,
+)
 from src.catalog import get_or_create_ingredient
 from src.grocery import (
     compute_ingredient_origins,
@@ -485,11 +490,28 @@ class WeekMenuController(Controller):
                 line_shop_ids,
             )
         )
+        categories = await load_categories(user_id)
+        ingredient_category_ids = await load_ingredient_category_ids(user_id)
+        uncategorised_label = t("categories.uncategorised")
+        for group in grocery_groups:
+            group["sections"] = group_by_category(
+                group["entries"],
+                ingredient_category_ids,
+                categories,
+                uncategorised_label=uncategorised_label,
+            )
+        to_check_sections = group_by_category(
+            to_check_items,
+            ingredient_category_ids,
+            categories,
+            uncategorised_label=uncategorised_label,
+        )
         units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return {
             "request": request,
             "unassigned_items": unassigned_items,
             "to_check_items": to_check_items,
+            "to_check_sections": to_check_sections,
             "already_have_items": already_have_items,
             "grocery_groups": grocery_groups,
             "grocery_export_text": format_grocery_export(

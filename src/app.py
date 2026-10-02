@@ -25,6 +25,7 @@ from src.auth import (
 )
 from src.controllers.admin import AdminController
 from src.controllers.auth import AuthController
+from src.controllers.categories import CategoryController
 from src.controllers.elements import ElementController
 from src.controllers.ingredient_merge import IngredientMergeController
 from src.controllers.ingredient_units import IngredientUnitMergeController
@@ -224,6 +225,7 @@ _app_route_handlers: list = [
     WeekMenuController,
     WeeklyGroceryController,
     InventoryController,
+    CategoryController,
     AdminController,
     ElementController,
     static_files_router,

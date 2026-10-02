@@ -38,6 +38,12 @@ class, check whether one of these already covers the need:
   `.item-row-actions` (one line on desktop, two on phones); a list of such
   editable rows is `ul.editable-list > li.editable-list-item`.
 - **Label + single control** (e.g. a sort select): `.inline-field`.
+- **Two-cell rows** (a name/label plus one control or a button group, kept on
+  one line on phones): add `.item-row--two` to `.ingredient-input.item-row`.
+- **Category headings** over a run of list items: `.category-heading`. Build
+  the runs with `group_by_category()` in `src/categories.py`; for grocery rows
+  render them with `partials/grocery-item-sections.html` (falls back to a flat
+  list when nothing is categorised).
 
 If a new component is genuinely distinct, add it to `components.css`.
 Feature-specific rules go in their feature file (`grocery.css`, `recipes.css`,
