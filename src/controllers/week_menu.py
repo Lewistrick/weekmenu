@@ -869,6 +869,15 @@ class WeekMenuController(Controller):
                     count=count,
                     noun=noun,
                 )
+                inventory_message = await self._reserve_inventory_message(
+                    user_id,
+                    {
+                        grocery_line_key(item["ingredient_id"], item["unit"])
+                        for item in missing_items
+                    },
+                )
+                if inventory_message:
+                    action_message = f"{action_message} {inventory_message}"
         return await self._grocery_add_response(request, action_message=action_message)
 
     @get(path="/grocery-list/export", summary="Export grocery list as plaintext")

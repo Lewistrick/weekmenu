@@ -22,6 +22,7 @@ from src.models import (
     Shop,
     Unit,
     User,
+    WeeklyGrocery,
 )
 from src.plan_store import GROCERY_STATUS_ACTIVE, GROCERY_STATUS_ALREADY_HAVE
 from src.units import unit_is_in_use
@@ -492,6 +493,61 @@ async def test_editing_reserved_amount_within_stock_adjusts_it(
     assert line.status == GROCERY_STATUS_ALREADY_HAVE
     assert line.inventory_quantity == 300
     assert await _stock_of(stock) == 300
+
+
+@pytest.mark.asyncio
+async def test_adding_weekly_groceries_reserves_covered_items(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Weekly groceries the inventory covers go straight to already-have."""
+    milk, milk_stock = await _stock(default_user, "milk", 2, abbrev="l")
+    eggs, eggs_stock = await _stock(default_user, "eggs", 4, abbrev="st")
+    await WeeklyGrocery.create(
+        owner=default_user,
+        ingredient=milk,
+        unit=await _unit(default_user, "l"),
+        quantity=2,
+    )
+    await WeeklyGrocery.create(
+        owner=default_user,
+        ingredient=eggs,
+        unit=await _unit(default_user, "st"),
+        quantity=6,
+    )
+
+    response = await test_client.post(
+        "/week-menu/grocery-list/add-weekly", follow_redirects=True
+    )
+
+    milk_line = await _line(default_user, milk)
+    assert milk_line.status == GROCERY_STATUS_ALREADY_HAVE
+    assert milk_line.inventory_quantity == 2
+    assert await _stock_of(milk_stock) == 0
+    # Partial stock (4 of 6) leaves the line on the list, stock untouched.
+    eggs_line = await _line(default_user, eggs)
+    assert eggs_line.status == GROCERY_STATUS_ACTIVE
+    assert eggs_line.inventory_quantity == 0
+    assert await _stock_of(eggs_stock) == 4
+    assert "Added 2 weekly groceries" in response.text
+    assert "Moved 1 grocery to" in response.text
+
+
+@pytest.mark.asyncio
+async def test_adding_custom_grocery_does_not_reserve_inventory(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """A single item added by hand stays on the list, even when in stock."""
+    milk, stock = await _stock(default_user, "milk", 5, abbrev="l")
+
+    await test_client.post(
+        "/week-menu/grocery-list/add",
+        data={"ingredient": "milk", "quantity": "1", "unit": "l"},
+    )
+
+    assert (await _line(default_user, milk)).status == GROCERY_STATUS_ACTIVE
+    assert await _stock_of(stock) == 5
 
 
 @pytest.mark.asyncio
