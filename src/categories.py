@@ -8,6 +8,7 @@ checking the cupboards goes one drawer at a time.
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict
 
+from src.category_icons import suggest_icon
 from src.i18n.service import t
 from src.models import Ingredient, IngredientCategory
 from src.plan_store import ensure_user_preference
@@ -26,8 +27,9 @@ DEFAULT_CATEGORY_KEYS: tuple[str, ...] = (
     "categories.default.other",
 )
 
-MOVE_UP = "up"
-MOVE_DOWN = "down"
+# Longest icon accepted: room for one emoji, including multi-code-point ones
+# such as flags or skin-tone and ZWJ sequences.
+MAX_ICON_LENGTH = 16
 
 
 class CategoryInfo(TypedDict):
@@ -35,6 +37,9 @@ class CategoryInfo(TypedDict):
 
     id: int
     name: str
+    icon: str
+    # What chips show: the icon, or the name's first letter when it has none.
+    badge: str
     sort_order: int
     ingredient_count: int
 
@@ -44,6 +49,7 @@ class CategorySection(TypedDict):
 
     category_id: int | None
     name: str
+    icon: str
     entries: list[Any]
 
 
@@ -62,6 +68,18 @@ class AssignmentGroup(TypedDict):
     rows: list[AssignmentRow]
 
 
+def _first_letter(name: str) -> str:
+    """Return a category's first letter, for chips when it has no icon."""
+    stripped = name.strip()
+    return stripped[0].upper() if stripped else "?"
+
+
+def _clean_icon(icon: Any) -> str | None:
+    """Return a stripped icon, or ``None`` when it is too long to be one emoji."""
+    clean = str(icon or "").strip()
+    return clean if len(clean) <= MAX_ICON_LENGTH else None
+
+
 async def load_categories(owner_id: int) -> list[CategoryInfo]:
     """Return a user's categories in their chosen order."""
     rows = await IngredientCategory.filter(owner_id=owner_id).order_by(
@@ -76,6 +94,8 @@ async def load_categories(owner_id: int) -> list[CategoryInfo]:
         CategoryInfo(
             id=row.id,
             name=row.name,
+            icon=row.icon,
+            badge=row.icon or _first_letter(row.name),
             sort_order=row.sort_order,
             ingredient_count=counts.get(row.id, 0),
         )
@@ -98,8 +118,12 @@ async def ensure_default_categories(owner_id: int) -> int:
     created = 0
     if not await IngredientCategory.filter(owner_id=owner_id).exists():
         for index, key in enumerate(DEFAULT_CATEGORY_KEYS):
+            name = t(key)
             await IngredientCategory.create(
-                owner_id=owner_id, name=t(key), sort_order=index
+                owner_id=owner_id,
+                name=name,
+                icon=suggest_icon(name),
+                sort_order=index,
             )
             created += 1
     preference.categories_seeded = True
@@ -118,15 +142,20 @@ async def _name_taken(
     return name.casefold() in {str(other).casefold() for other in existing}
 
 
-async def add_category(owner_id: int, name: Any) -> tuple[bool, str]:
+async def add_category(owner_id: int, name: Any, icon: Any = "") -> tuple[bool, str]:
     """Add a category at the end of the user's order.
+
+    An empty icon gets one suggested from the name (see ``suggest_icon``).
 
     Returns:
         A success flag and a message describing the outcome.
     """
     clean = str(name or "").strip()
+    clean_icon = _clean_icon(icon)
     if not clean:
         return False, t("message.categories.name_required")
+    if clean_icon is None:
+        return False, t("message.categories.icon_too_long")
     if await _name_taken(owner_id, clean):
         return False, t("message.categories.already_exists", name=clean)
     last = (
@@ -137,15 +166,16 @@ async def add_category(owner_id: int, name: Any) -> tuple[bool, str]:
     await IngredientCategory.create(
         owner_id=owner_id,
         name=clean,
+        icon=clean_icon or suggest_icon(clean),
         sort_order=(last.sort_order + 1) if last is not None else 0,
     )
     return True, t("message.categories.added", name=clean)
 
 
-async def rename_category(
-    owner_id: int, category_id: int, name: Any
+async def update_category(
+    owner_id: int, category_id: int, name: Any, icon: Any = ""
 ) -> tuple[bool, str]:
-    """Rename an owned category.
+    """Rename an owned category and set its icon (empty = first letter).
 
     Returns:
         A success flag and a message describing the outcome.
@@ -154,33 +184,35 @@ async def rename_category(
     if row is None:
         return False, t("message.categories.not_found")
     clean = str(name or "").strip()
+    clean_icon = _clean_icon(icon)
     if not clean:
         return False, t("message.categories.name_required")
+    if clean_icon is None:
+        return False, t("message.categories.icon_too_long")
     if await _name_taken(owner_id, clean, exclude_id=category_id):
         return False, t("message.categories.already_exists", name=clean)
     row.name = clean
+    row.icon = clean_icon
     await row.save()
     return True, t("message.categories.updated", name=clean)
 
 
-async def move_category(owner_id: int, category_id: int, direction: str) -> bool:
-    """Swap a category with its neighbour in the user's order.
+async def reorder_categories(owner_id: int, category_ids: Sequence[int]) -> bool:
+    """Store a new order for all of a user's categories.
+
+    Args:
+        owner_id: The user whose categories are reordered.
+        category_ids: Every one of the user's category ids, in the new order.
 
     Returns:
-        ``True`` when the category moved.
+        ``True`` when saved; ``False`` when the ids are not exactly the user's
+        categories (e.g. a stale page after a category was added or deleted).
     """
-    rows = list(
-        await IngredientCategory.filter(owner_id=owner_id).order_by("sort_order", "id")
-    )
-    index = next((i for i, row in enumerate(rows) if row.id == category_id), None)
-    if index is None:
+    rows = {row.id: row for row in await IngredientCategory.filter(owner_id=owner_id)}
+    if len(category_ids) != len(rows) or set(category_ids) != set(rows):
         return False
-    target = index - 1 if direction == MOVE_UP else index + 1
-    if direction not in (MOVE_UP, MOVE_DOWN) or not 0 <= target < len(rows):
-        return False
-    rows[index], rows[target] = rows[target], rows[index]
-    # Renumber everything so ties or gaps from older data cannot break moves.
-    for position, row in enumerate(rows):
+    for position, category_id in enumerate(category_ids):
+        row = rows[category_id]
         if row.sort_order != position:
             row.sort_order = position
             await row.save()
@@ -296,6 +328,7 @@ def group_by_category(
         CategorySection(
             category_id=category["id"],
             name=category["name"],
+            icon=category["icon"],
             entries=buckets[category["id"]],
         )
         for category in categories
@@ -304,7 +337,10 @@ def group_by_category(
     if None in buckets:
         sections.append(
             CategorySection(
-                category_id=None, name=uncategorised_label, entries=buckets[None]
+                category_id=None,
+                name=uncategorised_label,
+                icon="",
+                entries=buckets[None],
             )
         )
     return sections

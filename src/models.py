@@ -119,6 +119,8 @@ class IngredientCategory(Model):
         "models.User", related_name="ingredient_categories", on_delete=CASCADE
     )
     name = TextField(required=True)
+    # An emoji shown on assignment chips and list headings; "" = first letter.
+    icon = TextField(default="")
     sort_order = IntField(default=0)
 
     class Meta:

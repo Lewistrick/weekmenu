@@ -115,8 +115,24 @@ async def require_authentication(request: Request) -> Response | None:
     return None
 
 
-STYLESHEET_PATH = Path("src/static/style.css")
+STATIC_ROOT = Path("src/static")
+STYLESHEET_PATH = STATIC_ROOT / "style.css"
 _CSS_IMPORT = re.compile(r'@import\s+"([^"]+)"')
+
+
+def versioned_static(relative: str) -> str:
+    """Return a static path with a ``?v=<mtime>`` cache buster.
+
+    The version changes whenever the file changes, so browsers fetch the new
+    copy instead of a stale cached one.
+
+    Args:
+        relative: Path relative to the static root, e.g. ``js/app.js``.
+
+    Returns:
+        The same path with its version, e.g. ``js/app.js?v=1789...``.
+    """
+    return f"{relative}?v={int((STATIC_ROOT / relative).stat().st_mtime)}"
 
 
 def stylesheet_hrefs() -> list[str]:
@@ -129,11 +145,8 @@ def stylesheet_hrefs() -> list[str]:
     Returns:
         Paths relative to the static root, e.g. ``css/tokens.css?v=1789...``.
     """
-    hrefs: list[str] = []
-    for relative in _CSS_IMPORT.findall(STYLESHEET_PATH.read_text(encoding="utf-8")):
-        module = STYLESHEET_PATH.parent / relative
-        hrefs.append(f"{relative}?v={int(module.stat().st_mtime)}")
-    return hrefs
+    hub = STYLESHEET_PATH.read_text(encoding="utf-8")
+    return [versioned_static(relative) for relative in _CSS_IMPORT.findall(hub)]
 
 
 def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
@@ -151,6 +164,9 @@ def register_template_filters(template_engine: JinjaTemplateEngine) -> None:
     )
     template_engine.engine.globals["stylesheets"] = (  # ty: ignore[invalid-assignment]
         stylesheet_hrefs()
+    )
+    template_engine.engine.globals["static_url"] = (  # ty: ignore[invalid-assignment]
+        versioned_static
     )
 
 

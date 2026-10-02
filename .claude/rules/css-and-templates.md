@@ -38,12 +38,25 @@ class, check whether one of these already covers the need:
   `.item-row-actions` (one line on desktop, two on phones); a list of such
   editable rows is `ul.editable-list > li.editable-list-item`.
 - **Label + single control** (e.g. a sort select): `.inline-field`.
-- **Two-cell rows** (a name/label plus one control or a button group, kept on
-  one line on phones): add `.item-row--two` to `.ingredient-input.item-row`.
+- **Row variants** on `.ingredient-input.item-row`: `.item-row--icon` (emoji
+  field `.form-control.icon-input` + name + buttons; add `.item-row--handle`
+  for a leading drag grip) and `.item-row--flow` (a name followed by a
+  `.shop-chip-row` of choices that wraps below the name when it does not fit).
+  All stay usable on phones.
+- **Drag to reorder:** `<ul data-sortable-url="...">` with `data-id` on each
+  `<li>` and a `<span class="drag-handle">⠿</span>` in each row; load
+  `vendor/sortablejs/Sortable.min.js` and `js/sortable-lists.js` in the page's
+  `{% block scripts %}`. The new order is POSTed as `ids=3,1,2`.
+- **Static files:** link JS (and any other static asset) as
+  `{{ base_path }}/static/{{ static_url('js/x.js') }}` so it gets a
+  `?v=<mtime>` cache buster.
 - **Category headings** over a run of list items: `.category-heading`. Build
   the runs with `group_by_category()` in `src/categories.py`; for grocery rows
   render them with `partials/grocery-item-sections.html` (falls back to a flat
   list when nothing is categorised).
+  In the UI, ingredient categories are called **Section** (EN) / **Schap**
+  (NL), i.e. where an ingredient comes from; code, URLs, i18n keys and the
+  database keep saying "category".
 
 If a new component is genuinely distinct, add it to `components.css`.
 Feature-specific rules go in their feature file (`grocery.css`, `recipes.css`,

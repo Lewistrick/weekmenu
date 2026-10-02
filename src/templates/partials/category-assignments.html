@@ -6,22 +6,27 @@
     {% if assignment_groups %}
     {% for group in assignment_groups %}
     <h3 class="category-heading">
-        {{ group.category.name if group.category else t('categories.uncategorised') }} ({{ group.rows | length }})
+        {% if group.category %}{{ group.category.icon ~ ' ' if group.category.icon }}{{ group.category.name }}{% else %}{{ t('categories.uncategorised') }}{% endif %} ({{ group.rows | length }})
     </h3>
     <ul class="editable-list">
         {% for row in group.rows %}
         <li class="editable-list-item">
-            <div class="ingredient-input item-row item-row--two">
-                <label for="ingredient-category-{{ row.id }}">{{ row.name }}</label>
-                <select id="ingredient-category-{{ row.id }}" name="category_id" class="form-control"
-                    hx-post="{{ base_path }}/categories/ingredient/{{ row.id }}" hx-trigger="change"
-                    hx-target="#category-assignments" hx-swap="outerHTML"
-                    aria-label="{{ t('categories.aria.category_for', ingredient_name=row.name) }}">
-                    <option value="" {% if row.category_id is none %}selected{% endif %}>{{ t('categories.option.none') }}</option>
+            <div class="ingredient-input item-row item-row--flow">
+                <span>{{ row.name }}</span>
+                <div class="shop-chip-row" role="group" aria-label="{{ t('categories.aria.category_for', ingredient_name=row.name) }}">
+                    <button type="button" class="shop-chip-btn shop-chip-btn--clear{% if row.category_id is none %} shop-chip-btn--active{% endif %}"
+                        hx-post="{{ base_path }}/categories/ingredient/{{ row.id }}" hx-vals='{"category_id": ""}'
+                        hx-target="#category-assignments" hx-swap="outerHTML"
+                        title="{{ t('categories.uncategorised') }}" aria-label="{{ t('categories.uncategorised') }}"
+                        aria-pressed="{{ 'true' if row.category_id is none else 'false' }}">—</button>
                     {% for category in categories %}
-                    <option value="{{ category.id }}" {% if row.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                    <button type="button" class="shop-chip-btn shop-chip-btn--clear{% if category.icon %} shop-chip-btn--emoji{% endif %}{% if row.category_id == category.id %} shop-chip-btn--active{% endif %}"
+                        hx-post="{{ base_path }}/categories/ingredient/{{ row.id }}" hx-vals='{"category_id": "{{ category.id }}"}'
+                        hx-target="#category-assignments" hx-swap="outerHTML"
+                        title="{{ category.name }}" aria-label="{{ category.name }}"
+                        aria-pressed="{{ 'true' if row.category_id == category.id else 'false' }}">{{ category.badge }}</button>
                     {% endfor %}
-                </select>
+                </div>
             </div>
         </li>
         {% endfor %}

@@ -1,7 +1,11 @@
 """Tests for ingredient categories and category grouping in lists."""
 
+import sqlite3
+
 import pytest
 from litestar.testing import AsyncTestClient
+
+from src.category_icons import icon_backfill_sql, suggest_icon
 
 from src.categories import (
     DEFAULT_CATEGORY_KEYS,
@@ -50,7 +54,7 @@ async def test_categories_page_is_linked_from_settings_and_home(
 
     page = await test_client.get("/categories/manage")
     assert page.status_code == 200
-    assert "Categories" in page.text
+    assert "Sections" in page.text
 
 
 @pytest.mark.asyncio
@@ -101,9 +105,9 @@ async def test_add_category_appends_and_rejects_duplicates(
     duplicate = await test_client.post("/categories", data={"name": "vegetables"})
     empty = await test_client.post("/categories", data={"name": "  "})
 
-    assert "Category Bakery added." in added.text
-    assert "You already have a category called vegetables." in duplicate.text
-    assert "A category name is required." in empty.text
+    assert "Section Bakery added." in added.text
+    assert "You already have a section called vegetables." in duplicate.text
+    assert "A section name is required." in empty.text
     assert await _names(default_user) == ["Vegetables", "Bakery"]
 
 
@@ -119,31 +123,191 @@ async def test_rename_category(
     saved = await test_client.post(f"/categories/{veg.id}", data={"name": "Greens"})
     clash = await test_client.post(f"/categories/{veg.id}", data={"name": "FRUIT"})
 
-    assert "Category Greens saved." in saved.text
-    assert "You already have a category called FRUIT." in clash.text
+    assert "Section Greens saved." in saved.text
+    assert "You already have a section called FRUIT." in clash.text
     assert await _names(default_user) == ["Greens", "Fruit"]
 
 
 @pytest.mark.asyncio
-async def test_move_category_up_and_down(
+async def test_drag_order_is_saved(
     test_client: AsyncTestClient,
     default_user: User,
 ) -> None:
-    """Arrows swap a category with its neighbour; the ends stay put."""
+    """Dropping a row posts the full new order, which is stored."""
     a = await _category(default_user, "A", 0)
-    await _category(default_user, "B", 1)
+    b = await _category(default_user, "B", 1)
     c = await _category(default_user, "C", 2)
 
-    await test_client.post(f"/categories/{c.id}/move/up")
-    assert await _names(default_user) == ["A", "C", "B"]
-    await test_client.post(f"/categories/{a.id}/move/down")
-    assert await _names(default_user) == ["C", "A", "B"]
-    await test_client.post(f"/categories/{c.id}/move/up")
+    response = await test_client.post(
+        "/categories/order", data={"ids": f"{c.id},{a.id},{b.id}"}
+    )
+
+    assert response.status_code == 204
     assert await _names(default_user) == ["C", "A", "B"]
 
+
+@pytest.mark.asyncio
+async def test_drag_order_rejects_stale_or_foreign_ids(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """A partial list, or another user's ids, changes nothing (page reloads)."""
+    a = await _category(default_user, "A", 0)
+    b = await _category(default_user, "B", 1)
+    other = await User.create(username="other", email="o@example.com")
+    theirs = await _category(other, "X", 0)
+
+    missing = await test_client.post("/categories/order", data={"ids": f"{b.id}"})
+    foreign = await test_client.post(
+        "/categories/order", data={"ids": f"{b.id},{theirs.id}"}
+    )
+    junk = await test_client.post("/categories/order", data={"ids": "1,x"})
+
+    assert missing.status_code == 409
+    assert foreign.status_code == 409
+    assert junk.status_code == 404
+    assert await _names(default_user) == ["A", "B"]
+    assert a.id != theirs.id
+
+
+@pytest.mark.asyncio
+async def test_page_rows_are_draggable(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Rows carry a drag handle and ids; the drag scripts load versioned."""
+    veg = await _category(default_user, "Vegetables", 0)
+
     page = await test_client.get("/categories/manage")
-    first_row = page.text.split(f'id="category-{c.id}"', 1)[1].split("</li>", 1)[0]
-    assert "disabled" in first_row.split("move/down", 1)[0]
+
+    assert 'data-sortable-url="/categories/order"' in page.text
+    row = page.text.split(f'id="category-{veg.id}"', 1)[1].split("</li>", 1)[0]
+    assert f'data-id="{veg.id}"' in page.text
+    assert 'class="drag-handle"' in row
+    assert "move/up" not in page.text
+    assert "/static/vendor/sortablejs/Sortable.min.js?v=" in page.text
+    assert "/static/js/sortable-lists.js?v=" in page.text
+
+
+# --- Icons ---------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_icons_on_add_and_save(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """An icon can be set, is suggested from the name, and must be one emoji."""
+    await test_client.post("/categories", data={"name": "Snoep", "icon": "🍬"})
+    await test_client.post("/categories", data={"name": "Diepvries", "icon": ""})
+    await test_client.post("/categories", data={"name": "Kantoor", "icon": ""})
+    too_long = await test_client.post(
+        "/categories", data={"name": "Lang", "icon": "x" * 17}
+    )
+
+    icons = {
+        row.name: row.icon
+        for row in await IngredientCategory.filter(owner_id=default_user.id)
+    }
+    assert icons == {"Snoep": "🍬", "Diepvries": "🧊", "Kantoor": ""}
+    assert "Use a single emoji as the icon." in too_long.text
+
+    snoep = await IngredientCategory.get(owner_id=default_user.id, name="Snoep")
+    await test_client.post(
+        f"/categories/{snoep.id}", data={"name": "Snoep", "icon": ""}
+    )
+    await snoep.refresh_from_db()
+    assert snoep.icon == ""
+
+
+@pytest.mark.asyncio
+async def test_starter_set_gets_icons(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Seeded shelves come with an emoji each."""
+    await test_client.get("/categories/manage")
+
+    categories = await load_categories(default_user.id)
+    assert categories[0]["icon"] == "🥦"
+    assert all(category["icon"] for category in categories)
+
+
+def test_suggest_icon_matches_dutch_and_english_names() -> None:
+    """Keywords match in either language; unknown names get no icon."""
+    assert suggest_icon("Groente") == "🥦"
+    assert suggest_icon("Vlees & vis") == "🥩"
+    assert suggest_icon("Vriezer") == "🧊"
+    assert suggest_icon("Herbs & spices") == "🌿"
+    assert suggest_icon("Brood") == "🍞"
+    assert suggest_icon("Sauzen") == "🫙"
+    assert suggest_icon("Condiments") == "🫙"
+    assert suggest_icon("Kantoor") == ""
+
+
+def test_icon_backfill_only_fills_empty_icons() -> None:
+    """The one-time fill sets suggested icons and keeps chosen ones."""
+    connection = sqlite3.connect(":memory:")
+    connection.execute('CREATE TABLE "ingredientcategory" ("name" TEXT, "icon" TEXT)')
+    connection.executemany(
+        'INSERT INTO "ingredientcategory" VALUES (?, ?)',
+        [("Groente", ""), ("Vriezer", ""), ("Kantoor", ""), ("Fruit", "🍓")],
+    )
+
+    connection.executescript(icon_backfill_sql())
+
+    rows = dict(connection.execute('SELECT "name", "icon" FROM "ingredientcategory"'))
+    assert rows == {"Groente": "🥦", "Vriezer": "🧊", "Kantoor": "", "Fruit": "🍓"}
+
+
+@pytest.mark.asyncio
+async def test_assignment_chips_show_icons_or_letters(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Each ingredient gets one chip per shelf; the current one is active."""
+    veg = await IngredientCategory.create(
+        owner=default_user, name="Vegetables", icon="🥦", sort_order=0
+    )
+    await _category(default_user, "Kantoor", 1)
+    carrot = await Ingredient.create(owner=default_user, name="carrot", category=veg)
+
+    page = await test_client.get("/categories/manage")
+    assignments = page.text.split('id="category-assignments"', 1)[1]
+    row = assignments.split("carrot", 1)[1].split("</li>", 1)[0]
+
+    assert "🥦 Vegetables (1)" in assignments
+    assert 'aria-label="Vegetables"' in row
+    assert ">🥦</button>" in row
+    assert ">K</button>" in row
+    active = row.split("shop-chip-btn--active", 1)[1].split("</button>", 1)[0]
+    assert "🥦" in active
+    assert f"/categories/ingredient/{carrot.id}" in row
+    assert "<select" not in assignments
+
+
+@pytest.mark.asyncio
+async def test_grocery_headings_show_shelf_icon(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Grocery list headings start with the shelf's emoji."""
+    veg = await IngredientCategory.create(
+        owner=default_user, name="Vegetables", icon="🥦", sort_order=0
+    )
+    await _add_grocery(test_client, "carrot")
+    await Ingredient.filter(owner_id=default_user.id, name="carrot").update(
+        category_id=veg.id
+    )
+    carrot = await _ingredient(default_user, "carrot")
+    await test_client.post(
+        "/week-menu/grocery-list/to-check",
+        data={"ingredient_id": str(carrot.id), "unit": "st"},
+    )
+
+    page = await test_client.get("/week-menu/grocery-list")
+
+    assert '<h4 class="category-heading">🥦 Vegetables</h4>' in page.text
 
 
 @pytest.mark.asyncio
@@ -161,7 +325,7 @@ async def test_delete_category_uncategorises_its_ingredients(
 
     response = await test_client.delete(f"/categories/{veg.id}")
 
-    assert "Category deleted." in response.text
+    assert "Section deleted." in response.text
     await carrot.refresh_from_db()
     assert carrot.category_id is None
 
@@ -184,7 +348,7 @@ async def test_categories_are_private_per_user(
     delete = await test_client.delete(f"/categories/{theirs.id}")
 
     assert "Secret" not in page.text
-    assert "Category not found." in rename.text
+    assert "Section not found." in rename.text
     assert assign.status_code == 404
     assert delete.status_code == 404
     await theirs.refresh_from_db()
@@ -236,7 +400,7 @@ async def test_uncategorised_ingredients_are_listed_first(
     page = await test_client.get("/categories/manage")
     assignments = page.text.split('id="category-assignments"', 1)[1]
 
-    assert assignments.index("Uncategorised (1)") < assignments.index("Vegetables (1)")
+    assert assignments.index("No section (1)") < assignments.index("Vegetables (1)")
     assert assignments.index("salt") < assignments.index("carrot")
 
 
@@ -245,7 +409,14 @@ async def test_uncategorised_ingredients_are_listed_first(
 
 def _info(category_id: int, name: str) -> CategoryInfo:
     """Build a category record for the pure grouping function."""
-    return CategoryInfo(id=category_id, name=name, sort_order=0, ingredient_count=0)
+    return CategoryInfo(
+        id=category_id,
+        name=name,
+        icon="",
+        badge=name[0],
+        sort_order=0,
+        ingredient_count=0,
+    )
 
 
 def test_group_by_category_orders_sections_and_puts_uncategorised_last() -> None:
@@ -316,7 +487,7 @@ async def test_grocery_shop_section_and_to_check_are_grouped(
 
     vegetables = shop_html.index('<h4 class="category-heading">Vegetables</h4>')
     frozen = shop_html.index('<h4 class="category-heading">Freezer</h4>')
-    other = shop_html.index('<h4 class="category-heading">Uncategorised</h4>')
+    other = shop_html.index('<h4 class="category-heading">No section</h4>')
     assert vegetables < shop_html.index(">carrot<") < frozen
     assert frozen < shop_html.index(">peas<") < other < shop_html.index(">salt<")
 
@@ -367,7 +538,7 @@ async def test_inventory_category_sort_shows_headings(
 
     assert '<option value="category" selected>' in page.text
     vegetables = page.text.index('<h3 class="category-heading">Vegetables</h3>')
-    other = page.text.index('<h3 class="category-heading">Uncategorised</h3>')
+    other = page.text.index('<h3 class="category-heading">No section</h3>')
     carrot = page.text.index('value="carrot"')
     leek = page.text.index('value="leek"')
     salt = page.text.index('value="salt"')

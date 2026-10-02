@@ -2,7 +2,7 @@
    Expects: list_items, list_sections (from group_by_category), list_class. #}
 {% if list_sections %}
 {% for section in list_sections %}
-<h4 class="category-heading">{{ section.name }}</h4>
+<h4 class="category-heading">{{ section.icon ~ " " if section.icon }}{{ section.name }}</h4>
 <ul class="{{ list_class }}">
     {% for item in section.entries %}
     {% include "partials/grocery-item-row.html" %}

@@ -2,21 +2,20 @@
 
 from litestar import Controller, Request, delete, get, post
 from litestar.exceptions import NotFoundException
-from litestar.response import Template
+from litestar.response import Response, Template
+from litestar.status_codes import HTTP_204_NO_CONTENT, HTTP_409_CONFLICT
 from loguru import logger
 
 from src.auth import get_current_user
 from src.categories import (
-    MOVE_DOWN,
-    MOVE_UP,
     add_category,
     delete_category,
     ensure_default_categories,
     load_assignment_groups,
     load_categories,
-    move_category,
-    rename_category,
+    reorder_categories,
     set_ingredient_category,
+    update_category,
 )
 from src.i18n.service import t
 
@@ -76,7 +75,9 @@ class CategoryController(Controller):
         """Add a category at the end of the order."""
         owner_id = await self._owner_id(request)
         form_data = await request.form()
-        success, message = await add_category(owner_id, form_data.get("name"))
+        success, message = await add_category(
+            owner_id, form_data.get("name"), form_data.get("icon")
+        )
         if not success:
             return await self._render_page(request, warnings=[message])
         return await self._render_page(request, messages=[message])
@@ -86,26 +87,31 @@ class CategoryController(Controller):
         """Rename an owned category."""
         owner_id = await self._owner_id(request)
         form_data = await request.form()
-        success, message = await rename_category(
-            owner_id, category_id, form_data.get("name")
+        success, message = await update_category(
+            owner_id, category_id, form_data.get("name"), form_data.get("icon")
         )
         if not success:
             return await self._render_page(request, warnings=[message])
         return await self._render_page(request, messages=[message])
 
-    @post(
-        path="/{category_id:int}/move/{direction:str}",
-        summary="Move an ingredient category up or down",
-    )
-    async def reorder_category(
-        self, request: Request, category_id: int, direction: str
-    ) -> Template:
-        """Swap a category with its neighbour."""
+    @post(path="/order", summary="Reorder ingredient categories")
+    async def reorder(self, request: Request) -> Response:
+        """Save the order of all categories after a drag (``ids`` = "3,1,2")."""
         owner_id = await self._owner_id(request)
-        if direction not in (MOVE_UP, MOVE_DOWN):
-            raise NotFoundException()
-        await move_category(owner_id, category_id, direction)
-        return await self._render_page(request)
+        form_data = await request.form()
+        try:
+            category_ids = [
+                int(part)
+                for part in str(form_data.get("ids", "")).split(",")
+                if part.strip()
+            ]
+        except ValueError as error:
+            raise NotFoundException() from error
+        if not await reorder_categories(owner_id, category_ids):
+            # Stale page (a category was added or removed elsewhere): the
+            # page reloads to show the current list.
+            return Response(content="", status_code=HTTP_409_CONFLICT)
+        return Response(content="", status_code=HTTP_204_NO_CONTENT)
 
     @delete(
         path="/{category_id:int}",

@@ -4,7 +4,9 @@ import os
 
 from aerich import Command
 from tortoise import Tortoise
+from tortoise.backends.base.client import BaseDBAsyncClient
 
+from src.category_icons import icon_backfill_sql
 from src.db_config import is_postgres_url
 
 # ``generate_schemas`` only creates missing tables, so columns added to existing
@@ -17,7 +19,27 @@ POSTGRES_COLUMN_PATCHES = (
     'REFERENCES "ingredientcategory" ("id") ON DELETE SET NULL',
     'ALTER TABLE "userpreference" ADD COLUMN IF NOT EXISTS '
     '"categories_seeded" BOOLEAN NOT NULL DEFAULT FALSE',
+    'ALTER TABLE "ingredientcategory" ADD COLUMN IF NOT EXISTS '
+    "\"icon\" TEXT NOT NULL DEFAULT ''",
 )
+
+# One-time data fills, run only on the boot that adds their (table, column), so
+# later user edits (e.g. clearing an icon) are never overwritten.
+POSTGRES_COLUMN_BACKFILLS = {
+    ("ingredientcategory", "icon"): icon_backfill_sql,
+}
+
+
+async def _postgres_column_exists(
+    connection: BaseDBAsyncClient, table: str, column: str
+) -> bool:
+    """Return whether a column exists in the connected Postgres database."""
+    rows = await connection.execute_query_dict(
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name = $1 AND column_name = $2",
+        [table, column],
+    )
+    return bool(rows)
 
 
 def ensure_not_using_production_db_in_tests() -> None:
@@ -45,8 +67,15 @@ async def init_database(config: dict) -> None:
     if is_postgres_url(db_url):
         await Tortoise.generate_schemas(safe=True)
         connection = Tortoise.get_connection("default")
+        pending_backfills = [
+            backfill
+            for (table, column), backfill in POSTGRES_COLUMN_BACKFILLS.items()
+            if not await _postgres_column_exists(connection, table, column)
+        ]
         for statement in POSTGRES_COLUMN_PATCHES:
             await connection.execute_script(statement)
+        for backfill in pending_backfills:
+            await connection.execute_script(backfill())
         return
 
     command = Command(

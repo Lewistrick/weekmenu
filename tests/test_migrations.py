@@ -8,7 +8,10 @@ import pytest
 from tortoise.backends.sqlite.client import SqliteClient
 
 MIGRATIONS_DIR = Path("migrations/models")
-MIGRATION_FILES = sorted(MIGRATIONS_DIR.glob("*.py"))
+# Numeric order, like aerich: a plain text sort would run "10_..." before "1_...".
+MIGRATION_FILES = sorted(
+    MIGRATIONS_DIR.glob("*.py"), key=lambda path: int(path.name.split("_", 1)[0])
+)
 
 RECIPE_COLUMNS = {
     "id",
@@ -175,7 +178,7 @@ async def test_migrations_add_ingredient_categories(tmp_path: Path) -> None:
     for migration_path in MIGRATION_FILES:
         await _apply_migration(db_file, migration_path)
 
-    assert {"id", "owner_id", "name", "sort_order"}.issubset(
+    assert {"id", "owner_id", "name", "icon", "sort_order"}.issubset(
         _table_columns(db_file, "ingredientcategory")
     )
     assert "category_id" in _table_columns(db_file, "ingredient")

@@ -22,7 +22,9 @@
         </div>
         <form method="post" action="{{ base_path }}/categories" class="inline-form">
             <div class="form-group">
-                <div class="ingredient-input item-row item-row--two">
+                <div class="ingredient-input item-row item-row--icon">
+                    <input type="text" name="icon" class="form-control icon-input" maxlength="16" placeholder="🙂"
+                        aria-label="{{ t('categories.aria.icon') }}" />
                     <input type="text" name="name" class="form-control" placeholder="{{ t('common.name') }}"
                         aria-label="{{ t('common.name') }}" required />
                     <div class="item-row-actions">
@@ -40,22 +42,17 @@
             <p class="section-hint">{{ t('categories.hint.order') }}</p>
         </div>
         {% if categories %}
-        <ul class="editable-list">
+        <ul class="editable-list" data-sortable-url="{{ base_path }}/categories/order">
             {% for category in categories %}
-            <li class="editable-list-item" id="category-{{ category.id }}">
+            <li class="editable-list-item" id="category-{{ category.id }}" data-id="{{ category.id }}">
                 <form method="post" action="{{ base_path }}/categories/{{ category.id }}" class="inline-form">
-                    <div class="ingredient-input item-row item-row--two">
+                    <div class="ingredient-input item-row item-row--icon item-row--handle">
+                        <span class="drag-handle" title="{{ t('categories.aria.drag') }}" aria-hidden="true">⠿</span>
+                        <input type="text" name="icon" class="form-control icon-input" maxlength="16" value="{{ category.icon }}"
+                            placeholder="{{ category.badge }}" aria-label="{{ t('categories.aria.icon') }}" />
                         <input type="text" name="name" class="form-control" value="{{ category.name }}" required
                             aria-label="{{ t('common.name') }}" />
                         <div class="item-row-actions">
-                            <button type="button" class="btn btn-sm icon-btn"
-                                hx-post="{{ base_path }}/categories/{{ category.id }}/move/up" hx-target="body" hx-swap="innerHTML"
-                                {% if loop.first %}disabled{% endif %}
-                                title="{{ t('categories.aria.move_up') }}" aria-label="{{ t('categories.aria.move_up') }}">↑</button>
-                            <button type="button" class="btn btn-sm icon-btn"
-                                hx-post="{{ base_path }}/categories/{{ category.id }}/move/down" hx-target="body" hx-swap="innerHTML"
-                                {% if loop.last %}disabled{% endif %}
-                                title="{{ t('categories.aria.move_down') }}" aria-label="{{ t('categories.aria.move_down') }}">↓</button>
                             <button type="submit" class="btn btn-sm icon-btn" title="{{ t('categories.aria.save') }}"
                                 aria-label="{{ t('categories.aria.save') }}">💾</button>
                             {% set delete_url = base_path ~ "/categories/" ~ category.id %}
@@ -81,4 +78,9 @@
 
     {% include "partials/category-assignments.html" %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ base_path }}/static/{{ static_url('vendor/sortablejs/Sortable.min.js') }}"></script>
+<script src="{{ base_path }}/static/{{ static_url('js/sortable-lists.js') }}"></script>
 {% endblock %}

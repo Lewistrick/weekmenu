@@ -499,15 +499,57 @@
     margin: 0;
 }
 
-/* Two-cell row: a wide name/label cell and an auto-width control or button
-   cell. Stays on one line on phones (overrides the item-row phone layout). */
-.ingredient-input.item-row.item-row--two {
-    grid-template-columns: minmax(0, 1fr) auto;
+/* Icon + name + buttons row (e.g. shelves). Add .item-row--handle for a
+   leading drag handle. Stays on one line on phones. */
+.ingredient-input.item-row.item-row--icon {
+    grid-template-columns: 3.25rem minmax(0, 1fr) auto;
 }
 
-.ingredient-input.item-row.item-row--two > :first-child {
+.ingredient-input.item-row.item-row--icon.item-row--handle {
+    grid-template-columns: auto 3.25rem minmax(0, 1fr) auto;
+}
+
+.ingredient-input.item-row.item-row--icon > :first-child {
     grid-column: auto;
+}
+
+/* Name + a group of chips: one line when they fit, the chips wrap below the
+   name when they don't. */
+.ingredient-input.item-row.item-row--flow {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.ingredient-input.item-row.item-row--flow > :first-child {
+    flex: 1 1 8rem;
     overflow-wrap: anywhere;
+}
+
+.ingredient-input.item-row.item-row--flow > .shop-chip-row {
+    width: auto;
+}
+
+/* A narrow field holding one emoji. */
+.form-control.icon-input {
+    padding-left: var(--space-1);
+    padding-right: var(--space-1);
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+/* Grip for drag-to-reorder lists (see static/js/sortable-lists.js). */
+.drag-handle {
+    padding: var(--space-1) var(--space-2);
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--text-subtle);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.is-drag-ghost {
+    opacity: 0.4;
 }
 
 /* Heading over a run of list items that share an ingredient category. */
