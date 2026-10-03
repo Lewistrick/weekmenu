@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ view.shop.name if view.shop else t('shopping.no_shop') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">
+            {% if view.shop %}
+            <span class="shop-chip-btn shop-chip-btn--title"
+                style="color: {{ view.shop.foreground_color }}; background-color: {{ view.shop.background_color }};">{{ view.shop.letter }}</span>
+            {{ view.shop.name }}
+            {% else %}
+            {{ t('shopping.no_shop') }}
+            {% endif %}
+        </h1>
+    </header>
+
+    {% include "partials/shopping-progress.html" %}
+
+    {% if view.shelves %}
+    <div class="shopping-shelves">
+        {% for shelf in view.shelves %}
+        {% include "partials/shopping-shelf.html" %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="search-placeholder">{{ t('shopping.shop.empty') }}</p>
+    {% endif %}
+
+    <div class="toolbar">
+        <a href="{{ base_path }}/shopping" class="btn btn-secondary">{{ t('shopping.all_shops') }}</a>
+        {% if basket_count %}
+        <a href="{{ base_path }}/shopping/unpack" class="btn btn-primary">{{ t('shopping.action.done', count=basket_count) }}</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ base_path }}/static/{{ static_url('js/swipe-actions.js') }}"></script>
+{% endblock %}

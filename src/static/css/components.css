@@ -557,6 +557,53 @@
     opacity: 0.4;
 }
 
+/* Row with a leading checkbox: checkbox, label, amount field, unit. Stays on
+   one line on phones. */
+.ingredient-input.item-row.item-row--check {
+    grid-template-columns: auto minmax(0, 1fr) 6rem auto;
+}
+
+.ingredient-input.item-row.item-row--check > :first-child {
+    grid-column: auto;
+}
+
+/* Thin progress bar (e.g. items in the shopping basket). */
+.progress {
+    height: var(--space-2);
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-control);
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--success);
+    transition: width 0.2s ease;
+}
+
+/* A row that can be swiped right to trigger its action (see
+   static/js/swipe-actions.js). Vertical scrolling stays native. */
+.swipe-row {
+    transform: translateX(var(--swipe-x, 0));
+    transition: transform 0.15s ease;
+    touch-action: pan-y;
+}
+
+.swipe-row.is-swiping {
+    transition: none;
+}
+
+.swipe-row.is-swipe-armed {
+    border-color: var(--success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .swipe-row,
+    .progress-bar {
+        transition: none;
+    }
+}
+
 /* Heading over a run of list items that share an ingredient category. */
 .category-heading {
     margin: var(--space-3) 0 var(--space-2);

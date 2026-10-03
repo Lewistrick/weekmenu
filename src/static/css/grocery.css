@@ -211,6 +211,15 @@
     background-color: var(--bg-warn-inset);
 }
 
+/* Bought: in the shopping basket, waiting to be unpacked. */
+.grocery-item--basket {
+    opacity: 0.6;
+}
+
+.grocery-item--basket .grocery-item-name {
+    text-decoration: line-through;
+}
+
 .grocery-list--to-check .grocery-item {
     border-color: var(--warn-strong);
 }

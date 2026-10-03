@@ -1,0 +1,3 @@
+{# htmx response: the touched shelf (or nothing, removing it) plus the progress bar. #}
+{% if shelf %}{% include "partials/shopping-shelf.html" %}{% endif %}
+{% with oob=true %}{% include "partials/shopping-progress.html" %}{% endwith %}

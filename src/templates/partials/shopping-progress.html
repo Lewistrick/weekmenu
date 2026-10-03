@@ -1,0 +1,7 @@
+{# Progress bar for the shop page. Expects: view. Pass oob=true to update it in place. #}
+<div id="shopping-progress" class="shopping-progress"{% if oob %} hx-swap-oob="true"{% endif %}>
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ view.total }}" aria-valuenow="{{ view.done }}">
+        <div class="progress-bar" style="width: {{ (view.done * 100 // view.total) if view.total else 0 }}%"></div>
+    </div>
+    <p class="section-hint">{{ t('shopping.progress', done=view.done, total=view.total) }}</p>
+</div>

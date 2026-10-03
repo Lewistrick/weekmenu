@@ -1,0 +1,33 @@
+{# One collapsible shelf; the htmx swap unit. Expects: shelf, view. #}
+<details class="shopping-shelf surface" id="shelf-{{ shelf.id }}"{% if shelf.open %} open{% endif %}>
+    <summary class="shopping-shelf-summary">
+        <span class="shopping-shelf-title">{{ shelf.icon ~ " " if shelf.icon }}{{ shelf.name }}</span>
+        <span class="section-hint">{% if shelf.left %}{{ t('shopping.shelf.left', count=shelf.left) }}{% else %}✓ {{ t('shopping.shelf.done') }}{% endif %}</span>
+    </summary>
+    <ul class="shopping-items">
+        {% for item in shelf.lines %}
+        {% set vals = {"ingredient_id": item.ingredient_id, "unit": item.unit, "shop_ref": view.ref, "shelf_id": shelf.id} %}
+        {% set basket_vals = {"ingredient_id": item.ingredient_id, "unit": item.unit, "shop_ref": view.ref, "shelf_id": shelf.id, "in_basket": 0 if item.in_basket else 1} %}
+        <li class="swipe-row shopping-item{% if item.in_basket %} shopping-item--basket{% endif %}"
+            data-swipe-right=".shopping-basket-btn">
+            <span class="shopping-item-name">{{ item.name }}</span>
+            <span class="shopping-item-amount">{{ '%g' | format(item.quantity) }} {{ item.unit }}</span>
+            <div class="shopping-item-actions">
+                <button type="button" class="btn btn-sm icon-btn shopping-basket-btn{% if item.in_basket %} icon-btn--active{% endif %}"
+                    hx-post="{{ base_path }}/shopping/basket"
+                    hx-vals='{{ basket_vals | tojson }}'
+                    hx-target="#shelf-{{ shelf.id }}" hx-swap="outerHTML"
+                    aria-pressed="{{ 'true' if item.in_basket else 'false' }}"
+                    title="{{ t('shopping.aria.out_of_basket') if item.in_basket else t('shopping.aria.basket') }}"
+                    aria-label="{{ t('shopping.aria.out_of_basket') if item.in_basket else t('shopping.aria.basket') }}">🛒</button>
+                {% if not item.in_basket %}
+                <button type="button" class="btn btn-sm icon-btn"
+                    hx-post="{{ base_path }}/shopping/to-check" hx-vals='{{ vals | tojson }}'
+                    hx-target="#shelf-{{ shelf.id }}" hx-swap="outerHTML"
+                    title="{{ t('grocery.aria.move_to_to_check') }}" aria-label="{{ t('grocery.aria.move_to_to_check') }}">?</button>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</details>

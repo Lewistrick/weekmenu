@@ -32,6 +32,7 @@ from src.controllers.ingredient_units import IngredientUnitMergeController
 from src.controllers.inventory import InventoryController
 from src.controllers.ingredients import IngredientController
 from src.controllers.recipes import RecipeController
+from src.controllers.shopping import ShoppingController
 from src.controllers.shops import ShopController
 from src.controllers.tags import TagController
 from src.controllers.units import UnitController
@@ -242,6 +243,7 @@ _app_route_handlers: list = [
     WeeklyGroceryController,
     InventoryController,
     CategoryController,
+    ShoppingController,
     AdminController,
     ElementController,
     static_files_router,

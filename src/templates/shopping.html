@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.shopping') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.shopping') }}</h1>
+        <p class="page-lead">{{ t('shopping.lead') }}</p>
+    </header>
+
+    {% if cards %}
+    <div class="quick-actions">
+        {% for card in cards %}
+        <a href="{{ base_path }}/shopping/shop/{{ card.ref }}" class="action-card">
+            <span class="action-card-title">
+                {% if card.shop %}
+                <span class="shop-chip-btn shop-chip-btn--title"
+                    style="color: {{ card.shop.foreground_color }}; background-color: {{ card.shop.background_color }};">{{ card.shop.letter }}</span>
+                {{ card.shop.name }}
+                {% else %}
+                {{ t('shopping.no_shop') }}
+                {% endif %}
+            </span>
+            <span class="action-card-desc">{{ t('shopping.shop.left', count=card.view.total - card.view.done) }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <section class="recipe-section">
+        <p class="search-placeholder">{{ t('shopping.picker.empty') }}</p>
+        <a href="{{ base_path }}/week-menu/grocery-list" class="btn btn-secondary">{{ t('shopping.picker.to_grocery_list') }}</a>
+    </section>
+    {% endif %}
+
+    {% if basket_count %}
+    <div class="toolbar">
+        <a href="{{ base_path }}/shopping/unpack" class="btn btn-primary">{{ t('shopping.action.done', count=basket_count) }}</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -31,6 +31,9 @@ from src.week_menu import (
 GROCERY_STATUS_ACTIVE = "active"
 GROCERY_STATUS_TO_CHECK = "to_check"
 GROCERY_STATUS_ALREADY_HAVE = "already_have"
+# Bought in the shop but not yet unpacked: the line stays on the list (muted)
+# until the user confirms what went into the inventory.
+GROCERY_STATUS_IN_BASKET = "in_basket"
 
 # Tolerance for float comparisons between grocery and inventory amounts.
 QUANTITY_EPSILON = 1e-9
@@ -280,6 +283,12 @@ async def save_grocery_list(user_id: int, items: list[GroceryItem]) -> None:
                 quantity=item["quantity"],
             )
             continue
+        if (
+            row.status == GROCERY_STATUS_IN_BASKET
+            and abs(row.quantity - item["quantity"]) > QUANTITY_EPSILON
+        ):
+            # The bought amount no longer matches what is needed.
+            row.status = GROCERY_STATUS_ACTIVE
         row.quantity = item["quantity"]
         await row.save()
 
@@ -311,6 +320,14 @@ async def load_already_have_line_keys(user_id: int) -> set[str]:
         grocery_line_key(row.ingredient.id, row.unit.abbrev if row.unit else "")
         for row in rows
     }
+
+
+async def load_in_basket_line_keys(user_id: int) -> set[str]:
+    """Load grocery line keys the user has put in the shopping basket."""
+    rows = await GroceryListItem.filter(
+        user_id=user_id, status=GROCERY_STATUS_IN_BASKET
+    ).select_related("unit", "ingredient")
+    return {grocery_line_key(row.ingredient.id, row.unit.abbrev) for row in rows}
 
 
 async def load_to_check_line_keys(user_id: int) -> set[str]:
@@ -379,6 +396,45 @@ async def unmark_to_check_line(user_id: int, ingredient_id: int, unit: str) -> N
         return
     row.status = GROCERY_STATUS_ACTIVE
     await row.save()
+
+
+async def mark_in_basket_line(user_id: int, ingredient_id: int, unit: str) -> None:
+    """Put one grocery line in the basket (bought; never touches the inventory)."""
+    await _set_grocery_status(user_id, ingredient_id, unit, GROCERY_STATUS_IN_BASKET)
+
+
+async def unmark_in_basket_line(user_id: int, ingredient_id: int, unit: str) -> None:
+    """Take one grocery line out of the basket; its shop assignment is kept."""
+    row = await _get_grocery_row(user_id, ingredient_id, unit)
+    if row is None or row.status != GROCERY_STATUS_IN_BASKET:
+        return
+    row.status = GROCERY_STATUS_ACTIVE
+    await row.save()
+
+
+async def delete_in_basket_lines(
+    user_id: int, line_keys: set[str] | None = None
+) -> int:
+    """Remove in-basket lines from the grocery list (they are bought).
+
+    Args:
+        user_id: Owner of the grocery list.
+        line_keys: Only remove these lines (see ``grocery_line_key``); ``None``
+            removes every in-basket line.
+
+    Returns:
+        The number of lines removed.
+    """
+    rows = await GroceryListItem.filter(
+        user_id=user_id, status=GROCERY_STATUS_IN_BASKET
+    ).select_related("ingredient", "unit")
+    removed = 0
+    for row in rows:
+        key = grocery_line_key(row.ingredient.id, row.unit.abbrev)
+        if line_keys is None or key in line_keys:
+            await row.delete()
+            removed += 1
+    return removed
 
 
 async def clear_to_check(user_id: int) -> None:

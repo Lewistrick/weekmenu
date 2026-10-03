@@ -10,18 +10,15 @@ from loguru import logger
 from tortoise.expressions import Q
 
 from src.auth import get_current_user
-from src.categories import (
-    group_by_category,
-    load_categories,
-    load_ingredient_category_ids,
-)
 from src.catalog import get_or_create_ingredient
-from src.grocery import (
-    compute_ingredient_origins,
-    format_grocery_export,
-    format_week_menu_export,
-    split_grocery_lists,
+from src.grocery import format_week_menu_export
+from src.grocery import GroceryGroup, format_grocery_export
+from src.grocery_data import (
+    GrocerySplit,
+    load_current_grocery_items,
+    load_grocery_split,
 )
+from src.grocery_origins import load_ingredient_origins
 from src.i18n.service import t
 from src.inventory import ensure_inventory_item
 from src.models import (
@@ -41,19 +38,16 @@ from src.plan_store import (
     has_grocery_list_items,
     is_grocery_line_reserved,
     is_grocery_list_initialized,
-    load_already_have_line_keys,
     load_grocery_line_shops,
     load_grocery_list,
     load_include_public,
     load_inventory_line_keys,
     load_start_day,
     load_tag_constraints,
-    load_to_check_line_keys,
     load_week_menu,
     mark_already_have_line,
     mark_shop_already_have,
     mark_to_check_line,
-    prune_orphaned_grocery_lines,
     reset_grocery_plan,
     save_grocery_list,
     save_include_public,
@@ -97,6 +91,14 @@ from src.weekly_groceries import (
     weekly_groceries_as_items,
     weekly_groceries_missing_from_list,
 )
+
+
+def _in_basket(item: GroceryItem, split: GrocerySplit) -> bool:
+    """Return whether a grocery line is in the shopping basket (bought)."""
+    return (
+        grocery_line_key(item["ingredient_id"], item["unit"])
+        in split["in_basket_line_keys"]
+    )
 
 
 class WeekMenuController(Controller):
@@ -410,39 +412,9 @@ class WeekMenuController(Controller):
         )
 
     async def _ingredient_origins(self, request: Request) -> dict:
-        """Reconstruct where each grocery ingredient came from.
-
-        Origins are not persisted; they are recomputed from the current week
-        menu (recipe names) and the weekly groceries. Ingredients matching
-        neither source are treated as manually added by the template.
-
-        Returns:
-            A mapping of ingredient id to its :class:`IngredientOrigin`.
-        """
-        user_id = await self._viewer_id(request)
-        default_servings = await self._default_servings(request)
-        menu = await load_week_menu(user_id, default_servings=default_servings)
-        recipe_ids = [
-            slot["recipe_id"] for slot in menu.values() if slot["recipe_id"] is not None
-        ]
-        recipes_by_id = await self._recipes_by_id(recipe_ids)
-        recipe_names = {rid: recipe.name for rid, recipe in recipes_by_id.items()}
-
-        recipe_ingredient_ids: dict[int, set[int]] = defaultdict(set)
-        if recipe_ids:
-            recipe_ingredients = await RecipeIngredient.filter(
-                recipe_id__in=recipe_ids
-            ).select_related("recipe", "ingredient")
-            for recipe_ingredient in recipe_ingredients:
-                recipe_ingredient_ids[recipe_ingredient.recipe.id].add(
-                    recipe_ingredient.ingredient.id
-                )
-
-        weekly_ingredient_ids = {
-            item["ingredient_id"] for item in await weekly_groceries_as_items(user_id)
-        }
-        return compute_ingredient_origins(
-            dict(recipe_ingredient_ids), recipe_names, weekly_ingredient_ids
+        """Reconstruct where each grocery ingredient came from (see the module)."""
+        return await load_ingredient_origins(
+            await self._viewer_id(request), await self._default_servings(request)
         )
 
     async def _build_grocery_context(
@@ -457,12 +429,7 @@ class WeekMenuController(Controller):
         user_id = await self._viewer_id(request)
 
         if preserve_existing and await is_grocery_list_initialized(user_id):
-            grocery_items = await prune_orphaned_grocery_lines(
-                user_id,
-                await hydrate_grocery_item_names(
-                    user_id, await load_grocery_list(user_id)
-                ),
-            )
+            grocery_items = await load_current_grocery_items(user_id)
             pop_grocery_suppress_preserve(request)
         else:
             inventory_message = await self._replace_grocery_list(request, user_id)
@@ -475,57 +442,41 @@ class WeekMenuController(Controller):
         if action_message is None:
             action_message = pop_grocery_action_flash(request)
 
-        ingredient_shop_ids = await load_ingredient_shop_ids(user_id)
-        shops = await load_shops(user_id)
-        already_have_line_keys = await load_already_have_line_keys(user_id)
-        to_check_line_keys = await load_to_check_line_keys(user_id)
-        line_shop_ids = await load_grocery_line_shops(user_id)
-        unassigned_items, to_check_items, already_have_items, grocery_groups = (
-            split_grocery_lists(
-                grocery_items,
-                ingredient_shop_ids,
-                shops,
-                already_have_line_keys,
-                to_check_line_keys,
-                line_shop_ids,
-            )
-        )
-        categories = await load_categories(user_id)
-        ingredient_category_ids = await load_ingredient_category_ids(user_id)
-        uncategorised_label = t("categories.uncategorised")
-        for group in grocery_groups:
-            group["sections"] = group_by_category(
-                group["entries"],
-                ingredient_category_ids,
-                categories,
-                uncategorised_label=uncategorised_label,
-            )
-        to_check_sections = group_by_category(
-            to_check_items,
-            ingredient_category_ids,
-            categories,
-            uncategorised_label=uncategorised_label,
-        )
+        split = await load_grocery_split(user_id, grocery_items)
+        unassigned_items = split["unassigned_items"]
+        to_check_items = split["to_check_items"]
+        grocery_groups = split["grocery_groups"]
         units = await Unit.filter(owner_id=user_id).order_by("abbrev")
         return {
             "request": request,
             "unassigned_items": unassigned_items,
             "to_check_items": to_check_items,
-            "to_check_sections": to_check_sections,
-            "already_have_items": already_have_items,
+            "to_check_sections": split["to_check_sections"],
+            "already_have_items": split["already_have_items"],
             "grocery_groups": grocery_groups,
             "grocery_export_text": format_grocery_export(
-                unassigned_items,
-                to_check_items,
-                grocery_groups,
+                [i for i in unassigned_items if not _in_basket(i, split)],
+                [i for i in to_check_items if not _in_basket(i, split)],
+                [
+                    GroceryGroup(
+                        **{
+                            **group,
+                            "entries": [
+                                i for i in group["entries"] if not _in_basket(i, split)
+                            ],
+                        }
+                    )
+                    for group in grocery_groups
+                ],
                 unassigned_label=t("grocery.label.unassigned"),
                 to_check_label=t("grocery.label.to_check"),
             ),
-            "shops": shops,
-            "ingredient_shop_ids": ingredient_shop_ids,
-            "line_shop_ids": line_shop_ids,
-            "already_have_line_keys": already_have_line_keys,
-            "to_check_line_keys": to_check_line_keys,
+            "shops": split["shops"],
+            "ingredient_shop_ids": split["ingredient_shop_ids"],
+            "line_shop_ids": split["line_shop_ids"],
+            "already_have_line_keys": split["already_have_line_keys"],
+            "to_check_line_keys": split["to_check_line_keys"],
+            "in_basket_line_keys": split["in_basket_line_keys"],
             "inventory_line_keys": await load_inventory_line_keys(user_id),
             "units": units,
             "grocery_action_message": action_message,

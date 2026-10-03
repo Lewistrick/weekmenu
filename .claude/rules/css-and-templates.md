@@ -47,6 +47,13 @@ class, check whether one of these already covers the need:
   `<li>` and a `<span class="drag-handle">⠿</span>` in each row; load
   `vendor/sortablejs/Sortable.min.js` and `js/sortable-lists.js` in the page's
   `{% block scripts %}`. The new order is POSTed as `ids=3,1,2`.
+- **Swipe rows:** give a list item `class="swipe-row"` and
+  `data-swipe-right="<selector>"`; load `js/swipe-actions.js` in the page's
+  `{% block scripts %}`. A swipe right clicks that button inside the row, so
+  there must always be a button as well (swiping is never the only way).
+- **Progress bar:** `.progress` > `.progress-bar` (width in %).
+- **Checkbox rows:** `.ingredient-input.item-row.item-row--check` (checkbox,
+  label, amount field, unit).
 - **Static files:** link JS (and any other static asset) as
   `{{ base_path }}/static/{{ static_url('js/x.js') }}` so it gets a
   `?v=<mtime>` cache buster.
@@ -64,7 +71,7 @@ etc.), not in `components.css`.
 
 ## CSS: file organisation
 
-`src/static/style.css` is a hub of 9 `@import` directives. Never add rules to
+`src/static/style.css` is a hub of `@import` directives (one per file below). Never add rules to
 it directly. Pages do not link the hub itself: `partials/stylesheets.html`
 links each imported module in hub order with a `?v=<mtime>` cache buster
 (see `stylesheet_hrefs()` in `src/app.py`). A new module only needs its
@@ -78,6 +85,7 @@ links each imported module in hub order with a `?v=<mtime>` cache buster
 | `components.css` | reusable UI components |
 | `week-menu.css` | week-menu page |
 | `grocery.css` | grocery list page |
+| `shopping.css` | in-shop page (shelves, basket rows) |
 | `recipes.css` | recipe views and edit page |
 | `auth.css` | login/register |
 | `admin.css` | admin pages |

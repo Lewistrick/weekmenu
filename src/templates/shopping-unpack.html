@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app.title.shop_unpack') }}{% endblock %}
+
+{% block content %}
+<div class="content-page">
+    <header class="page-header">
+        <h1 class="page-title-main">{{ t('app.title.shop_unpack') }}</h1>
+        <p class="page-lead">{{ t('shopping.unpack.lead') }}</p>
+    </header>
+
+    {% if lines %}
+    <p class="section-hint">{{ t('shopping.unpack.hint') }}</p>
+    <form method="post" action="{{ base_path }}/shopping/unpack" class="inline-form">
+        <input type="hidden" name="line_count" value="{{ lines | length }}" />
+        <ul class="editable-list">
+            {% for line in lines %}
+            <li class="editable-list-item">
+                <input type="hidden" name="ingredient_id_{{ loop.index0 }}" value="{{ line.ingredient_id }}" />
+                <input type="hidden" name="unit_{{ loop.index0 }}" value="{{ line.unit }}" />
+                <div class="ingredient-input item-row item-row--check">
+                    <input type="checkbox" name="include_{{ loop.index0 }}" value="1" {% if line.include %}checked{% endif %}
+                        aria-label="{{ t('shopping.unpack.aria.include', name=line.name) }}" />
+                    <label for="quantity-{{ loop.index0 }}">{{ line.name }}</label>
+                    <input type="number" id="quantity-{{ loop.index0 }}" name="quantity_{{ loop.index0 }}" class="form-control"
+                        value="{{ '%g' | format(line.quantity) }}" min="0" step="any" aria-label="{{ t('common.amount') }}" />
+                    <span class="section-hint">{{ line.unit }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="toolbar">
+            <button type="submit" class="btn btn-primary">{{ t('shopping.unpack.confirm') }}</button>
+            <a href="{{ base_path }}/shopping" class="btn btn-secondary">{{ t('shopping.unpack.not_now') }}</a>
+        </div>
+    </form>
+    {% else %}
+    <section class="recipe-section">
+        <p class="search-placeholder">{{ t('shopping.unpack.empty') }}</p>
+        <a href="{{ base_path }}/shopping" class="btn btn-secondary">{{ t('shopping.all_shops') }}</a>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

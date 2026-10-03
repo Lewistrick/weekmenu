@@ -1,0 +1,72 @@
+.shopping-shelves {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.shopping-shelf {
+    padding: var(--space-2) var(--space-3);
+}
+
+.shopping-shelf-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    font-weight: 600;
+    color: var(--text-heading);
+    cursor: pointer;
+    list-style: none;
+}
+
+.shopping-shelf-summary::-webkit-details-marker {
+    display: none;
+}
+
+.shopping-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.shopping-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-raised);
+}
+
+.shopping-item-name {
+    overflow-wrap: anywhere;
+    color: var(--text-heading);
+}
+
+.shopping-item-amount {
+    white-space: nowrap;
+    color: var(--link);
+}
+
+.shopping-item-actions {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.shopping-item--basket {
+    opacity: 0.6;
+}
+
+.shopping-item--basket .shopping-item-name {
+    text-decoration: line-through;
+}
+
+.shopping-progress {
+    margin: var(--space-3) 0;
+}

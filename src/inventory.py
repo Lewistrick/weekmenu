@@ -15,7 +15,7 @@ from typing import Any, TypedDict
 from src.catalog import get_or_create_ingredient
 from src.categories import CategoryInfo, CategorySection
 from src.i18n.service import t
-from src.models import InventoryItem, Unit
+from src.models import Ingredient, InventoryItem, Unit
 
 INVENTORY_SORT_UPDATED_DESC = "updated_desc"
 INVENTORY_SORT_UPDATED_ASC = "updated_asc"
@@ -179,6 +179,57 @@ async def _resolve_ingredient_and_unit(
     return ingredient.id, quantity, unit.id, None
 
 
+async def _add_stock(
+    owner_id: int, ingredient_id: int, unit_id: int, quantity: float
+) -> bool:
+    """Add an amount to the item for this ingredient/unit, creating it if needed.
+
+    Returns:
+        ``True`` when the amount was added to an existing item (a merge).
+    """
+    existing = await InventoryItem.get_or_none(
+        owner_id=owner_id, ingredient_id=ingredient_id, unit_id=unit_id
+    )
+    if existing is not None:
+        existing.quantity = round(existing.quantity + quantity, 6)
+        await existing.save()
+        return True
+    await InventoryItem.create(
+        owner_id=owner_id,
+        ingredient_id=ingredient_id,
+        unit_id=unit_id,
+        quantity=quantity,
+    )
+    return False
+
+
+async def add_stock(
+    owner_id: int, ingredient_id: int, unit_abbrev: str, quantity: float
+) -> bool:
+    """Add bought stock to the inventory, summing into an existing item.
+
+    Args:
+        owner_id: The user whose inventory to change.
+        ingredient_id: One of the user's ingredients.
+        unit_abbrev: Abbreviation of one of the user's units.
+        quantity: The amount to add (more than zero).
+
+    Returns:
+        ``True`` when stock was added, ``False`` when the unit is unknown, the
+        ingredient is not the user's, or the amount is not positive.
+    """
+    if (
+        quantity <= 0
+        or not await Ingredient.filter(id=ingredient_id, owner_id=owner_id).exists()
+    ):
+        return False
+    unit = await Unit.filter(owner_id=owner_id, abbrev=unit_abbrev.strip()).first()
+    if unit is None:
+        return False
+    await _add_stock(owner_id, ingredient_id, unit.id, quantity)
+    return True
+
+
 async def add_inventory_item(
     owner_id: int, name: Any, quantity_raw: Any, unit_abbrev: Any
 ) -> tuple[bool, str]:
@@ -200,21 +251,8 @@ async def add_inventory_item(
         return False, error
     assert ingredient_id is not None and quantity is not None and unit_id is not None
 
-    existing = await InventoryItem.get_or_none(
-        owner_id=owner_id, ingredient_id=ingredient_id, unit_id=unit_id
-    )
-    if existing is not None:
-        existing.quantity = round(existing.quantity + quantity, 6)
-        await existing.save()
-        return True, t("message.inventory.merged")
-
-    await InventoryItem.create(
-        owner_id=owner_id,
-        ingredient_id=ingredient_id,
-        unit_id=unit_id,
-        quantity=quantity,
-    )
-    return True, t("message.inventory.added")
+    merged = await _add_stock(owner_id, ingredient_id, unit_id, quantity)
+    return True, t("message.inventory.merged" if merged else "message.inventory.added")
 
 
 async def update_inventory_item(
