@@ -1,5 +1,5 @@
 {# One editable inventory row. Expects: row, units, unit_abbrevs, sort. #}
-<li class="editable-list-item" id="inventory-item-{{ row.id }}">
+<li class="editable-list-item{% if row.quantity <= 0 %} editable-list-item--empty{% endif %}" id="inventory-item-{{ row.id }}">
     <form method="post" action="{{ base_path }}/inventory/{{ row.id }}" class="inline-form">
         <input type="hidden" name="sort" value="{{ sort }}" />
         <div class="ingredient-input item-row">

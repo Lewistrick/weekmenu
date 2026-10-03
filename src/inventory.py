@@ -8,10 +8,12 @@ How inventory interacts with the grocery list (reserving stock for lines on the
 already-have list) lives in :mod:`src.plan_store`.
 """
 
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any, TypedDict
 
 from src.catalog import get_or_create_ingredient
+from src.categories import CategoryInfo, CategorySection
 from src.i18n.service import t
 from src.models import InventoryItem, Unit
 
@@ -20,11 +22,14 @@ INVENTORY_SORT_UPDATED_ASC = "updated_asc"
 INVENTORY_SORT_NAME = "name"
 # Alphabetical within each category; the caller adds the category headings.
 INVENTORY_SORT_CATEGORY = "category"
+# Rows with amount 0 first (0 is 0 in any unit); the caller adds the groups.
+INVENTORY_SORT_EMPTY_FIRST = "empty_first"
 INVENTORY_SORTS = (
     INVENTORY_SORT_UPDATED_DESC,
     INVENTORY_SORT_UPDATED_ASC,
     INVENTORY_SORT_NAME,
     INVENTORY_SORT_CATEGORY,
+    INVENTORY_SORT_EMPTY_FIRST,
 )
 
 
@@ -86,9 +91,59 @@ async def load_inventory(
         )
         for row in rows
     ]
-    if sort in (INVENTORY_SORT_NAME, INVENTORY_SORT_CATEGORY):
+    if sort in (
+        INVENTORY_SORT_NAME,
+        INVENTORY_SORT_CATEGORY,
+        INVENTORY_SORT_EMPTY_FIRST,
+    ):
         prepared.sort(key=lambda row: (row["name"].lower(), row["unit"].lower()))
     return prepared
+
+
+def group_by_stock(
+    items: Sequence[Mapping[str, Any]],
+    ingredient_category_ids: Mapping[int, int | None],
+    categories: Sequence[CategoryInfo],
+    *,
+    empty_label: str,
+    in_stock_label: str,
+) -> list[CategorySection]:
+    """Split inventory rows into an "empty" and an "in stock" group.
+
+    A row is empty when its amount is zero. That is judged per row (ingredient
+    and unit), so amounts in different units never need comparing. Inside a
+    group rows follow the user's shelf order, then name, then unit; rows of
+    ingredients without a shelf come last.
+
+    Args:
+        items: Inventory rows (``ingredient_id``, ``name``, ``unit``, ``quantity``).
+        ingredient_category_ids: Ingredient id to shelf (category) id.
+        categories: The user's shelves, in order.
+        empty_label: Heading for the empty group.
+        in_stock_label: Heading for the in-stock group.
+
+    Returns:
+        The non-empty groups, empty rows first.
+    """
+    shelf_position = {category["id"]: i for i, category in enumerate(categories)}
+    unshelved = len(shelf_position)
+
+    def order(item: Mapping[str, Any]) -> tuple[int, str, str]:
+        shelf_id = ingredient_category_ids.get(item["ingredient_id"])
+        return (
+            shelf_position.get(shelf_id, unshelved),
+            str(item["name"]).lower(),
+            str(item["unit"]).lower(),
+        )
+
+    empty = sorted((item for item in items if item["quantity"] <= 0), key=order)
+    in_stock = sorted((item for item in items if item["quantity"] > 0), key=order)
+    groups = ((empty_label, empty), (in_stock_label, in_stock))
+    return [
+        CategorySection(category_id=None, name=label, icon="", entries=list(rows))
+        for label, rows in groups
+        if rows
+    ]
 
 
 async def _resolve_ingredient_and_unit(

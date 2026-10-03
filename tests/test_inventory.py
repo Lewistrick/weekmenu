@@ -16,12 +16,14 @@ from src.inventory import (
 from src.models import (
     GroceryListItem,
     Ingredient,
+    IngredientCategory,
     InventoryItem,
     Recipe,
     RecipeIngredient,
     Shop,
     Unit,
     User,
+    UserPreference,
     WeeklyGrocery,
 )
 from src.plan_store import GROCERY_STATUS_ACTIVE, GROCERY_STATUS_ALREADY_HAVE
@@ -712,3 +714,124 @@ def test_item_row_grid_wins_over_ingredient_input_flex() -> None:
 
     assert ".ingredient-input.item-row {\n    display: grid;" in css
     assert "\n.item-row {" not in css
+
+
+# --- "Empty first" sort -------------------------------------------------------
+
+
+async def _stock_on_shelf(
+    user: User, name: str, quantity: float, abbrev: str, shelf_id: int | None = None
+) -> InventoryItem:
+    """Create an ingredient (optionally on a shelf) with one inventory row."""
+    ingredient = await Ingredient.create(owner=user, name=name, category_id=shelf_id)
+    return await InventoryItem.create(
+        owner=user,
+        ingredient=ingredient,
+        unit=await _unit(user, abbrev),
+        quantity=quantity,
+    )
+
+
+@pytest.mark.asyncio
+async def test_empty_first_groups_zero_rows_regardless_of_unit(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Rows with amount 0 sit under 'Empty', whatever their unit."""
+    await _stock_on_shelf(default_user, "flour", 500, "g")
+    await _stock_on_shelf(default_user, "eggs", 0, "st")
+    await _stock_on_shelf(default_user, "milk", 0, "l")
+    await _stock_on_shelf(default_user, "rice", 3, "st")
+
+    page = await test_client.get("/inventory?sort=empty_first")
+
+    assert '<option value="empty_first" selected>Empty first</option>' in page.text
+    empty = page.text.index('<h3 class="category-heading">Empty</h3>')
+    in_stock = page.text.index('<h3 class="category-heading">In stock</h3>')
+    positions = {
+        name: page.text.index(f'value="{name}"')
+        for name in ("eggs", "milk", "flour", "rice")
+    }
+    assert empty < positions["eggs"] < positions["milk"] < in_stock
+    assert in_stock < positions["flour"] < positions["rice"]
+
+
+@pytest.mark.asyncio
+async def test_empty_first_orders_by_shelf_then_name(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Inside a group rows follow the shelf order, then name; no shelf last."""
+    veg = await IngredientCategory.create(owner=default_user, name="Veg", sort_order=0)
+    dairy = await IngredientCategory.create(
+        owner=default_user, name="Dairy", sort_order=1
+    )
+    await _stock_on_shelf(default_user, "zucchini", 0, "st", veg.id)
+    await _stock_on_shelf(default_user, "butter", 0, "g", dairy.id)
+    await _stock_on_shelf(default_user, "apple", 0, "st")
+    await _stock_on_shelf(default_user, "carrot", 0, "st", veg.id)
+
+    page = await test_client.get("/inventory?sort=empty_first")
+
+    order = [
+        page.text.index(f'value="{name}"')
+        for name in ("carrot", "zucchini", "butter", "apple")
+    ]
+    assert order == sorted(order)
+    assert 'category-heading">In stock<' not in page.text
+
+
+@pytest.mark.asyncio
+async def test_empty_first_only_shows_groups_with_rows(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """With nothing empty, only the 'In stock' group is shown (and vice versa)."""
+    await _stock_on_shelf(default_user, "flour", 500, "g")
+
+    all_stocked = await test_client.get("/inventory?sort=empty_first")
+    await InventoryItem.filter(owner_id=default_user.id).update(quantity=0)
+    all_empty = await test_client.get("/inventory?sort=empty_first")
+
+    assert 'category-heading">Empty<' not in all_stocked.text
+    assert 'category-heading">In stock<' in all_stocked.text
+    assert 'category-heading">Empty<' in all_empty.text
+    assert 'category-heading">In stock<' not in all_empty.text
+
+
+@pytest.mark.asyncio
+async def test_zero_rows_are_highlighted_in_every_sort(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """Rows with amount 0 carry the empty modifier, whatever the sort order."""
+    empty = await _stock_on_shelf(default_user, "eggs", 0, "st")
+    stocked = await _stock_on_shelf(default_user, "flour", 500, "g")
+
+    for sort in ("name", "updated_desc", "empty_first"):
+        page = await test_client.get(f"/inventory?sort={sort}")
+        empty_li = page.text.split(f'id="inventory-item-{empty.id}"', 1)[0]
+        stocked_li = page.text.split(f'id="inventory-item-{stocked.id}"', 1)[0]
+        assert empty_li.rstrip().endswith(
+            'editable-list-item editable-list-item--empty"'
+        )
+        assert not stocked_li.rstrip().endswith('--empty"')
+
+
+@pytest.mark.asyncio
+async def test_empty_first_labels_are_dutch_for_dutch_users(
+    test_client: AsyncTestClient,
+    default_user: User,
+) -> None:
+    """The sort option and group headings exist in Dutch too."""
+    await UserPreference.filter(user_id=default_user.id).update(
+        language="🇳🇱 Nederlands"
+    )
+    await _stock_on_shelf(default_user, "eggs", 0, "st")
+    await _stock_on_shelf(default_user, "flour", 500, "g")
+
+    page = await test_client.get("/inventory?sort=empty_first")
+
+    assert "Leeg eerst" in page.text
+    assert '<h3 class="category-heading">Leeg</h3>' in page.text
+    assert '<h3 class="category-heading">Op voorraad</h3>' in page.text

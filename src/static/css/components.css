@@ -499,6 +499,11 @@
     margin: 0;
 }
 
+/* A row with nothing left (e.g. inventory amount 0). */
+.editable-list-item--empty .ingredient-input {
+    border-color: var(--warn-strong);
+}
+
 /* Icon + name + buttons row (e.g. shelves). Add .item-row--handle for a
    leading drag handle. Stays on one line on phones. */
 .ingredient-input.item-row.item-row--icon {

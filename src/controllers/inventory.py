@@ -14,9 +14,11 @@ from src.categories import (
 from src.i18n.service import t
 from src.inventory import (
     INVENTORY_SORT_CATEGORY,
+    INVENTORY_SORT_EMPTY_FIRST,
     INVENTORY_SORTS,
     add_inventory_item,
     delete_inventory_item,
+    group_by_stock,
     load_inventory,
     normalize_inventory_sort,
     update_inventory_item,
@@ -58,6 +60,14 @@ class InventoryController(Controller):
                 await load_categories(owner_id),
                 uncategorised_label=t("categories.uncategorised"),
                 always=True,
+            )
+        elif active_sort == INVENTORY_SORT_EMPTY_FIRST:
+            sections = group_by_stock(
+                items,
+                await load_ingredient_category_ids(owner_id),
+                await load_categories(owner_id),
+                empty_label=t("inventory.group.empty"),
+                in_stock_label=t("inventory.group.in_stock"),
             )
         return Template(
             template_name="manage-inventory.html",
